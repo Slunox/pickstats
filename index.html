@@ -31,7 +31,13 @@ nav button.on{background:var(--ink);color:#fff}
 .q{display:flex;align-items:center;gap:6px}
 .q button{width:48px;height:48px;border-radius:50%;background:var(--card);font-size:1.5rem;font-weight:700}
 .q b{min-width:70px;text-align:center;font-size:1.6rem}
-.undo{padding:12px 18px;border-radius:10px;background:var(--card);border:2px solid var(--ink);font-weight:700}
+.undo{padding:10px 16px;border-radius:10px;background:var(--card);border:2px solid var(--ink);font-weight:700;width:min(100%,300px);line-height:1.25}
+.undo small{display:block;margin-top:3px;font-weight:600;font-size:.9rem;color:var(--mut);white-space:normal;overflow-wrap:anywhere}
+.undo[disabled]{opacity:.45;cursor:default}
+.hrow{display:grid;grid-template-columns:70px 1fr 56px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.hrow .hq{font-weight:800;background:var(--bg);border-radius:8px;padding:8px 0;text-align:center}
+.hrow .hd b{display:block}.hrow .hd span{color:var(--mut)}
+.hrow .del{width:56px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .pl{display:grid;grid-template-columns:48px 1fr;align-items:center;column-gap:8px;padding:10px 12px;min-height:70px;border-radius:12px;background:var(--card);text-align:left;border:3px solid transparent}
 .pl b{grid-row:1/3;font-size:1.9rem;font-weight:800;color:var(--a)}
@@ -98,6 +104,15 @@ function tally(q){const o={};roster().forEach(p=>o[p.n]={...p,reb:0,stl:0,to:0,m
 const orbs=q=>S.ev.filter(e=>e.a==='orb'&&inQ(e,q)).length;
 const miss=r=>r.m1+r.m2+r.m3;
 
+const evText=e=>(e.a==='orb'?S.opp+' : ':'#'+e.p+(((roster().find(r=>r.n===e.p)||{}).name)?' '+roster().find(r=>r.n===e.p).name:'')+' : ')+LBL[e.a];
+let hq='all';
+function hist(){
+ const list=S.ev.map((e,i)=>({e,i})).filter(o=>hq==='all'||o.e.q===+hq).reverse();
+ const chips=`<div class="chips"><button class="chip${hq==='all'?' on':''}" data-x="hq" data-q="all">Tout</button>`+periods().map(p=>`<button class="chip${hq==p?' on':''}" data-x="hq" data-q="${p}">${qLabel(p)}</button>`).join('')+`</div>`;
+ return chips+`<div class="card"><h2>Historique (${list.length} action${list.length>1?'s':''})</h2>`+
+  (list.length?list.map(o=>`<div class="hrow"><span class="hq">${qLabel(o.e.q)}</span><div class="hd"><b>${esc(o.e.a==='orb'?S.opp:'#'+o.e.p+(((roster().find(r=>r.n===o.e.p)||{}).name)?' '+roster().find(r=>r.n===o.e.p).name:''))}</b><span>${LBL[o.e.a]}</span></div><button class="del" data-x="delev" data-i="${o.i}" aria-label="Supprimer cette action">✕</button></div>`).join(''):'<p class="help">Aucune action enregistrée.</p>')+
+  `<p class="help">La croix supprime l’action immédiatement. Les actions les plus récentes sont en haut.</p></div>`;
+}
 function play(){
  const T=tally(null);
  const last=S.ev[S.ev.length-1];
@@ -108,7 +123,7 @@ function play(){
   ACTS.map(a=>`<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')+`</div></div></div>`}
  return `<div class="top">
   <div class="me"><span class="nm">${esc(S.me)}</span><span class="sub">Notre équipe</span></div>
-  <div class="mid"><div class="q"><button data-x="q-" aria-label="Période précédente">‹</button><b>${qLabel(S.q)}</b><button data-x="q+" aria-label="Période suivante">›</button></div><button class="undo" data-x="undo">Annuler la dernière</button></div>
+  <div class="mid"><div class="q"><button data-x="q-" aria-label="Période précédente">‹</button><b>${qLabel(S.q)}</b><button data-x="q+" aria-label="Période suivante">›</button></div><button class="undo" data-x="undo"${last?'':' disabled'}>Annuler la dernière<small>${last?esc(evText(last))+' · '+qLabel(last.q):'Aucune action'}</small></button></div>
   <div class="opp"><span class="nm">${esc(S.opp)}</span><span class="sub">Rebonds offensifs : ${orbs(S.q)} ce quart · ${orbs(null)} au total</span>
   <div class="orb"><b>${orbs(S.q)}</b><button data-x="orb">+1 rebond offensif</button></div></div></div>
  <div class="grid">`+roster().map(p=>{const s=T[p.n];
@@ -139,8 +154,8 @@ function settings(){
  <p class="help">Tout est enregistré automatiquement sur cet appareil. Exporte le CSV après chaque match.</p>`;
 }
 function render(){
- const tabs=[['play','Saisie'],['stats','Statistiques'],['set','Équipes']];
- $('#app').innerHTML=`<nav>${tabs.map(t=>`<button class="${view===t[0]?'on':''}" data-x="view" data-v="${t[0]}">${t[1]}</button>`).join('')}</nav>`+({play,stats,set:settings}[view])();
+ const tabs=[['play','Saisie'],['hist','Historique'],['stats','Statistiques'],['set','Équipes']];
+ $('#app').innerHTML=`<nav>${tabs.map(t=>`<button class="${view===t[0]?'on':''}" data-x="view" data-v="${t[0]}">${t[1]}</button>`).join('')}</nav>`+({play,hist,stats,set:settings}[view])();
 }
 function summary(){
  const sec=q=>{const T=Object.values(tally(q));const s=k=>T.reduce((a,r)=>a+r[k],0);
@@ -185,13 +200,15 @@ document.addEventListener('click',e=>{
  else if(x==='act'&&sel){S.ev.push({p:sel,a:el.dataset.a,q:S.q});sel=null;save()}
  else if(x==='orb'){S.ev.push({a:'orb',q:S.q});save()}
  else if(x==='desel')sel=null;
- else if(x==='undo'){S.ev.pop();save()}
+ else if(x==='undo'){if(!S.ev.length)return;S.ev.pop();save()}
  else if(x==='q+'){S.q++;save()}
  else if(x==='q-'){if(S.q>1){S.q--;save()}}
  else if(x==='addp')S.roster.push({n:'',name:''}),save();
  else if(x==='delp'){const p=S.roster[+el.dataset.i];
   if(!(p&&S.ev.some(v=>v.p===String(p.n).trim()))||confirm('Ce joueur a déjà des actions enregistrées. Le retirer masque ses stats. Continuer ?')){S.roster.splice(+el.dataset.i,1);save()}}
  else if(x==='sq')sq=el.dataset.q;
+ else if(x==='hq')hq=el.dataset.q;
+ else if(x==='delev'){S.ev.splice(+el.dataset.i,1);save()}
  else if(x==='share'){share();return}
  else if(x==='copy'){copyText();return}
  else if(x==='pdf'){pdf();return}
