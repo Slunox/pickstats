@@ -19,15 +19,15 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 nav{display:flex;gap:6px;margin-bottom:10px}
 nav button{flex:1;padding:12px;border-radius:10px;background:var(--card);font-weight:700}
 nav button.on{background:var(--ink);color:#fff}
-.top{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;margin-bottom:12px}
-.me,.opp{border-radius:14px;color:#fff;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.me,.opp{border-radius:14px;color:#fff;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
 .me{background:var(--a)}.opp{background:var(--b)}
 .nm{font-weight:800;font-size:1.3rem}
 .sub{font-size:.95rem;opacity:.9}
 .orb{margin-top:8px;display:flex;align-items:center;gap:12px}
 .orb button{background:#fff;color:var(--b);font-weight:800;border-radius:12px;padding:12px 16px;font-size:1.05rem;min-height:56px}
 .orb b{font-size:2.6rem;line-height:1;font-variant-numeric:tabular-nums}
-.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:150px}
+.mid{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;grid-column:1/-1;order:-1}
 .q{display:flex;align-items:center;gap:6px}
 .q button{width:48px;height:48px;border-radius:50%;background:var(--card);font-size:1.5rem;font-weight:700}
 .q b{min-width:70px;text-align:center;font-size:1.6rem}
@@ -39,17 +39,17 @@ nav button.on{background:var(--ink);color:#fff}
 .hrow .hd b{display:block}.hrow .hd span{color:var(--mut)}
 .hrow .del{width:56px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
-.pl{display:grid;grid-template-columns:48px 1fr;align-items:center;column-gap:8px;padding:10px 12px;min-height:70px;border-radius:12px;background:var(--card);text-align:left;border:3px solid transparent}
-.pl b{grid-row:1/3;font-size:1.9rem;font-weight:800;color:var(--a)}
+.pl{display:grid;grid-template-columns:minmax(3.1rem,auto) 1fr;align-items:center;column-gap:6px;padding:10px 12px;min-height:70px;border-radius:12px;background:var(--card);text-align:left;border:3px solid transparent}
+.pl b{grid-row:1/3;text-align:center;font-variant-numeric:tabular-nums;font-size:2.6rem;font-weight:800;color:var(--a)}
 .pl span{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pl i{font-style:normal;font-size:.85rem;color:var(--mut)}
 .pl.on{border-color:var(--ink);background:#FFF6CC}
 .last{margin-top:12px;color:var(--mut);text-align:center}
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:#fff;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:#fff;border-radius:24px 24px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.25);padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
 .bar .in{max-width:1100px;margin:0 auto}
 .who{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:1.1rem}
 .who button{padding:8px 14px;border-radius:8px;background:#2D3E48;color:#fff}
-.acts{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.acts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.acts.t4{grid-template-columns:repeat(4,1fr)}.acts.t2{grid-template-columns:repeat(2,1fr)}
 .acts button{min-height:64px;border-radius:10px;font-weight:800;font-size:1.05rem;color:var(--ink)}
 .acts .n{background:#BDE7C9}.acts .r{background:#F5C6C0}.acts .f{background:#F6D98B}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
@@ -73,24 +73,46 @@ textarea{min-height:200px}
 .prow input{min-height:52px;font-size:1.1rem}
 .prow input[data-r="n"]{text-align:center;font-weight:800}
 .del{height:52px;border-radius:8px;background:#F5C6C0;font-weight:800}
+.orbs{display:flex;gap:26px;margin-top:10px}.ob{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;min-width:48px}
+.ob b{font-size:2.4rem;line-height:1;font-variant-numeric:tabular-nums}
+.ob button{background:#fff;color:var(--b);font-weight:800;border-radius:12px;padding:12px 22px;font-size:1.2rem;min-height:56px}
+.me .orbs{gap:14px 28px;flex-wrap:wrap;justify-content:center}.me .ob button{color:var(--a);padding:12px 14px}
+table.mt{margin-top:16px}
+.grid.stk{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.pl.st{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:0;padding:10px 8px;text-align:center}
+.pl.st b{font-size:3.2rem;line-height:1;text-align:center}
+.pl.st span{max-width:100%;font-size:.85rem}.pl.st i{font-size:.72rem}
+.open{margin-top:8px;width:100%;min-height:52px;padding:12px 16px;border-radius:12px;background:#fff;font-weight:800;font-size:1.05rem}
+.tiles{display:flex;gap:6px;width:100%;margin-top:8px}
+.tile{flex:1;min-width:0;background:rgba(255,255,255,.2);border-radius:10px;padding:5px 2px 4px;display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.tile small{font-size:.72rem;font-weight:600}
+.tile b{font-size:1.25rem;font-variant-numeric:tabular-nums}
+.tile.tot{flex:1.2;margin-left:4px;background:rgba(0,0,0,.25)}
+.foot{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;width:100%;margin-top:8px;font-size:.78rem;text-align:left}
+.foot span:last-child{text-align:right;font-weight:700;white-space:nowrap}
+.me .open{color:var(--a)}.opp .open{color:var(--b)}.open.on{background:#FFF6CC;color:var(--ink)}
 #print{display:none}
 #print h1{font-size:20pt;margin:0}#print .date{margin:2px 0 18px;color:#555}
 #print h2{font-size:13pt;margin:0 0 6px}#print section{break-inside:avoid;margin-bottom:20px}
 #print table{font-size:10pt}#print th,#print td{border-bottom:1px solid #999;padding:5px 6px}#print p{margin:6px 0 0}
-@media print{html,body{background:#fff;color:#000}#app{display:none}#print{display:block}@page{margin:14mm}}
-@media(max-width:700px){.top{grid-template-columns:1fr}.mid{flex-direction:row;justify-content:center}.acts{grid-template-columns:repeat(3,1fr)}}
+@media print{html,body{background:#fff;color:#000}#app{display:none}#print{display:block}@page{margin:12mm;size:landscape}}
+@media(max-width:700px){.nm{font-size:1.05rem}.ob button{padding:12px 10px}.acts{grid-template-columns:repeat(3,1fr)}.acts.t4{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="print"></div>
 <script>
-const ACTS=[['reb','Rebond','n'],['stl','Interception','n'],['to','Balle perdue','f'],['m2','Raté 2 pts','r'],['m3','Raté 3 pts','r'],['m1','Raté LF','r']];
-const LBL={...Object.fromEntries(ACTS.map(a=>[a[0],a[1]])),orb:'Rebond offensif adverse'};
+const ACTS=[['ro','Rebond off.','n'],['rd','Rebond déf.','n'],['stl','Interception','n'],['fd','Faute provoquée','n'],['to','Balle perdue','f'],['trav','Marcher','f'],['m2','Raté 2 pts','r'],['m3','Raté 3 pts','r'],['m1','Raté LF','r']];
+const TACTS=[['w5','5 secondes','n'],['w8','8 secondes','n'],['w24','24 secondes','n'],['wr','Ballon récupéré','n']];
+const OACTS=[['orb','Rebond offensif','n'],['odr','Rebond défensif','n']];
+const WON=[['w5','5 s'],['w8','8 s'],['w24','24 s'],['wr','Récupérés']];
+const LBL={ro:'Rebond offensif',rd:'Rebond défensif',stl:'Interception',fd:'Faute provoquée',to:'Balle perdue',trav:'Marcher',m2:'Raté 2 pts',m3:'Raté 3 pts',m1:'Raté LF',w5:'Ballon gagné 5 s',w8:'Ballon gagné 8 s',w24:'Ballon gagné 24 s',wr:'Ballon récupéré',orb:'Rebond offensif adverse',odr:'Rebond défensif adverse'};
 let view='play',sel=null,sq='all',S=load();
 function fresh(){return{me:'Mon équipe',opp:'Adversaire',roster:[4,5,6,7,8,9,10,11,12,13].map(n=>({n:String(n),name:''})),ev:[],q:1}}
 function load(){try{const s=JSON.parse(localStorage.getItem('bb-stats-2'));if(s&&s.ev){
  if(typeof s.roster==='string')s.roster=s.roster.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const i=l.search(/\s/);return i<0?{n:l,name:''}:{n:l.slice(0,i),name:l.slice(i+1).trim()}});
+ s.ev.forEach(e=>{if(e.a==='reb')e.a='rd'});
  return s}}catch(e){}return fresh()}
 function save(){try{localStorage.setItem('bb-stats-2',JSON.stringify(S))}catch(e){}}
 const $=s=>document.querySelector(s);
@@ -99,53 +121,60 @@ const qLabel=q=>q<=4?'Q'+q:'Prol. '+(q-4);
 const periods=()=>{const m=Math.max(4,S.q,...S.ev.map(e=>e.q));return Array.from({length:m},(_,i)=>i+1)};
 function roster(){return S.roster.filter(p=>String(p.n).trim()).map(p=>({n:String(p.n).trim(),name:String(p.name||'').trim()}))}
 const inQ=(e,q)=>q==null||e.q===q;
-function tally(q){const o={};roster().forEach(p=>o[p.n]={...p,reb:0,stl:0,to:0,m1:0,m2:0,m3:0});
- S.ev.forEach(e=>{if(e.a!=='orb'&&inQ(e,q)&&o[e.p])o[e.p][e.a]++});return o}
-const orbs=q=>S.ev.filter(e=>e.a==='orb'&&inQ(e,q)).length;
+const PK=['ro','rd','stl','fd','to','trav','m1','m2','m3'];
+function tally(q){const o={};roster().forEach(p=>{o[p.n]={...p};PK.forEach(k=>o[p.n][k]=0)});
+ S.ev.forEach(e=>{if(inQ(e,q)&&o[e.p]&&PK.includes(e.a))o[e.p][e.a]++});return o}
+const cnt=(a,q)=>S.ev.filter(e=>e.a===a&&inQ(e,q)).length;
 const miss=r=>r.m1+r.m2+r.m3;
 
-const evText=e=>(e.a==='orb'?S.opp+' : ':'#'+e.p+(((roster().find(r=>r.n===e.p)||{}).name)?' '+roster().find(r=>r.n===e.p).name:'')+' : ')+LBL[e.a];
+const roster1=n=>roster().find(r=>r.n===n)||{n,name:''};
+const who=e=>e.a==='orb'||e.a==='odr'?S.opp:e.p==='__team'?'Équipe':'#'+e.p+(roster1(e.p).name?' '+roster1(e.p).name:'');
+const evText=e=>e.a==='orb'||e.a==='odr'?LBL[e.a]:(e.p==='__team'?'Équipe':'#'+e.p)+' : '+LBL[e.a];
 let hq='all';
 function hist(){
  const list=S.ev.map((e,i)=>({e,i})).filter(o=>hq==='all'||o.e.q===+hq).reverse();
  const chips=`<div class="chips"><button class="chip${hq==='all'?' on':''}" data-x="hq" data-q="all">Tout</button>`+periods().map(p=>`<button class="chip${hq==p?' on':''}" data-x="hq" data-q="${p}">${qLabel(p)}</button>`).join('')+`</div>`;
  return chips+`<div class="card"><h2>Historique (${list.length} action${list.length>1?'s':''})</h2>`+
-  (list.length?list.map(o=>`<div class="hrow"><span class="hq">${qLabel(o.e.q)}</span><div class="hd"><b>${esc(o.e.a==='orb'?S.opp:'#'+o.e.p+(((roster().find(r=>r.n===o.e.p)||{}).name)?' '+roster().find(r=>r.n===o.e.p).name:''))}</b><span>${LBL[o.e.a]}</span></div><button class="del" data-x="delev" data-i="${o.i}" aria-label="Supprimer cette action">✕</button></div>`).join(''):'<p class="help">Aucune action enregistrée.</p>')+
+  (list.length?list.map(o=>`<div class="hrow"><span class="hq">${qLabel(o.e.q)}</span><div class="hd"><b>${esc(who(o.e))}</b><span>${LBL[o.e.a]}</span></div><button class="del" data-x="delev" data-i="${o.i}" aria-label="Supprimer cette action">✕</button></div>`).join(''):'<p class="help">Aucune action enregistrée.</p>')+
   `<p class="help">La croix supprime l’action immédiatement. Les actions les plus récentes sont en haut.</p></div>`;
 }
 function play(){
- const T=tally(null);
+ const T=tally(null);const stk=S.layout==='stack';
  const last=S.ev[S.ev.length-1];
- const lt=last?'Dernière action : '+(last.a==='orb'?esc(S.opp)+' — ':'#'+esc(last.p)+' — ')+LBL[last.a]+' ('+qLabel(last.q)+')':'Touche un joueur, puis une action.';
  let bar='';
- if(sel){const p=roster().find(r=>r.n===sel)||{n:sel,name:''};
-  bar=`<div class="bar"><div class="in"><div class="who"><span>#${esc(p.n)} ${esc(p.name)}</span><button data-x="desel">Fermer</button></div><div class="acts">`+
-  ACTS.map(a=>`<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')+`</div></div></div>`}
+ if(sel){const k=sel==='__team'?'t':sel==='__opp'?'o':'p';const p=roster1(sel);
+  const L=k==='t'?TACTS:k==='o'?OACTS:ACTS;
+  const title=k==='t'?esc(S.me)+' : ballons gagnés':k==='o'?esc(S.opp)+' : rebonds':'#'+esc(p.n)+' '+esc(p.name);
+  bar=`<div class="bar"><div class="in"><div class="who"><span>${title}</span><button data-x="desel">Fermer</button></div><div class="acts${k==='t'?' t4':k==='o'?' t2':''}">`+
+  L.map(a=>`<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')+`</div></div></div>`}
+ const won=WON.reduce((n,w)=>n+cnt(w[0],null),0);
  return `<div class="top">
-  <div class="me"><span class="nm">${esc(S.me)}</span><span class="sub">Notre équipe</span></div>
+  <div class="me"><span class="nm">${esc(S.me)}</span><button class="open${sel==='__team'?' on':''}" data-x="pl" data-p="__team">Ajouter un ballon gagné</button><div class="tiles">${WON.map(w=>`<div class="tile"><small>${w[1]}</small><b>${cnt(w[0],S.q)}</b></div>`).join('')}<div class="tile tot"><small>Total</small><b>${won}</b></div></div></div>
   <div class="mid"><div class="q"><button data-x="q-" aria-label="Période précédente">‹</button><b>${qLabel(S.q)}</b><button data-x="q+" aria-label="Période suivante">›</button></div><button class="undo" data-x="undo"${last?'':' disabled'}>Annuler la dernière<small>${last?esc(evText(last))+' · '+qLabel(last.q):'Aucune action'}</small></button></div>
-  <div class="opp"><span class="nm">${esc(S.opp)}</span><span class="sub">Rebonds offensifs : ${orbs(S.q)} ce quart · ${orbs(null)} au total</span>
-  <div class="orb"><b>${orbs(S.q)}</b><button data-x="orb">+1 rebond offensif</button></div></div></div>
- <div class="grid">`+roster().map(p=>{const s=T[p.n];
-  return `<button class="pl${sel===p.n?' on':''}" data-x="pl" data-p="${esc(p.n)}"><b>${esc(p.n)}</b><span>${esc(p.name)||'&nbsp;'}</span><i>Reb ${s.reb} · Int ${s.stl} · BP ${s.to} · Ratés ${miss(s)}</i></button>`}).join('')+
- `</div><div class="last">${lt}</div>${bar}`;
+  <div class="opp"><span class="nm">${esc(S.opp)}</span><button class="open${sel==='__opp'?' on':''}" data-x="pl" data-p="__opp">Ajouter un rebond</button><div class="tiles"><div class="tile"><small>Off.</small><b>${cnt('orb',S.q)}</b></div><div class="tile"><small>Déf.</small><b>${cnt('odr',S.q)}</b></div><div class="tile tot"><small>Total</small><b>${cnt('orb',null)+cnt('odr',null)}</b></div></div></div></div>
+ <div class="grid${stk?' stk':''}">`+roster().map(p=>{const r=T[p.n];
+  return `<button class="pl${stk?' st':''}${sel===p.n?' on':''}" data-x="pl" data-p="${esc(p.n)}"><b>${esc(p.n)}</b><span>${esc(p.name)||'&nbsp;'}</span><i>Reb ${r.ro+r.rd} · Int ${r.stl} · BP ${r.to} · Ratés ${miss(r)}</i></button>`}).join('')+
+ `</div>${bar}`;
+}
+function tables(q){
+ const T=Object.values(tally(q));const s=k=>T.reduce((a,r)=>a+r[k],0);
+ const row=r=>`<tr><td>#${esc(r.n)} ${esc(r.name)}</td><td>${r.ro}</td><td>${r.rd}</td><td>${r.stl}</td><td>${r.fd}</td><td>${r.to}</td><td>${r.trav}</td><td><b>${miss(r)}</b></td><td>${r.m2}</td><td>${r.m3}</td><td>${r.m1}</td></tr>`;
+ const won=WON.map(w=>cnt(w[0],q));
+ return `<table><tr><th>Joueur</th><th>Reb. off.</th><th>Reb. déf.</th><th>Interc.</th><th>Fautes prov.</th><th>Balles perdues</th><th>Marchers</th><th>Ratés</th><th>dont 2 pts</th><th>dont 3 pts</th><th>dont LF</th></tr>${T.map(row).join('')}<tr class="tot"><td>Équipe</td><td>${s('ro')}</td><td>${s('rd')}</td><td>${s('stl')}</td><td>${s('fd')}</td><td>${s('to')}</td><td>${s('trav')}</td><td>${s('m1')+s('m2')+s('m3')}</td><td>${s('m2')}</td><td>${s('m3')}</td><td>${s('m1')}</td></tr></table>
+ <table class="mt"><tr><th>Ballons gagnés</th><th>5 s</th><th>8 s</th><th>24 s</th><th>Récupérés</th><th>Total</th></tr><tr><td>${esc(S.me)}</td>${won.map(n=>`<td>${n}</td>`).join('')}<td><b>${won.reduce((a,b)=>a+b,0)}</b></td></tr></table>
+ <table class="mt"><tr><th>${esc(S.opp)}</th><th>Reb. off.</th><th>Reb. déf.</th></tr><tr><td>Rebonds</td><td>${cnt('orb',q)}</td><td>${cnt('odr',q)}</td></tr></table>`;
 }
 function stats(){
  const q=sq==='all'?null:+sq;
- const T=Object.values(tally(q));
- const sum=k=>T.reduce((s,r)=>s+r[k],0);
- const row=r=>`<tr><td>#${esc(r.n)} ${esc(r.name)}</td><td>${r.reb}</td><td>${r.stl}</td><td>${r.to}</td><td><b>${miss(r)}</b></td><td>${r.m2}</td><td>${r.m3}</td><td>${r.m1}</td></tr>`;
  const chips=`<div class="chips"><button class="chip${sq==='all'?' on':''}" data-x="sq" data-q="all">Total match</button>`+periods().map(p=>`<button class="chip${sq==p?' on':''}" data-x="sq" data-q="${p}">${qLabel(p)}</button>`).join('')+`</div>`;
- return chips+`<div class="card"><h2>${esc(S.me)} contre ${esc(S.opp)} — ${q==null?'total du match':qLabel(q)}</h2>
- <table><tr><th>Joueur</th><th>Rebonds</th><th>Intercept.</th><th>Balles perdues</th><th>Ratés</th><th>dont 2 pts</th><th>dont 3 pts</th><th>dont LF</th></tr>${T.map(row).join('')}
- <tr class="tot"><td>Équipe</td><td>${sum('reb')}</td><td>${sum('stl')}</td><td>${sum('to')}</td><td>${sum('m1')+sum('m2')+sum('m3')}</td><td>${sum('m2')}</td><td>${sum('m3')}</td><td>${sum('m1')}</td></tr></table>
- <p class="help">Rebonds offensifs de ${esc(S.opp)} : <b>${orbs(q)}</b></p></div>
+ return chips+`<div class="card"><h2>${esc(S.me)} contre ${esc(S.opp)} — ${q==null?'total du match':qLabel(q)}</h2>${tables(q)}</div>
  <button class="btn" data-x="share">Partager (WhatsApp…)</button><button class="btn" data-x="copy">Copier le texte</button><button class="btn" data-x="pdf">Exporter en PDF</button><button class="btn" data-x="csv">Exporter en CSV</button>`;
 }
 function settings(){
  return `<div class="card"><h2>Match</h2><label>Notre équipe</label><input data-f="me" value="${esc(S.me)}">
  <label>Équipe adverse</label><input data-f="opp" value="${esc(S.opp)}">
- </div><div class="card"><h2>Nos joueurs</h2>
+ </div><div class="card"><h2>Affichage des joueurs</h2><div class="chips"><button class="chip${S.layout==='stack'?'':' on'}" data-x="lay" data-l="cards">Liste détaillée</button><button class="chip${S.layout==='stack'?' on':''}" data-x="lay" data-l="stack">Numéro en grand</button></div>
+ <p class="help">Liste détaillée : le numéro à gauche, le nom et les stats à droite. Numéro en grand : le numéro en gros en haut de chaque bloc, le nom et les stats en plus petit dessous.</p></div><div class="card"><h2>Nos joueurs</h2>
  <div class="prow head"><span>Numéro</span><span>Nom</span><span></span></div>`+
  S.roster.map((p,i)=>`<div class="prow"><input data-r="n" data-i="${i}" inputmode="numeric" maxlength="3" value="${esc(p.n)}" aria-label="Numéro"><input data-r="name" data-i="${i}" value="${esc(p.name)}" placeholder="Nom du joueur" aria-label="Nom"><button class="del" data-x="delp" data-i="${i}" aria-label="Supprimer ce joueur">✕</button></div>`).join('')+
  `<button class="btn" data-x="addp">Ajouter un joueur</button>
@@ -159,8 +188,9 @@ function render(){
 }
 function summary(){
  const sec=q=>{const T=Object.values(tally(q));const s=k=>T.reduce((a,r)=>a+r[k],0);
-  const lines=T.filter(r=>r.reb+r.stl+r.to+miss(r)>0).map(r=>`#${r.n}${r.name?' '+r.name:''} : Reb ${r.reb}, Int ${r.stl}, BP ${r.to}, Ratés ${miss(r)} (2 pts ${r.m2}, 3 pts ${r.m3}, LF ${r.m1})`);
-  return `*${q==null?'Total du match':qLabel(q)}*\nÉquipe : Reb ${s('reb')}, Int ${s('stl')}, BP ${s('to')}, Ratés ${s('m1')+s('m2')+s('m3')}\nRebonds off. de ${S.opp} : ${orbs(q)}`+(lines.length?'\n'+lines.join('\n'):'')};
+  const lines=T.filter(r=>PK.some(k=>r[k]>0)).map(r=>`#${r.n}${r.name?' '+r.name:''} : Reb off. ${r.ro}, Reb déf. ${r.rd}, Int ${r.stl}, Faute prov. ${r.fd}, Perdues ${r.to}, Marchers ${r.trav}, Ratés ${miss(r)} (2 pts ${r.m2}, 3 pts ${r.m3}, LF ${r.m1})`);
+  const w=WON.map(x=>x[1]+' '+cnt(x[0],q)).join(', ');
+  return `*${q==null?'Total du match':qLabel(q)}*\nÉquipe : Reb off. ${s('ro')}, Reb déf. ${s('rd')}, Int ${s('stl')}, Fautes prov. ${s('fd')}, Perdues ${s('to')}, Marchers ${s('trav')}, Ratés ${s('m1')+s('m2')+s('m3')}\nBallons gagnés : ${w}\n${S.opp} : Reb off. ${cnt('orb',q)}, Reb déf. ${cnt('odr',q)}`+(lines.length?'\n'+lines.join('\n'):'')};
  const ps=periods().filter(p=>S.ev.some(e=>e.q===p));
  return `*${S.me} contre ${S.opp}* (${new Date().toLocaleDateString('fr-FR')})\n\n`+[null,...ps].map(sec).join('\n\n');
 }
@@ -176,19 +206,17 @@ async function copyText(){
  alert('Texte copié. Colle-le dans ta conversation.');
 }
 function pdf(){
- const sec=q=>{const T=Object.values(tally(q));const s=k=>T.reduce((a,r)=>a+r[k],0);
-  const tr=r=>`<tr><td>#${esc(r.n)} ${esc(r.name)}</td><td>${r.reb}</td><td>${r.stl}</td><td>${r.to}</td><td>${miss(r)}</td><td>${r.m2}</td><td>${r.m3}</td><td>${r.m1}</td></tr>`;
-  return `<section><h2>${q==null?'Total du match':qLabel(q)}</h2><table><tr><th>Joueur</th><th>Rebonds</th><th>Intercept.</th><th>Balles perdues</th><th>Ratés</th><th>dont 2 pts</th><th>dont 3 pts</th><th>dont LF</th></tr>${T.map(tr).join('')}<tr class="tot"><td>Équipe</td><td>${s('reb')}</td><td>${s('stl')}</td><td>${s('to')}</td><td>${s('m1')+s('m2')+s('m3')}</td><td>${s('m2')}</td><td>${s('m3')}</td><td>${s('m1')}</td></tr></table><p>Rebonds offensifs de ${esc(S.opp)} : <b>${orbs(q)}</b></p></section>`};
+ const sec=q=>`<section><h2>${q==null?'Total du match':qLabel(q)}</h2>${tables(q)}</section>`;
  $('#print').innerHTML=`<h1>${esc(S.me)} contre ${esc(S.opp)}</h1><p class="date">${new Date().toLocaleDateString('fr-FR')}</p>`+[null,...periods()].map(sec).join('');
  window.print();
 }
 function csv(){
- const rows=[['Match','Période','N°','Nom','Rebonds','Interceptions','Balles perdues','Ratés total','Ratés 2 pts','Ratés 3 pts','Ratés LF','Rebonds off. adverses']];
+ const rows=[['Match','Période','N°','Nom','Reb. off.','Reb. déf.','Interceptions','Fautes provoquées','Balles perdues','Marchers','Ratés total','Ratés 2 pts','Ratés 3 pts','Ratés LF','Ballons gagnés 5 s','Ballons gagnés 8 s','Ballons gagnés 24 s','Ballons récupérés','Reb. off. adverses','Reb. déf. adverses']];
  const m=S.me+' - '+S.opp;
  [null,...periods()].forEach(q=>{const T=Object.values(tally(q));const pl=q==null?'Total':qLabel(q);
-  T.forEach(r=>rows.push([m,pl,r.n,r.name,r.reb,r.stl,r.to,miss(r),r.m2,r.m3,r.m1,'']));
+  T.forEach(r=>rows.push([m,pl,r.n,r.name,r.ro,r.rd,r.stl,r.fd,r.to,r.trav,miss(r),r.m2,r.m3,r.m1,'','','','','','']));
   const s=k=>T.reduce((a,r)=>a+r[k],0);
-  rows.push([m,pl,'','ÉQUIPE',s('reb'),s('stl'),s('to'),s('m1')+s('m2')+s('m3'),s('m2'),s('m3'),s('m1'),orbs(q)])});
+  rows.push([m,pl,'','ÉQUIPE',s('ro'),s('rd'),s('stl'),s('fd'),s('to'),s('trav'),s('m1')+s('m2')+s('m3'),s('m2'),s('m3'),s('m1'),...WON.map(w=>cnt(w[0],q)),cnt('orb',q),cnt('odr',q)])});
  const txt='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'}));
  a.download='stats-basket-'+S.opp.replace(/[^\w-]+/g,'_')+'.csv';document.body.appendChild(a);a.click();a.remove();
@@ -197,8 +225,9 @@ document.addEventListener('click',e=>{
  const el=e.target.closest('[data-x]');if(!el)return;const x=el.dataset.x;
  if(x==='view'){view=el.dataset.v;sel=null}
  else if(x==='pl')sel=sel===el.dataset.p?null:el.dataset.p;
- else if(x==='act'&&sel){S.ev.push({p:sel,a:el.dataset.a,q:S.q});sel=null;save()}
- else if(x==='orb'){S.ev.push({a:'orb',q:S.q});save()}
+ else if(x==='act'&&sel){const ev={a:el.dataset.a,q:S.q};if(sel!=='__opp')ev.p=sel;S.ev.push(ev);sel=null;save()}
+ else if(x==='tm'){S.ev.push({p:'__team',a:el.dataset.a,q:S.q});save()}
+ else if(x==='orb'||x==='odr'){S.ev.push({a:x,q:S.q});save()}
  else if(x==='desel')sel=null;
  else if(x==='undo'){if(!S.ev.length)return;S.ev.pop();save()}
  else if(x==='q+'){S.q++;save()}
@@ -206,6 +235,7 @@ document.addEventListener('click',e=>{
  else if(x==='addp')S.roster.push({n:'',name:''}),save();
  else if(x==='delp'){const p=S.roster[+el.dataset.i];
   if(!(p&&S.ev.some(v=>v.p===String(p.n).trim()))||confirm('Ce joueur a déjà des actions enregistrées. Le retirer masque ses stats. Continuer ?')){S.roster.splice(+el.dataset.i,1);save()}}
+ else if(x==='lay'){S.layout=el.dataset.l;save()}
  else if(x==='sq')sq=el.dataset.q;
  else if(x==='hq')hq=el.dataset.q;
  else if(x==='delev'){S.ev.splice(+el.dataset.i,1);save()}
