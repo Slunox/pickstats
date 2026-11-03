@@ -1,5 +1,5 @@
 // Pour publier une mise à jour de l'appli, change simplement le numéro de version ci-dessous.
-const CACHE = 'stats-basket-v30';
+const CACHE = 'stats-basket-v1';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
