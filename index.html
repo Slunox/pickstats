@@ -130,11 +130,12 @@ html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2
 <div id="print"></div>
 <div id="toast"></div>
 <script>
+const APP_VERSION='1.1';
 const ACTS=[['ro','Rebond off.','n'],['rd','Rebond déf.','n'],['stl','Interception','n'],['fd','Faute provoquée','n'],['to','Balle perdue','f'],['trav','Marcher','f'],['m2','Raté 2 pts','r'],['m3','Raté 3 pts','r'],['m1','Raté LF','r']];
 const TACTS=[['w5','5 secondes','n'],['w8','8 secondes','n'],['w24','24 secondes','n'],['wr','Ballon récupéré','n']];
 const OACTS=[['orb','Rebond offensif','n'],['odr','Rebond défensif','n']];
 const TAGC={ro:'g',rd:'g',stl:'g',fd:'g',w5:'g',w8:'g',w24:'g',wr:'g',to:'f',trav:'f',m1:'r',m2:'r',m3:'r',orb:'o',odr:'o'};
-const WON=[['w5','5 s'],['w8','8 s'],['w24','24 s'],['wr','Récup.']];
+const WON=[['w5','5 s'],['w8','8 s'],['w24','24 s'],['wr','Récup.','Rec.']];
 const LBL={ro:'Rebond offensif',rd:'Rebond défensif',stl:'Interception',fd:'Faute provoquée',to:'Balle perdue',trav:'Marcher',m2:'Raté 2 pts',m3:'Raté 3 pts',m1:'Raté LF',w5:'Ballon gagné 5 s',w8:'Ballon gagné 8 s',w24:'Ballon gagné 24 s',wr:'Ballon récupéré',orb:'Rebond offensif adverse',odr:'Rebond défensif adverse'};
 let view='play',sel=null,adding=false,gid=null,smode='cur',sq='all',S=load();
 function fresh(){return{me:'Mon équipe',opp:'Adversaire',roster:[4,5,6,7,8,9,10,11,12,13].map(n=>({n:String(n),name:''})),ev:[],q:1,arch:[]}}
@@ -187,7 +188,7 @@ function play(){
   L.map(a=>`<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')+`</div></div></div>`}
  const won=WON.reduce((n,w)=>n+cnt(w[0],null),0);
  return `<div class="top">
-  <div class="me"><div class="nmrow"><input class="nmi" data-f="me" value="${esc(S.me)}" placeholder="Notre équipe" maxlength="30" readonly aria-label="Nom de notre équipe"><button class="ed" data-x="edit" aria-label="Modifier le nom">✎</button></div><button class="open${sel==='__team'?' on':''}" data-x="pl" data-p="__team">Ajouter un ballon gagné</button><div class="tiles">${WON.map(w=>`<div class="tile"><small>${w[1]}</small><b>${cnt(w[0],S.q)}</b></div>`).join('')}<div class="tile tot"><small>Total</small><b>${won}</b></div></div></div>
+  <div class="me"><div class="nmrow"><input class="nmi" data-f="me" value="${esc(S.me)}" placeholder="Notre équipe" maxlength="30" readonly aria-label="Nom de notre équipe"><button class="ed" data-x="edit" aria-label="Modifier le nom">✎</button></div><button class="open${sel==='__team'?' on':''}" data-x="pl" data-p="__team">Ajouter un ballon gagné</button><div class="tiles">${WON.map(w=>`<div class="tile"><small>${w[2]||w[1]}</small><b>${cnt(w[0],S.q)}</b></div>`).join('')}<div class="tile tot"><small>Total</small><b>${won}</b></div></div></div>
   <div class="mid"><div class="q"><button data-x="q-" aria-label="Période précédente">‹</button><b>${qLabel(S.q)}</b><button data-x="q+" aria-label="Période suivante">›</button></div><button class="undo" data-x="undo"${last?'':' disabled'}>Annuler la dernière<small>${last?esc(evText(last))+' · '+qLabel(last.q):'Aucune action'}</small></button><button class="undo hb" data-x="view" data-v="hist">Historique</button></div>
   <div class="opp"><div class="nmrow"><input class="nmi" data-f="opp" value="${esc(S.opp)}" placeholder="Adversaire" maxlength="30" readonly aria-label="Nom de l’équipe adverse"><button class="ed" data-x="edit" aria-label="Modifier le nom">✎</button></div><button class="open${sel==='__opp'?' on':''}" data-x="pl" data-p="__opp">Ajouter un rebond</button><div class="tiles"><div class="tile"><small>Off.</small><b>${cnt('orb',S.q)}</b></div><div class="tile"><small>Déf.</small><b>${cnt('odr',S.q)}</b></div><div class="tile tot"><small>Total</small><b>${cnt('orb',null)+cnt('odr',null)}</b></div></div></div></div>
  <div class="grid${stk?' stk':''}">`+roster().map(p=>{const r=T[p.n];
@@ -226,12 +227,15 @@ function settings(){
  <p class="help">Archiver range le match dans l’onglet Matchs, avec sa date, et repart sur un match vide.</p></div>
  <div class="card"><h2>Écran</h2><div class="chips"><button class="chip${S.awake===false?'':' on'}" data-x="awake" data-v="1">Toujours allumé</button><button class="chip${S.awake===false?' on':''}" data-x="awake" data-v="0">Veille normale</button></div>
  <p class="help">Évite que la tablette se mette en veille pendant la saisie (selon les appareils et les navigateurs).</p></div>
+ <div class="card"><h2>Vibration</h2><div class="chips"><button class="chip${S.vibe===false?'':' on'}" data-x="vibe" data-v="1">Activée</button><button class="chip${S.vibe===false?' on':''}" data-x="vibe" data-v="0">Désactivée</button></div>
+ <p class="help">Une courte vibration à chaque action enregistrée. Elle fonctionne surtout sur Android : les iPhone et iPad ne la prennent pas en charge.</p></div>
  <div class="card"><h2>Sauvegarde</h2><button class="btn" data-x="backup">Sauvegarder (fichier)</button><button class="btn" data-x="restore">Restaurer une sauvegarde</button><input type="file" id="restore" accept=".json,application/json" hidden>
  <p class="help">Le fichier contient le match en cours, les archives, l’effectif et les réglages. Garde-le en lieu sûr : si les données du navigateur sont effacées, tu pourras tout récupérer.</p></div>
- <p class="help">Tout est enregistré automatiquement sur cet appareil. Exporte le CSV après chaque match.</p>`;
+ <p class="help">Tout est enregistré automatiquement sur cet appareil. Exporte le CSV après chaque match.</p>
+ <p class="help">Version ${APP_VERSION}</p>`;
 }
 let tt;
-function toast(m){const t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),1400);try{if(navigator.vibrate)navigator.vibrate(25)}catch(e){}}
+function toast(m){const t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),1400);try{if(S.vibe!==false&&navigator.vibrate)navigator.vibrate(25)}catch(e){}}
 function withMatch(m,f){if(!m)return f();const b=S;S={...b,me:m.me,opp:m.opp,ev:m.ev,q:m.q,roster:m.roster};try{return f()}finally{S=b}}
 const curG=()=>(S.arch||[]).find(m=>m.id===gid);
 const inCtx=f=>view==='game'?withMatch(curG(),f):f();
@@ -333,6 +337,7 @@ document.addEventListener('click',e=>{
   S.arch.push({id:Date.now(),date:new Date().toISOString(),me:S.me,opp:S.opp,q:S.q,ev:S.ev.slice(),roster:roster().map(p=>({n:p.n,name:p.name,in:true}))});
   S.ev=[];S.q=1;S.opp='Adversaire';sel=null;sq='all';view='stats';smode='arch';save();toast('Match archivé')}
  else if(x==='awake'){S.awake=el.dataset.v==='1';save();if(!S.awake&&wl){wl.release();wl=null}else keepAwake()}
+ else if(x==='vibe'){S.vibe=el.dataset.v==='1';save();if(S.vibe)try{if(navigator.vibrate)navigator.vibrate(40)}catch(e){}}
  else if(x==='backup'){backup();return}
  else if(x==='restore'){$('#restore').click();return}
  else if(x==='addopen'){adding=!adding;sel=null}
