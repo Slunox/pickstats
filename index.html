@@ -11,14 +11,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Stats Basket">
 <style>
-:root{--bg:#E8EDEF;--ink:#16242C;--card:#fff;--line:#CBD3D7;--mut:#667279;--a:#14506B;--b:#C2410C}
+:root{--dk:#16242C;--sel:#FFF6CC;--num:#14506B;--bg:#E8EDEF;--ink:#16242C;--card:#fff;--line:#CBD3D7;--mut:#667279;--a:#14506B;--b:#C2410C}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;-webkit-user-select:none;user-select:none}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 #app{max-width:1100px;margin:0 auto;padding:10px 12px 220px}
 nav{display:flex;gap:6px;margin-bottom:10px}
 nav button{flex:1;padding:12px;border-radius:10px;background:var(--card);font-weight:700}
-nav button.on{background:var(--ink);color:#fff}
+nav button.on{background:var(--dk);color:#fff}
 .top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .me,.opp{border-radius:14px;color:#fff;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
 .me{background:var(--a)}.opp{background:var(--b)}
@@ -40,21 +40,21 @@ nav button.on{background:var(--ink);color:#fff}
 .hrow .del{width:56px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .pl{display:grid;grid-template-columns:minmax(3.1rem,auto) 1fr;align-items:center;column-gap:6px;padding:10px 12px;min-height:70px;border-radius:12px;background:var(--card);text-align:left;border:3px solid transparent}
-.pl b{grid-row:1/3;text-align:center;font-variant-numeric:tabular-nums;font-size:2.6rem;font-weight:800;color:var(--a)}
+.pl b{grid-row:1/3;text-align:center;font-variant-numeric:tabular-nums;font-size:2.6rem;font-weight:800;color:var(--num)}
 .pl span{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pl i{font-style:normal;font-size:.85rem;color:var(--mut)}
-.pl.on{border-color:var(--ink);background:#FFF6CC}
+.pl.on{border-color:var(--ink);background:var(--sel)}
 .last{margin-top:12px;color:var(--mut);text-align:center}
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:#fff;border-radius:24px 24px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.25);padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--dk);color:#fff;border-radius:24px 24px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.25);padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
 .bar .in{max-width:1100px;margin:0 auto}
 .who{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:1.1rem}
-.who button{padding:8px 14px;border-radius:8px;background:#2D3E48;color:#fff}
+.who button{padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff}
 .acts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.acts.t4{grid-template-columns:repeat(4,1fr)}.acts.t2{grid-template-columns:repeat(2,1fr)}
-.acts button{min-height:64px;border-radius:10px;font-weight:800;font-size:1.05rem;color:var(--ink)}
+.acts button{min-height:64px;border-radius:10px;font-weight:800;font-size:1.05rem;color:#16242C}
 .acts .n{background:#BDE7C9}.acts .r{background:#F5C6C0}.acts .f{background:#F6D98B}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chip{padding:12px 18px;border-radius:999px;background:var(--card);font-weight:700}
-.chip.on{background:var(--ink);color:#fff}
+.chip.on{background:var(--dk);color:#fff}
 .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px;overflow-x:auto}
 .card h2{margin:0 0 10px;font-size:1.2rem}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
@@ -62,17 +62,17 @@ th,td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line);whit
 th{font-size:.85rem;color:var(--mut);font-weight:700}
 td:first-child,th:first-child{text-align:left}
 tr.tot td{font-weight:800;border-bottom:0}
-.btn{padding:14px 20px;border-radius:10px;background:var(--ink);color:#fff;font-weight:700;margin:0 8px 8px 0}
+.btn{padding:14px 20px;border-radius:10px;background:var(--dk);color:#fff;font-weight:700;margin:0 8px 8px 0}
 .btn.bad{background:#B91C1C}
 label{display:block;font-weight:700;margin:8px 0 4px}
-input,textarea{width:100%;font:inherit;padding:10px;border-radius:8px;border:2px solid var(--line);-webkit-user-select:text;user-select:text}
+input,textarea{width:100%;font:inherit;padding:10px;border-radius:8px;border:2px solid var(--line);background:var(--card);color:var(--ink);-webkit-user-select:text;user-select:text}
 textarea{min-height:200px}
 .help{color:var(--mut);font-size:.9rem;margin:4px 0 0}
 .prow{display:grid;grid-template-columns:90px 1fr 52px;gap:8px;margin-bottom:8px;align-items:center}
 .prow.head{font-weight:700;font-size:.85rem;color:var(--mut);margin-bottom:4px}
 .prow input{min-height:52px;font-size:1.1rem}
 .prow input[data-r="n"]{text-align:center;font-weight:800}
-.del{height:52px;border-radius:8px;background:#F5C6C0;font-weight:800}
+.del{height:52px;border-radius:8px;background:#F5C6C0;color:#16242C;font-weight:800}
 .orbs{display:flex;gap:26px;margin-top:10px}.ob{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;min-width:48px}
 .ob b{font-size:2.4rem;line-height:1;font-variant-numeric:tabular-nums}
 .ob button{background:#fff;color:var(--b);font-weight:800;border-radius:12px;padding:12px 22px;font-size:1.2rem;min-height:56px}
@@ -90,12 +90,13 @@ table.mt{margin-top:16px}
 .tile.tot{flex:1.2;margin-left:4px;background:rgba(0,0,0,.25)}
 .foot{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;width:100%;margin-top:8px;font-size:.78rem;text-align:left}
 .foot span:last-child{text-align:right;font-weight:700;white-space:nowrap}
-.me .open{color:var(--a)}.opp .open{color:var(--b)}.open.on{background:#FFF6CC;color:var(--ink)}
+.me .open{color:var(--a)}.opp .open{color:var(--b)}.open.on{background:var(--sel);color:var(--ink)}
+html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2831;--line:#2E404B;--mut:#9DABB3;--a:#2A7FA8;--b:#D2561A;--dk:#2F4C5E;--sel:#4A4423;--num:#7CC4E6}
 #print{display:none}
 #print h1{font-size:20pt;margin:0}#print .date{margin:2px 0 18px;color:#555}
 #print h2{font-size:13pt;margin:0 0 6px}#print section{break-inside:avoid;margin-bottom:20px}
 #print table{font-size:10pt}#print th,#print td{border-bottom:1px solid #999;padding:5px 6px}#print p{margin:6px 0 0}
-@media print{html,body{background:#fff;color:#000}#app{display:none}#print{display:block}@page{margin:12mm;size:landscape}}
+@media print{html,body{background:#fff;color:#000}html[data-theme]{--mut:#555;--line:#999}#app{display:none}#print{display:block}@page{margin:12mm;size:landscape}}
 @media(max-width:700px){.nm{font-size:1.05rem}.ob button{padding:12px 10px}.acts{grid-template-columns:repeat(3,1fr)}.acts.t4{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -173,7 +174,8 @@ function stats(){
 function settings(){
  return `<div class="card"><h2>Match</h2><label>Notre équipe</label><input data-f="me" value="${esc(S.me)}">
  <label>Équipe adverse</label><input data-f="opp" value="${esc(S.opp)}">
- </div><div class="card"><h2>Affichage des joueurs</h2><div class="chips"><button class="chip${S.layout==='stack'?'':' on'}" data-x="lay" data-l="cards">Liste détaillée</button><button class="chip${S.layout==='stack'?' on':''}" data-x="lay" data-l="stack">Numéro en grand</button></div>
+ </div><div class="card"><h2>Apparence</h2><div class="chips"><button class="chip${(S.theme||'light')==='light'?' on':''}" data-x="theme" data-t="light">Clair</button><button class="chip${S.theme==='dark'?' on':''}" data-x="theme" data-t="dark">Sombre</button><button class="chip${S.theme==='auto'?' on':''}" data-x="theme" data-t="auto">Automatique</button></div>
+ <p class="help">Automatique suit le réglage clair ou sombre de la tablette.</p></div><div class="card"><h2>Affichage des joueurs</h2><div class="chips"><button class="chip${S.layout==='stack'?'':' on'}" data-x="lay" data-l="cards">Liste détaillée</button><button class="chip${S.layout==='stack'?' on':''}" data-x="lay" data-l="stack">Numéro en grand</button></div>
  <p class="help">Liste détaillée : le numéro à gauche, le nom et les stats à droite. Numéro en grand : le numéro en gros en haut de chaque bloc, le nom et les stats en plus petit dessous.</p></div><div class="card"><h2>Nos joueurs</h2>
  <div class="prow head"><span>Numéro</span><span>Nom</span><span></span></div>`+
  S.roster.map((p,i)=>`<div class="prow"><input data-r="n" data-i="${i}" inputmode="numeric" maxlength="3" value="${esc(p.n)}" aria-label="Numéro"><input data-r="name" data-i="${i}" value="${esc(p.name)}" placeholder="Nom du joueur" aria-label="Nom"><button class="del" data-x="delp" data-i="${i}" aria-label="Supprimer ce joueur">✕</button></div>`).join('')+
@@ -182,7 +184,15 @@ function settings(){
  <button class="btn bad" data-x="new">Nouveau match (efface les stats)</button>
  <p class="help">Tout est enregistré automatiquement sur cet appareil. Exporte le CSV après chaque match.</p>`;
 }
+function applyTheme(){
+ const t=S.theme||'light';
+ const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
+ document.documentElement.dataset.theme=dark?'dark':'light';
+ const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=dark?'#0E181E':'#16242C';
+}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(S.theme==='auto')applyTheme()})}catch(e){}
 function render(){
+ applyTheme();
  const tabs=[['play','Saisie'],['hist','Historique'],['stats','Statistiques'],['set','Équipes']];
  $('#app').innerHTML=`<nav>${tabs.map(t=>`<button class="${view===t[0]?'on':''}" data-x="view" data-v="${t[0]}">${t[1]}</button>`).join('')}</nav>`+({play,hist,stats,set:settings}[view])();
 }
@@ -235,6 +245,7 @@ document.addEventListener('click',e=>{
  else if(x==='addp')S.roster.push({n:'',name:''}),save();
  else if(x==='delp'){const p=S.roster[+el.dataset.i];
   if(!(p&&S.ev.some(v=>v.p===String(p.n).trim()))||confirm('Ce joueur a déjà des actions enregistrées. Le retirer masque ses stats. Continuer ?')){S.roster.splice(+el.dataset.i,1);save()}}
+ else if(x==='theme'){S.theme=el.dataset.t;save()}
  else if(x==='lay'){S.layout=el.dataset.l;save()}
  else if(x==='sq')sq=el.dataset.q;
  else if(x==='hq')hq=el.dataset.q;
