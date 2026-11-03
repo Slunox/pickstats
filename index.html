@@ -53,8 +53,8 @@ nav button.on{background:var(--dk);color:#fff}
 .acts button{min-height:64px;border-radius:10px;font-weight:800;font-size:1.05rem;color:#16242C}
 .acts .n{background:#BDE7C9}.acts .r{background:#F5C6C0}.acts .f{background:#F6D98B}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-.chip{padding:12px 18px;border-radius:999px;background:var(--card);font-weight:700}
-.chip.on{background:var(--dk);color:#fff}
+.chip{padding:12px 18px;border-radius:999px;background:var(--card);border:2px solid var(--line);font-weight:700}
+.chip.on{background:var(--dk);border-color:var(--dk);color:#fff}
 .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px;overflow-x:auto}
 .card h2{margin:0 0 10px;font-size:1.2rem}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
@@ -79,7 +79,9 @@ textarea{min-height:200px}
 .ob button{background:#fff;color:var(--b);font-weight:800;border-radius:12px;padding:12px 22px;font-size:1.2rem;min-height:56px}
 .me .orbs{gap:14px 28px;flex-wrap:wrap;justify-content:center}.me .ob button{color:var(--a);padding:12px 14px}
 table.mt{margin-top:16px}
-.undo.hb{flex:0 0 auto;max-width:none;padding:12px 18px;align-self:stretch}
+.ur{display:flex;gap:10px;flex:1 1 280px;min-width:0;max-width:520px}
+.ur .undo{flex:1 1 0;max-width:none}
+.undo.hb{flex:0 0 auto;max-width:none;padding:12px 14px;align-self:stretch}
 html,body{touch-action:manipulation;overscroll-behavior:none;-webkit-touch-callout:none}
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--dk);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:90vw;text-align:center}
 #toast.on{opacity:1}
@@ -130,7 +132,7 @@ html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2
 <div id="print"></div>
 <div id="toast"></div>
 <script>
-const APP_VERSION='1.1';
+const APP_VERSION='1.2';
 const ACTS=[['ro','Rebond off.','n'],['rd','Rebond déf.','n'],['stl','Interception','n'],['fd','Faute provoquée','n'],['to','Balle perdue','f'],['trav','Marcher','f'],['m2','Raté 2 pts','r'],['m3','Raté 3 pts','r'],['m1','Raté LF','r']];
 const TACTS=[['w5','5 secondes','n'],['w8','8 secondes','n'],['w24','24 secondes','n'],['wr','Ballon récupéré','n']];
 const OACTS=[['orb','Rebond offensif','n'],['odr','Rebond défensif','n']];
@@ -189,7 +191,7 @@ function play(){
  const won=WON.reduce((n,w)=>n+cnt(w[0],null),0);
  return `<div class="top">
   <div class="me"><div class="nmrow"><input class="nmi" data-f="me" value="${esc(S.me)}" placeholder="Notre équipe" maxlength="30" readonly aria-label="Nom de notre équipe"><button class="ed" data-x="edit" aria-label="Modifier le nom">✎</button></div><button class="open${sel==='__team'?' on':''}" data-x="pl" data-p="__team">Ajouter un ballon gagné</button><div class="tiles">${WON.map(w=>`<div class="tile"><small>${w[2]||w[1]}</small><b>${cnt(w[0],S.q)}</b></div>`).join('')}<div class="tile tot"><small>Total</small><b>${won}</b></div></div></div>
-  <div class="mid"><div class="q"><button data-x="q-" aria-label="Période précédente">‹</button><b>${qLabel(S.q)}</b><button data-x="q+" aria-label="Période suivante">›</button></div><button class="undo" data-x="undo"${last?'':' disabled'}>Annuler la dernière<small>${last?esc(evText(last))+' · '+qLabel(last.q):'Aucune action'}</small></button><button class="undo hb" data-x="view" data-v="hist">Historique</button></div>
+  <div class="mid"><div class="q"><button data-x="q-" aria-label="Période précédente">‹</button><b>${qLabel(S.q)}</b><button data-x="q+" aria-label="Période suivante">›</button></div><div class="ur"><button class="undo" data-x="undo"${last?'':' disabled'}>Annuler la dernière<small>${last?esc(evText(last))+' · '+qLabel(last.q):'Aucune action'}</small></button><button class="undo hb" data-x="view" data-v="hist">Historique</button></div></div>
   <div class="opp"><div class="nmrow"><input class="nmi" data-f="opp" value="${esc(S.opp)}" placeholder="Adversaire" maxlength="30" readonly aria-label="Nom de l’équipe adverse"><button class="ed" data-x="edit" aria-label="Modifier le nom">✎</button></div><button class="open${sel==='__opp'?' on':''}" data-x="pl" data-p="__opp">Ajouter un rebond</button><div class="tiles"><div class="tile"><small>Off.</small><b>${cnt('orb',S.q)}</b></div><div class="tile"><small>Déf.</small><b>${cnt('odr',S.q)}</b></div><div class="tile tot"><small>Total</small><b>${cnt('orb',null)+cnt('odr',null)}</b></div></div></div></div>
  <div class="grid${stk?' stk':''}">`+roster().map(p=>{const r=T[p.n];
   return `<button class="pl${stk?' st':''}${sel===p.n?' on':''}" data-x="pl" data-p="${esc(p.n)}"><b>${esc(p.n)}</b><span>${esc(p.name)||'&nbsp;'}</span><i>Reb ${r.ro+r.rd} · Int ${r.stl} · BP ${r.to} · Ratés ${miss(r)}</i></button>`}).join('')+
