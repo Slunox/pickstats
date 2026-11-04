@@ -199,7 +199,7 @@ const ACTIONS = {
   // Réglages
   theme: el => { S.theme = el.dataset.t; save(); },
   lay: el => { S.layout = el.dataset.l; save(); },
-  pst: el => { S.pstats = el.dataset.v === '1'; save(); },
+  pst: el => { S.pstats = el.dataset.v; save(); },
   awake: el => {
     S.awake = el.dataset.v === '1';
     save();

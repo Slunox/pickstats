@@ -49,6 +49,19 @@ export const who = e => isOpp(e) ? S.opp
   : e.p === '__team' ? 'Équipe'
   : '#' + e.p + (roster1(e.p).name ? ' ' + roster1(e.p).name : '');
 
+// Stats affichées sur les boutons joueurs : 'all' (toutes), 'last' (la dernière) ou 'off'.
+// Les anciennes versions enregistraient true/false.
+export const statsMode = () => (S.pstats === false || S.pstats === 'off' ? 'off' : S.pstats === 'last' ? 'last' : 'all');
+
+// Dernière action individuelle d'un joueur pendant la période q.
+export const lastAction = (n, q) => {
+  for (let i = S.ev.length - 1; i >= 0; i--) {
+    const e = S.ev[i];
+    if (e.p === n && e.q === q && PK.includes(e.a)) return e;
+  }
+  return null;
+};
+
 export const evText = e => isOpp(e) ? LBL[e.a] : (e.p === '__team' ? 'Équipe' : '#' + e.p) + ' : ' + LBL[e.a];
 
 // --- Équipes ---

@@ -3,7 +3,7 @@
 import { S, ui } from '../state.js';
 import { ACTS, TACTS, OACTS, WON, SG } from '../constants.js';
 import { esc, qLabel } from '../util.js';
-import { allP, tally, cnt, roster1, evText } from '../model.js';
+import { allP, tally, cnt, roster1, evText, statsMode, lastAction } from '../model.js';
 
 // Barre du bas avec les boutons d'action du joueur (ou de l'équipe) sélectionné.
 function actionBar() {
@@ -23,8 +23,13 @@ function actionBar() {
   </div></div>`;
 }
 
-function playerButton(p, r, stk, shw) {
-  const c = shw ? SG.filter(k => r[k[0]] > 0) : [];
+function playerButton(p, r, stk, mode) {
+  let c = [];
+  if (mode === 'all') c = SG.filter(k => r[k[0]] > 0);
+  else if (mode === 'last') {
+    const e = lastAction(p.n, S.q);
+    if (e) c = SG.filter(k => k[0] === e.a);
+  }
   const chips = c.length ? `<div class="sg">${c.map(k => `<span class="${k[2]}">${k[1]} ${r[k[0]]}</span>`).join('')}</div>` : '';
   return `<button class="pl${stk ? ' st' : ''}${c.length ? '' : ' ns'}${ui.sel === p.n ? ' on' : ''}" data-x="pl" data-p="${esc(p.n)}">`
     + `<b>${esc(p.n)}</b><span>${esc(p.name) || '&nbsp;'}</span>${chips}</button>`;
@@ -32,7 +37,7 @@ function playerButton(p, r, stk, shw) {
 
 export function play() {
   const T = tally(S.q);
-  const stk = S.layout === 'stack', shw = S.pstats !== false;
+  const stk = S.layout === 'stack', mode = statsMode(), shw = mode !== 'off';
   const last = S.ev[S.ev.length - 1];
 
   return `<div class="top">
@@ -63,7 +68,7 @@ export function play() {
   </div>
   ${shw ? `<div class="qnote">Stats du quart en cours : ${qLabel(S.q)}</div>` : ''}
   <div class="grid${stk ? ' stk' : ''}">
-    ${allP().filter(p => p.in).map(p => playerButton(p, T[p.n], stk, shw)).join('')}
+    ${allP().filter(p => p.in).map(p => playerButton(p, T[p.n], stk, mode)).join('')}
   </div>
   ${actionBar()}`;
 }

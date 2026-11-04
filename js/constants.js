@@ -1,6 +1,6 @@
 // Données fixes de l'appli : libellés, listes d'actions, catégories.
 
-export const APP_VERSION = '2.6';
+export const APP_VERSION = '2.7';
 export const STORAGE_KEY = 'bb-stats-2';
 
 // Actions d'un joueur : [code, libellé du bouton, couleur]
