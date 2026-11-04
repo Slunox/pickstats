@@ -3,7 +3,7 @@
 import { S, ui, withMatch } from '../state.js';
 import { esc, fdate } from '../util.js';
 import { sortedTeams, curG, inTeam } from '../model.js';
-import { back, periodChips, exportButtons, tables } from './common.js';
+import { back, periodChips, exportButtons, sendCard, tables } from './common.js';
 
 function gameRow(m) {
   return `<div class="grow">
@@ -36,6 +36,7 @@ export function games() {
   return back('Mon club', 'view', 'club') + chips
     + `<div class="card"><h2>Matchs archivés (${L.length})</h2>`
     + (L.length ? L.map(gameRow).join('') : '<p class="help">Aucun match archivé pour ce filtre.</p>')
+    + '<button class="btn" data-x="impopen" style="margin-top:12px">Importer un match reçu</button>'
     + '</div>';
 }
 
@@ -47,6 +48,7 @@ export function game() {
     return periodChips(ui.sq, 'sq', 'Total match')
       + `<div class="card"><h2>${esc(S.me)} contre ${esc(S.opp)} — ${fdate(m)}</h2>${tables(q)}</div>`
       + exportButtons()
+      + sendCard()
       + `<button class="btn bad" data-x="gdel" data-id="${m.id}">Supprimer ce match</button>`;
   });
 }

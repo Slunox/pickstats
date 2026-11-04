@@ -4,10 +4,15 @@ import { S } from './state.js';
 import { render, applyTheme } from './render.js';
 import { keepAwake } from './awake.js';
 import './actions.js'; // branche les écouteurs de clics et de saisie
+import { takeHash } from './share.js';
 
 try {
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.theme === 'auto') applyTheme(); });
 } catch (e) {}
+
+// Ouverture par un lien de match envoyé depuis un autre appareil
+takeHash();
+window.addEventListener('hashchange', () => { if (takeHash()) render(); });
 
 render();
 

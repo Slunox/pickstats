@@ -57,6 +57,7 @@ tr.tot td{font-weight:800;border-bottom:0}
 label{display:block;font-weight:700;margin:8px 0 4px}
 input,textarea{width:100%;font:inherit;padding:10px;border-radius:8px;border:2px solid var(--line);background:var(--card);color:var(--ink);-webkit-user-select:text;user-select:text}
 textarea{min-height:200px}
+.imp textarea{min-height:110px;word-break:break-all}
 .help{color:var(--mut);font-size:.9rem;margin:4px 0 0}
 .prow{display:grid;grid-template-columns:56px 90px 1fr 52px;gap:8px;margin-bottom:8px;align-items:center}
 .prow.head{font-weight:700;font-size:.85rem;color:var(--mut);margin-bottom:4px}

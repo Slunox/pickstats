@@ -17,11 +17,18 @@ export function periodChips(cur, x, allLabel) {
 
 // Boutons d'export (sans espace entre eux, comme avant).
 export const exportButtons = () => [
-  '<button class="btn" data-x="share">Partager (WhatsApp…)</button>',
+  '<button class="btn" data-x="share">Partager le résumé (WhatsApp…)</button>',
   '<button class="btn" data-x="copy">Copier le texte</button>',
   '<button class="btn" data-x="pdf">Exporter en PDF</button>',
   '<button class="btn" data-x="csv">Exporter en CSV</button>',
 ].join('');
+
+// Envoi du match à un autre utilisateur de l'appli.
+export const sendCard = () => `<div class="card">
+  <h2>Envoyer le match</h2>
+  <p class="help" style="margin:0 0 10px">Pour un autre coach qui utilise Stats Basket : il pourra l’ajouter à ses matchs archivés et retrouver toutes les stats.</p>
+  <button class="btn" data-x="sendlink">Envoyer un lien</button><button class="btn" data-x="sendfile">Envoyer un fichier</button>
+</div>`;
 
 // Tableaux de stats pour une période (null = tout le match).
 export function tables(q) {

@@ -82,4 +82,7 @@ export const ui = {
   P: null,        // préparation d'un match : { teamId, opp, rows }
   sq: 'all',      // période affichée dans les statistiques
   hq: 'all',      // période affichée dans l'historique
+  imp: null,      // match reçu en attente d'import
+  impErr: '',     // erreur d'import
+  impText: '',    // texte collé dans l'écran d'import
 };

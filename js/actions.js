@@ -10,17 +10,18 @@ import { inCtx, share, copyText, pdf, csv, backup, restoreFile } from './export.
 import { markDup } from './views/pick.js';
 import { render } from './render.js';
 import { keepAwake, releaseAwake } from './awake.js';
+import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
 
 // --- Match ---
 
 function endMatch() {
-  S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.roster = []; S.active = false;
+  S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.roster = []; S.active = false; S.matchId = null;
   ui.sel = null; ui.sq = 'all';
 }
 
 function archiveMatch() {
   S.arch.push({
-    id: Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp, teamId: S.teamId, q: S.q,
+    id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp, teamId: S.teamId, q: S.q,
     ev: S.ev.slice(), roster: roster().map(p => ({ n: p.n, name: p.name, in: true })),
   });
   endMatch();
@@ -44,6 +45,7 @@ function startMatch() {
     S.teamId = t.id;
     S.roster = ch.map(r => ({ n: String(r.num).trim(), name: r.name, in: true, pid: r.id })).sort(cmpN);
     S.ev = []; S.q = 1; S.active = true;
+    S.matchId = Date.now() * 1000 + Math.floor(Math.random() * 1000); // identifiant partagé avec les autres appareils
     ui.sel = null; ui.sq = 'all'; ui.P = null; ui.view = 'play';
     save();
   };
@@ -127,6 +129,24 @@ const ACTIONS = {
     }, true);
     return false;
   },
+
+  // Envoi et réception d'un match
+  sendlink: () => { sendLink(); return false; },
+  sendfile: () => { sendFile(); return false; },
+  impopen: () => { ui.imp = null; ui.impErr = ''; ui.impText = ''; ui.view = 'import'; },
+  impcancel: () => { ui.imp = null; ui.impErr = ''; ui.view = 'games'; },
+  impgo: () => {
+    const code = extractCode(ui.impText), m = code && decodeMatch(code);
+    ui.imp = m || null;
+    ui.impErr = m ? '' : 'Ce lien n’est pas un match Stats Basket valide.';
+  },
+  impfile: () => { $('#impfile').click(); return false; },
+  impadd: () => {
+    addImported(ui.imp);
+    ui.gid = ui.imp.id; ui.imp = null; ui.sq = 'all'; ui.view = 'game';
+    toast('Match ajouté à tes matchs archivés');
+  },
+  impview: () => { ui.gid = ui.imp.id; ui.imp = null; ui.sq = 'all'; ui.view = 'game'; },
 
   // Démarrage d'un match
   startpick: () => {
@@ -247,6 +267,7 @@ const INPUTS = {
   pn: (d, t) => { tm().players[+d.pn].name = t.value; save(); },
   pu: (d, t) => { tm().players[+d.pu].num = t.value; save(); },
   po: (d, t) => { ui.P.opp = t.value; },
+  imp: (d, t) => { ui.impText = t.value; },
   pnum: (d, t) => { ui.P.rows[+d.pnum].num = t.value; markDup(); },
   cname: (d, t) => {
     const r = S.roster[+d.cname];
@@ -289,6 +310,16 @@ function renumber(t, i) {
 document.addEventListener('change', e => {
   const t = e.target, d = t.dataset;
   if (t.id === 'restore') { restoreFile(t.files[0], render); t.value = ''; return; }
+  if (t.id === 'impfile') {
+    const f = t.files[0];
+    t.value = '';
+    if (f) readMatchFile(f).then(m => {
+      ui.imp = m;
+      ui.impErr = m ? '' : 'Ce fichier n’est pas un match Stats Basket valide.';
+      render();
+    });
+    return;
+  }
   if (d.pc !== undefined) { ui.P.rows[+d.pc].in = t.checked; markDup(); return; }
   if (d.cin !== undefined) { S.roster[+d.cin].in = t.checked; save(); return; }
   if (d.cnum !== undefined) { renumber(t, +d.cnum); return; }
