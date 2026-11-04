@@ -27,7 +27,7 @@ export function games() {
   L = L.slice().reverse();
 
   const chip = (v, label) => `<button class="chip${ui.gfilter === v ? ' on' : ''}" data-x="gf" data-v="${v}">${label}</button>`;
-  const chips = '<div class="chips">'
+  const chips = '<div class="chips scroll">'
     + chip('all', `Toutes (${all.length})`)
     + teams.map(t => chip(t.id, `${esc(t.name)} (${all.filter(m => inTeam(m, t)).length})`)).join('')
     + (orphan.length ? chip('none', `Autres (${orphan.length})`) : '')

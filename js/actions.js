@@ -130,6 +130,7 @@ const ACTIONS = {
 
   // Démarrage d'un match
   startpick: () => {
+    if (S.active) return false;
     ui.P = { teamId: null, opp: '', rows: [] };
     ui.view = 'pick';
     if (S.teams.length === 1) selTeam(S.teams[0].id);

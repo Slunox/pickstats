@@ -42,6 +42,9 @@ nav button.on{background:var(--dk);color:#fff}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chip{padding:12px 18px;border-radius:999px;background:var(--card);border:2px solid var(--line);font-weight:700}
 .chip.on{background:var(--dk);border-color:var(--dk);color:#fff}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;margin-left:-12px;margin-right:-12px;padding:0 12px 2px;scroll-padding:0 12px}
+.chips.scroll::-webkit-scrollbar{display:none}
+.chips.scroll .chip{flex:0 0 auto;white-space:nowrap;scroll-snap-align:start}
 .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px;overflow-x:auto}
 .card h2{margin:0 0 10px;font-size:1.2rem}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
@@ -78,7 +81,9 @@ html[data-theme="dark"] select{background-image:url("data:image/svg+xml,%3Csvg x
 .prow4 input[type=checkbox]{width:30px;height:30px;min-height:0;accent-color:var(--a)}
 .prow4 input[data-cnum]{text-align:center;font-weight:800}.prow4 input.dup{border-color:#B91C1C}
 .del[disabled]{opacity:.3;cursor:default}
-.homewrap{max-width:520px;margin:0 auto;padding-top:8px;display:flex;flex-direction:column;gap:14px;position:relative}
+.homewrap{max-width:520px;margin:0 auto;padding-top:8px;display:flex;flex-direction:column;justify-content:center;gap:14px;position:relative;min-height:calc(100vh - 20px);min-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+#app:has(.homewrap){padding-bottom:10px}
+.hbig[disabled]{opacity:.45;filter:grayscale(1);cursor:not-allowed}
 .homewrap h1{margin:8px 0 6px;text-align:center;font-size:1.6rem}
 .hgear{position:absolute;top:0;right:0}.gear2{width:48px;height:48px;border-radius:50%;background:var(--card);font-size:1.3rem}
 .hbig{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:130px;padding:18px;border-radius:18px;background:var(--card);border:2px solid var(--line);text-align:center}

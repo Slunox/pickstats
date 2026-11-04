@@ -1,6 +1,6 @@
 // Données fixes de l'appli : libellés, listes d'actions, catégories.
 
-export const APP_VERSION = '2.7';
+export const APP_VERSION = '2.8';
 export const STORAGE_KEY = 'bb-stats-2';
 
 // Actions d'un joueur : [code, libellé du bouton, couleur]
@@ -57,6 +57,7 @@ export const LBL = {
 // Codes des stats individuelles
 export const PK = ['ro', 'rd', 'stl', 'fd', 'to', 'trav', 'm1', 'm2', 'm3'];
 
-export const CATS = ['Baby', 'U7', 'U9', 'U11', 'U13', 'U15', 'U17', 'U18', 'U20', 'U21', 'Sénior', 'Vétéran', 'Loisir', 'Autre'];
+// Catégories du plus âgé au plus jeune : c'est aussi l'ordre de tri des équipes.
+export const CATS = ['Vétéran', 'Sénior', 'Loisir', 'U21', 'U20', 'U18', 'U17', 'U15', 'U13', 'U11', 'U9', 'U7', 'Baby', 'Autre'];
 
 export const SEXES = [['', 'Non précisé'], ['M', 'Masculin (M)'], ['F', 'Féminin (F)'], ['Mixte', 'Mixte']];

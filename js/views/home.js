@@ -14,7 +14,7 @@ export function home() {
     <div class="hgear"><button class="gear2" data-x="view" data-v="set" aria-label="Réglages">⚙</button></div>
     <h1>${esc(S.clubName || 'Stats Basket')}</h1>
     ${resume}
-    <button class="hbig go" data-x="startpick"><b>Commencer un match</b><span>Choisir l’équipe et les joueurs</span></button>
+    <button class="hbig go" data-x="startpick"${S.active ? ' disabled' : ''}><b>Commencer un match</b><span>${S.active ? 'Archive le match en cours pour en commencer un nouveau' : 'Choisir l’équipe et les joueurs'}</span></button>
     <button class="hbig" data-x="view" data-v="club"><b>Gérer mon club</b><span>Équipes, joueurs, matchs archivés</span></button>
   </div>`;
 }

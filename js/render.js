@@ -40,4 +40,9 @@ export function render() {
   applyTheme();
   const inMatch = S.active && MATCH_VIEWS.includes(ui.view);
   $('#app').innerHTML = (inMatch ? nav() : '') + (VIEWS[ui.view] || home)();
+  // Les filtres défilants sont recréés à chaque rendu : on garde le filtre choisi visible.
+  document.querySelectorAll('.chips.scroll').forEach(c => {
+    const on = c.querySelector('.chip.on');
+    if (on) c.scrollLeft = on.offsetLeft - c.offsetLeft - (c.clientWidth - on.offsetWidth) / 2;
+  });
 }
