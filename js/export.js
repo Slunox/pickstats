@@ -59,11 +59,38 @@ export async function copyText() {
   toast('Texte copié : colle-le dans ta conversation');
 }
 
+// Tableau équipe : une ligne par stat, une colonne par période + total.
+function evolution(ps) {
+  const team = q => {
+    const T = Object.values(tally(q));
+    const s = k => T.reduce((a, r) => a + r[k], 0);
+    return {
+      stl: s('stl'), fd: s('fd'), to: s('to'), trav: s('trav'), miss: s('m1') + s('m2') + s('m3'),
+      ro: cnt('ro', q), rd: cnt('rd', q), orb: cnt('orb', q), odr: cnt('odr', q),
+      won: WON.reduce((a, w) => a + cnt(w[0], q), 0),
+    };
+  };
+  const cols = [...ps, null].map(team);
+  const lines = [
+    ['Interceptions', 'stl'], ['Fautes provoquées', 'fd'], ['Balles perdues', 'to'], ['Marchers', 'trav'],
+    ['Ratés', 'miss'], ['Reb. offensifs', 'ro'], ['Reb. défensifs', 'rd'], ['Ballons gagnés', 'won'],
+    [`Reb. off. ${esc(S.opp)}`, 'orb'], [`Reb. déf. ${esc(S.opp)}`, 'odr'],
+  ];
+  return `<section class="evo"><h2>Évolution par quart-temps</h2><table>`
+    + `<tr><th>${esc(S.me)}</th>${ps.map(q => `<th>${qLabel(q)}</th>`).join('')}<th>Total</th></tr>`
+    + lines.map(([l, k]) => `<tr><td>${l}</td>${cols.map((c, i) => i === ps.length ? `<td><b>${c[k]}</b></td>` : `<td>${c[k]}</td>`).join('')}</tr>`).join('')
+    + `</table></section>`;
+}
+
 export function pdf() {
   const sec = q => `<section><h2>${q == null ? 'Total du match' : qLabel(q)}</h2>${tables(q)}</section>`;
-  $('#print').innerHTML = `<h1>${esc(S.me)} contre ${esc(S.opp)}</h1>`
-    + `<p class="date">${S.clubName ? esc(S.clubName) + ' · ' : ''}${new Date().toLocaleDateString('fr-FR')}</p>`
-    + [null, ...periods()].map(sec).join('');
+  const head = `<h1>${esc(S.me)} contre ${esc(S.opp)}</h1>`
+    + `<p class="date">${S.clubName ? esc(S.clubName) + ' · ' : ''}${new Date().toLocaleDateString('fr-FR')}</p>`;
+  // Page 1 : total du match + évolution de l'équipe par période. Ensuite, 2 périodes par page.
+  const ps = periods();
+  const pages = [head + sec(null) + evolution(ps)];
+  for (let i = 0; i < ps.length; i += 2) pages.push(ps.slice(i, i + 2).map(sec).join(''));
+  $('#print').innerHTML = pages.map(p => `<div class="pg">${p}</div>`).join('');
   window.print();
 }
 

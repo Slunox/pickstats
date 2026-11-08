@@ -156,8 +156,14 @@ html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2
 @media(max-width:560px){.top{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:420px){nav button{padding:12px 4px;font-size:.9rem}}
 #print{display:none}
-#print h1{font-size:20pt;margin:0}#print .date{margin:2px 0 18px;color:#555}
-#print h2{font-size:13pt;margin:0 0 6px}#print section{break-inside:avoid;margin-bottom:20px}
-#print table{font-size:10pt}#print th,#print td{border-bottom:1px solid #999;padding:5px 6px}#print p{margin:6px 0 0}
-@media print{html,body{background:#fff;color:#000}html[data-theme]{--mut:#555;--line:#999}#app{display:none}#print{display:block}@page{margin:12mm;size:landscape}}
+#print h1{font-size:20pt;margin:0}#print .date{margin:2px 0 14px;color:#555}
+#print .pg{break-after:page}#print .pg:last-child{break-after:auto}
+#print h2{font-size:13pt;margin:0 0 6px;grid-column:1/-1;border-bottom:2px solid #000;padding-bottom:2px}
+/* Tableau joueurs en pleine largeur, rebonds et ballons gagnés côte à côte en dessous. */
+#print section{break-inside:avoid;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;column-gap:16px;align-items:start}
+#print section>table:first-of-type{grid-column:1/-1}#print table.mt{margin-top:10px}
+#print table{font-size:9.5pt}#print th,#print td{border-bottom:1px solid #999;padding:3.5px 5px}#print p{margin:6px 0 0}
+#print th{font-size:8.5pt}
+#print .evo td:first-child,#print .evo th:first-child{text-align:left}
+@media print{html,body{background:#fff;color:#000}html[data-theme]{--mut:#555;--line:#999}#app{display:none}#print{display:block}@page{margin:12mm;size:A4 portrait}}
 @media(max-width:700px){.nm{font-size:1.05rem}.ob button{padding:12px 10px}.acts{grid-template-columns:repeat(3,1fr)}.acts.t4{grid-template-columns:repeat(2,1fr)}.acts.t6{grid-template-columns:repeat(3,1fr)}}
