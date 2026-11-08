@@ -43,6 +43,7 @@ export function encodeMatch(m) {
     CODES.indexOf(e.a), e.q, e.p === undefined ? 'z' : e.p === '__team' ? 'y' : idx[e.p],
   ]);
   const o = { v: 1, i: m.id, d: m.date, me: m.me, op: m.opp, q: m.q, r };
+  if (m.by) o.b = m.by;
   if (r.length <= 34 && ev.every(x => x[1] < 36)) {
     o.e = ev.map(x => B36[x[0]] + B36[x[1]] + (typeof x[2] === 'number' ? B36[x[2]] : x[2])).join('');
   } else {
@@ -94,6 +95,7 @@ export function decodeMatch(code) {
       q: Math.max(1, Number.isInteger(o.q) ? o.q : 1, ...ev.map(e => e.q)),
       ev,
       roster: rr.filter(p => p.n),
+      ...(o.b ? { by: str(o.b, 20) } : {}),
     };
   } catch (e) {
     return null;
@@ -136,7 +138,7 @@ export function sendLink() {
   if (!m) return;
   const url = linkFor(m), title = m.me + ' contre ' + m.opp;
   if (navigator.share) {
-    navigator.share({ title, text: 'Match ' + title + ' à ajouter dans Stats Basket :', url })
+    navigator.share({ title, text: 'Match ' + title + ' à ajouter dans Pick&Stats :', url })
       .catch(e => { if (!e || e.name !== 'AbortError') copy(url); });
   } else copy(url);
 }
@@ -185,7 +187,7 @@ export function importStatus(m) {
 
 export function addImported(m) {
   const t = teamFor(m);
-  const entry = { id: m.id, date: m.date, me: m.me, opp: m.opp, teamId: t ? t.id : null, q: m.q, ev: m.ev, roster: m.roster };
+  const entry = { id: m.id, date: m.date, me: m.me, opp: m.opp, teamId: t ? t.id : null, q: m.q, ev: m.ev, roster: m.roster, ...(m.by ? { by: m.by } : {}) };
   const i = S.arch.findIndex(a => String(a.id) === String(m.id));
   if (i >= 0) S.arch[i] = entry; else S.arch.push(entry);
   save();
@@ -197,7 +199,7 @@ export function takeHash() {
   const m = decodeMatch(location.hash.slice(3));
   history.replaceState(null, '', location.pathname + location.search);
   ui.imp = m;
-  ui.impErr = m ? '' : 'Ce lien n’est pas un match Stats Basket valide.';
+  ui.impErr = m ? '' : 'Ce lien n’est pas un match Pick&Stats valide.';
   ui.impText = '';
   ui.view = 'import';
   return true;

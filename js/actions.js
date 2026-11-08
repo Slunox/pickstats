@@ -9,10 +9,11 @@ import { toast, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP } from './constants.js';
 import { inCtx, share, copyText, pdf, csv, backup, restoreFile } from './export.js';
 import { markDup } from './views/pick.js';
+import { logoFromFile } from './logo.js';
 import { render } from './render.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
-import { login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
+import { shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
 
 // --- Match ---
 
@@ -25,6 +26,7 @@ function archiveMatch() {
   S.arch.push({
     id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp, teamId: S.teamId, q: S.q,
     ev: S.ev.slice(), roster: roster().map(p => ({ n: p.n, name: p.name, in: true })),
+    ...(cloud.name ? { by: cloud.name } : {}), // pseudo de celui qui a fait les stats
   });
   endMatch();
   save();
@@ -83,6 +85,7 @@ const ACTIONS = {
     if (ui.view === 'tedit') sortPlayers();
     if (ui.view === 'comp') { S.roster.sort(cmpN); save(); }
     ui.view = el.dataset.v;
+    ui.sheet = null;
     ui.sel = null;
   },
   resume: () => { ui.view = 'play'; },
@@ -169,7 +172,7 @@ const ACTIONS = {
   impgo: () => {
     const code = extractCode(ui.impText), m = code && decodeMatch(code);
     ui.imp = m || null;
-    ui.impErr = m ? '' : 'Ce lien n’est pas un match Stats Basket valide.';
+    ui.impErr = m ? '' : 'Ce lien n’est pas un match Pick&Stats valide.';
   },
   impfile: () => { $('#impfile').click(); return false; },
   impadd: () => {
@@ -237,6 +240,9 @@ const ACTIONS = {
       }, true);
     }
   },
+  logopick: () => { $('#logofile').click(); return false; },
+  logodel: () => { S.clubLogo = ''; save(); },
+  tcolor: el => { tm().color = el.dataset.v; save(); },
   addpl: () => { tm().players.push({ id: uid(), name: '', num: '' }); save(); },
   delpl: el => { tm().players.splice(+el.dataset.i, 1); save(); },
   delteam: () => {
@@ -273,7 +279,11 @@ const ACTIONS = {
   creset: () => { resetPassword(ui.cmail || ''); return false; },
   clogout: () => { logout(); return false; },
   cmode: el => { setMode(el.dataset.v); },
-  csignup: () => { signup(ui.cmail || '', ($('#cpass') || {}).value || ''); return false; },
+  sheet: () => { ui.sheet = 'account'; ui.sheetFlow = !(cloud.club && !cloud.ask); cloud.err = ''; cloud.info = ''; },
+  sclose: () => { ui.sheet = null; ui.sheetFlow = false; },
+  cshare: () => { shareCode(); return false; },
+  csignup: () => { signup(ui.cmail || '', ($('#cpass') || {}).value || '', ui.cpseudo); return false; },
+  csavename: () => { setName($('#cpseudo') ? $('#cpseudo').value : ui.cpseudo); return false; },
   cjoin: () => { joinClub(ui.ccode); return false; },
   ccreate: () => { createClub(ui.cclub || S.clubName || ''); return false; },
   cmerge: el => { keepLocal(el.dataset.v === '1'); },
@@ -352,6 +362,7 @@ const INPUTS = {
   imp: (d, t) => { ui.impText = t.value; },
   cm: (d, t) => { ui.cmail = t.value; },
   ccode: (d, t) => { ui.ccode = t.value; },
+  cpseudo: (d, t) => { ui.cpseudo = t.value; },
   cclub: (d, t) => { ui.cclub = t.value; },
   pnum: (d, t) => { ui.P.rows[+d.pnum].num = t.value; markDup(); },
   cname: (d, t) => {
@@ -395,12 +406,19 @@ function renumber(t, i) {
 document.addEventListener('change', e => {
   const t = e.target, d = t.dataset;
   if (t.id === 'restore') { restoreFile(t.files[0], render); t.value = ''; return; }
+  if (t.id === 'logofile') {
+    const f = t.files[0];
+    t.value = '';
+    logoFromFile(f).then(url => { S.clubLogo = url; save(); render(); toast('Logo enregistré'); })
+      .catch(() => note('Cette image ne peut pas être lue. Essaie une image JPEG ou PNG.'));
+    return;
+  }
   if (t.id === 'impfile') {
     const f = t.files[0];
     t.value = '';
     if (f) readMatchFile(f).then(m => {
       ui.imp = m;
-      ui.impErr = m ? '' : 'Ce fichier n’est pas un match Stats Basket valide.';
+      ui.impErr = m ? '' : 'Ce fichier n’est pas un match Pick&Stats valide.';
       render();
     });
     return;

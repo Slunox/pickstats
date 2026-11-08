@@ -3,7 +3,7 @@
 import { S, ui } from '../state.js';
 import { ACTS, WON, SG, TEAM_REB, OPP_REB } from '../constants.js';
 import { esc, qLabel } from '../util.js';
-import { allP, tally, cnt, roster1, evText, statsMode, lastAction } from '../model.js';
+import { allP, tally, cnt, roster1, evText, statsMode, lastAction, curTeamColor } from '../model.js';
 
 // Barre du bas avec les boutons d'action du joueur sélectionné.
 function actionBar() {
@@ -40,7 +40,7 @@ export function play() {
   const last = S.ev[S.ev.length - 1];
 
   return `<div class="top">
-    <div class="me">
+    <div class="me" style="--a:${curTeamColor()}">
       <div class="nm">${esc(S.me)}</div>
       ${teamGroup('Rebonds', TEAM_REB, 'Rebond')}
       ${teamGroup('Ballons gagnés', WON, 'Ballon gagné')}

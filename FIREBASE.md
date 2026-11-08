@@ -40,15 +40,16 @@ Firebase est gratuit pour cet usage (offre « Spark », sans carte bancaire).
 ## 4. Publier et créer ton club
 
 1. Envoie les modifications sur GitHub (l'appli en ligne se met à jour en 1 à 2 minutes).
-2. Dans l'appli : **Réglages (⚙)** → **Compte et club** → **Créer un compte**.
+2. Dans l'appli : sur l'accueil, touche **Se connecter** → **Créer un compte** (pseudo, e-mail, mot de passe).
+   Le pseudo est ce que voient les autres membres et ce qui apparaît sur les matchs archivés ; l'e-mail reste privé.
 3. **Créer un club** : la tablette propose d'y ajouter les équipes et matchs qu'elle contient déjà.
    Fais-le d'abord sur la tablette qui a le plus de données.
-4. Le **code d'invitation** s'affiche dans la même carte : donne-le aux autres coachs.
+4. Le **code d'invitation** s'affiche dans **Club et membres** (bouton « Envoyer le code ») : donne-le aux autres coachs.
    Ils créent leur compte, saisissent le code dans « Rejoindre un club », et c'est tout.
 
 ## Gérer le club (responsable)
 
-Dans **Réglages → Compte et club** :
+Sur l'accueil, bouton **Club et membres** :
 - **Nouveau code** : l'ancien code ne permet plus de rejoindre le club (les membres actuels restent).
   Utile si le code a circulé trop largement.
 - **Membres** : nommer un autre responsable, repasser quelqu'un coach, ou retirer un membre.

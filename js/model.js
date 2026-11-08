@@ -102,3 +102,24 @@ export function selTeam(id) {
 export const curG = () => (S.arch || []).find(m => String(m.id) === String(ui.gid));
 
 export const inTeam = (m, t) => (m.teamId ? m.teamId === t.id : m.me === t.name);
+
+// Couleurs proposées pour les équipes (assez foncées pour un texte blanc).
+export const TEAM_COLORS = ['#2563EB', '#1E3A8A', '#0891B2', '#0F766E', '#059669', '#4D7C0F',
+  '#D97706', '#DC2626', '#9F1239', '#DB2777', '#7C3AED', '#334155'];
+
+// Couleur d'une équipe : celle choisie dans sa fiche, sinon une couleur fixe tirée de son identifiant.
+// t : l'équipe, ou une simple clé (nom d'une équipe supprimée).
+export function teamColor(t) {
+  if (t && typeof t === 'object' && t.color) return t.color;
+  const s = String(t && typeof t === 'object' ? t.id : t || '');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  const auto = ['#2563EB', '#DC2626', '#059669', '#7C3AED', '#D97706', '#DB2777', '#0891B2', '#4D7C0F'];
+  return s ? auto[h % auto.length] : '#667279';
+}
+
+// Couleur de l'équipe du match en cours (ou du match archivé affiché).
+export function curTeamColor() {
+  const t = S.teams.find(z => z.id === S.teamId) || S.teams.find(z => z.name === S.me);
+  return teamColor(t || S.me);
+}

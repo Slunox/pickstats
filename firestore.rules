@@ -49,8 +49,9 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/clubs/$(c)).data.owner == me())
           // Avec le code d'invitation en cours : coach
           || (request.resource.data.role == 'coach' && inviteOk(request.resource.data.code, c)));
-        // Seul un responsable change les rôles ; on peut toujours quitter le club.
-        allow update: if isAdmin(c);
+        // Seul un responsable change les rôles ; chacun peut changer son pseudo ; on peut toujours quitter le club.
+        allow update: if isAdmin(c)
+          || (signedIn() && me() == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']));
         allow delete: if isAdmin(c) || (signedIn() && me() == uid);
       }
 

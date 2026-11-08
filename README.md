@@ -1,4 +1,4 @@
-# Stats Basket
+# Pick&Stats
 
 Appli web (PWA) pour saisir les statistiques d'un match de basket sur tablette.
 En ligne : https://slunox.github.io/stats-basket/
@@ -19,8 +19,10 @@ js/render.js            Choix et affichage de l'écran courant
 js/export.js            Partage, PDF, CSV, sauvegarde
 js/cloud.js             Données partagées du club (Firebase), voir FIREBASE.md
 js/cloud-config.js      Configuration Firebase du club (null = désactivé)
+js/logo.js              Logo du club : réduction de l’image choisie
 js/awake.js             Écran toujours allumé
 js/views/*.js           Un fichier par écran
+js/views/account.js     Compte et club : bandeau de l’accueil, fenêtre de connexion, page « Club et membres »
 sw.js                   Service worker (mode hors ligne)
 ```
 

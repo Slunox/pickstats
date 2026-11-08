@@ -12,8 +12,9 @@ import { stats } from './views/stats.js';
 import { comp } from './views/composition.js';
 import { settings } from './views/settings.js';
 import { importView } from './views/import.js';
+import { members } from './views/account.js';
 
-const VIEWS = { home, club, tedit, pick, games, game, play, hist, stats, comp, set: settings, import: importView };
+const VIEWS = { home, club, tedit, pick, games, game, play, hist, stats, comp, set: settings, import: importView, members };
 
 // Écrans qui affichent la barre d'onglets du match en cours
 const MATCH_VIEWS = ['play', 'hist', 'stats', 'comp', 'set'];

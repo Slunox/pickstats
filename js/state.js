@@ -71,7 +71,7 @@ export function save() {
 export function withMatch(m, f) {
   if (!m) return f();
   const b = S;
-  S = { ...b, me: m.me, opp: m.opp, ev: m.ev, q: m.q, roster: m.roster };
+  S = { ...b, me: m.me, opp: m.opp, ev: m.ev, q: m.q, roster: m.roster, teamId: m.teamId };
   try { return f(); } finally { S = b; }
 }
 
@@ -92,4 +92,7 @@ export const ui = {
   cmail: '',      // e-mail saisi pour la connexion au club
   ccode: '',      // code d'invitation saisi
   cclub: '',      // nom du club à créer
+  cpseudo: '',    // pseudo saisi (inscription ou modification)
+  sheet: null,    // fenêtre ouverte sur l'accueil ('account')
+  sheetFlow: false, // fenêtre ouverte pour se connecter : elle se ferme une fois le club rejoint
 };

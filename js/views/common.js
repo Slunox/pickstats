@@ -26,7 +26,7 @@ export const exportButtons = () => [
 // Envoi du match à un autre utilisateur de l'appli.
 export const sendCard = () => `<div class="card">
   <h2>Envoyer le match</h2>
-  <p class="help" style="margin:0 0 10px">Pour un autre coach qui utilise Stats Basket : il pourra l’ajouter à ses matchs archivés et retrouver toutes les stats.</p>
+  <p class="help" style="margin:0 0 10px">Pour un autre coach qui utilise Pick&amp;Stats : il pourra l’ajouter à ses matchs archivés et retrouver toutes les stats.</p>
   <button class="btn" data-x="sendlink">Envoyer un lien</button><button class="btn" data-x="sendfile">Envoyer un fichier</button>
 </div>`;
 

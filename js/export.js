@@ -3,7 +3,7 @@
 import { S, ui, withMatch, migrate, setS, save } from './state.js';
 import { WON, PK } from './constants.js';
 import { $, esc, qLabel } from './util.js';
-import { periods, tally, cnt, miss, curG } from './model.js';
+import { periods, tally, cnt, miss, curG, curTeamColor } from './model.js';
 import { toast, ask, note } from './dom.js';
 import { tables } from './views/common.js';
 import { cloudResync } from './cloud.js';
@@ -85,12 +85,14 @@ function evolution(ps) {
 
 export function pdf() {
   const sec = q => `<section><h2>${q == null ? 'Total du match' : qLabel(q)}</h2>${tables(q)}</section>`;
-  const head = `<h1>${esc(S.me)} contre ${esc(S.opp)}</h1>`
-    + `<p class="date">${S.clubName ? esc(S.clubName) + ' · ' : ''}${new Date().toLocaleDateString('fr-FR')}</p>`;
+  const logo = S.clubLogo ? `<img class="plogo" src="${S.clubLogo}" alt="">` : '';
+  const head = `<div class="phead">${logo}<div><h1>${esc(S.me)} contre ${esc(S.opp)}</h1>`
+    + `<p class="date">${S.clubName ? esc(S.clubName) + ' · ' : ''}${new Date().toLocaleDateString('fr-FR')}</p></div></div>`;
   // Page 1 : total du match + évolution de l'équipe par période. Ensuite, 2 périodes par page.
   const ps = periods();
   const pages = [head + sec(null) + evolution(ps)];
   for (let i = 0; i < ps.length; i += 2) pages.push(ps.slice(i, i + 2).map(sec).join(''));
+  $('#print').style.setProperty('--tc', curTeamColor());
   $('#print').innerHTML = pages.map(p => `<div class="pg">${p}</div>`).join('');
   window.print();
 }
@@ -107,12 +109,12 @@ export function csv() {
     rows.push([m, pl, '', 'ÉQUIPE', cnt('ro', q), cnt('rd', q), s('stl'), s('fd'), s('to'), s('trav'), s('m1') + s('m2') + s('m3'), s('m2'), s('m3'), s('m1'), ...WON.map(w => cnt(w[0], q)), cnt('orb', q), cnt('odr', q)]);
   });
   const txt = '\uFEFF' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\n');
-  download('stats-basket-' + S.opp.replace(/[^\w-]+/g, '_') + '.csv', txt, 'text/csv;charset=utf-8');
+  download('pick-and-stats-' + S.opp.replace(/[^\w-]+/g, '_') + '.csv', txt, 'text/csv;charset=utf-8');
 }
 
 export function backup() {
   const txt = JSON.stringify({ app: 'stats-basket', version: 1, date: new Date().toISOString(), data: S });
-  download('sauvegarde-stats-basket-' + new Date().toISOString().slice(0, 10) + '.json', txt, 'application/json');
+  download('sauvegarde-pick-and-stats-' + new Date().toISOString().slice(0, 10) + '.json', txt, 'application/json');
 }
 
 // render est passé en paramètre : la restauration se termine après la lecture du fichier.

@@ -23,6 +23,7 @@
 
 import { S, save, saveHooks } from './state.js';
 import { FIREBASE } from './cloud-config.js';
+import { toast } from './dom.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
 const SEEN_KEY = 'bb-cloud-seen';
@@ -34,7 +35,7 @@ const ON_KEY = 'bb-cloud-on';
 // club   : null tant que l'utilisateur n'a pas de club, sinon { id, name, code, role }
 // ask    : { teams, matches } quand il faut décider quoi faire des données déjà sur l'appareil
 export const cloud = {
-  status: FIREBASE ? 'off' : 'none', mode: 'login', email: '', uid: '', err: '', info: '',
+  status: FIREBASE ? 'off' : 'none', mode: 'login', email: '', name: '', uid: '', err: '', info: '',
   club: null, clubLoading: false, ask: null, members: [], offline: false, pending: false,
 };
 
@@ -154,17 +155,24 @@ function onSnap(kind, snap) {
   afterSnap(changed);
 }
 
-// Nom du club : même principe, sur le document du club.
+// Champs du document du club partagés avec l'appareil : [champ Firestore, clé dans S]
+const CLUB_FIELDS = [['name', 'clubName'], ['logo', 'clubLogo']];
+
+// Nom et logo du club : même principe, sur le document du club.
 function onClubSnap(snap) {
   const c = clubId();
   if (!c || !snap.exists()) return;
-  const d = snap.data(), key = c + '/name', s = seen[key], lh = S.clubName || '', rh = d.name || '';
-  cloud.club.name = rh;
+  const d = snap.data();
+  cloud.club.name = d.name || '';
   cloud.club.code = d.code || '';
   let changed = false;
-  if (snap.metadata.hasPendingWrites) { /* écho de notre envoi */ }
-  else if (lh === rh) seen[key] = rh;
-  else if (!(s !== undefined && lh !== s && rh === s)) { S.clubName = rh; seen[key] = rh; changed = true; }
+  if (!snap.metadata.hasPendingWrites) { // sinon : écho de notre envoi
+    CLUB_FIELDS.forEach(([f, k]) => {
+      const key = c + '/' + f, s = seen[key], lh = S[k] || '', rh = d[f] || '';
+      if (lh === rh) seen[key] = rh;
+      else if (!(s !== undefined && lh !== s && rh === s)) { S[k] = rh; seen[key] = rh; changed = true; }
+    });
+  }
   ready.club = true;
   keepSeen();
   afterSnap(changed);
@@ -204,11 +212,12 @@ function flush() {
     });
   });
   if (ready.club) {
-    const key = c + '/name', name = S.clubName || '';
-    if (seen[key] !== name) {
-      seen[key] = name;
-      F.updateDoc(F.doc(db, 'clubs', c), { name }).catch(fail);
-    }
+    const up = {};
+    CLUB_FIELDS.forEach(([f, k]) => {
+      const key = c + '/' + f, v = S[k] || '';
+      if (seen[key] !== v) { seen[key] = v; up[f] = v; }
+    });
+    if (Object.keys(up).length) F.updateDoc(F.doc(db, 'clubs', c), up).catch(fail);
   }
   keepSeen();
 }
@@ -238,7 +247,7 @@ function listen() {
   unsubs.push(F.onSnapshot(F.doc(db, 'clubs', c), onClubSnap, fail));
   unsubs.push(F.onSnapshot(col('members'), snap => {
     cloud.members = snap.docs.map(d => ({ uid: d.id, ...d.data() }))
-      .sort((a, b) => (a.role === b.role ? String(a.email).localeCompare(String(b.email)) : a.role === 'admin' ? -1 : 1));
+      .sort((a, b) => (a.role === b.role ? memberName(a).localeCompare(memberName(b), 'fr') : a.role === 'admin' ? -1 : 1));
     refresh();
   }, () => {}));
 }
@@ -259,6 +268,7 @@ function attach(c) {
     S.teams = [];
     S.arch = [];
     S.clubName = '';
+    S.clubLogo = '';
     S.cloudClub = c;
     save();
   } else if (!S.cloudClub && (S.teams.length || S.arch.length)) {
@@ -288,7 +298,9 @@ function watchMember(c) {
       refresh();
       return;
     }
-    const role = snap.data().role || 'coach';
+    const data = snap.data(), role = data.role || 'coach';
+    // Pseudo du compte recopié sur la fiche de membre (affiché aux autres membres).
+    if (cloud.name && data.name !== cloud.name) F.updateDoc(snap.ref || F.doc(db, 'clubs', c, 'members', cloud.uid), { name: cloud.name }).catch(() => {});
     if (!cloud.club || cloud.club.id !== c) cloud.club = { id: c, name: '', code: '', role };
     else cloud.club.role = role;
     if (attached) { refresh(); return; }
@@ -353,6 +365,7 @@ async function start() {
     if (user) {
       cloud.status = 'on';
       cloud.email = user.email || '';
+      cloud.name = user.displayName || '';
       cloud.uid = user.uid;
       cloud.err = '';
       store(ON_KEY, 1);
@@ -360,6 +373,7 @@ async function start() {
     } else {
       cloud.status = 'off';
       cloud.email = '';
+      cloud.name = '';
       cloud.uid = '';
     }
     refresh();
@@ -416,11 +430,32 @@ export const login = (email, password) => run(async () => {
   await F.signInWithEmailAndPassword(auth, email.trim(), password);
 });
 
-export const signup = (email, password) => run(async () => {
+// Pseudo : affiché aux autres membres et sur les matchs archivés (l'e-mail reste privé).
+const cleanName = n => String(n || '').trim().replace(/\s+/g, ' ');
+const nameErr = n => (n.length < 2 ? 'Choisis un pseudo (2 caractères minimum).' : n.length > 20 ? 'Pseudo trop long : 20 caractères maximum.' : '');
+
+// Nom à afficher pour un membre : son pseudo, sinon le début de son e-mail.
+export const memberName = m => cleanName(m && m.name) || String((m && m.email) || '?').split('@')[0];
+
+export const signup = (email, password, name) => run(async () => {
+  name = cleanName(name);
+  if (nameErr(name)) { cloud.err = nameErr(name); return; }
   if (!email) throw { code: 'auth/invalid-email' };
   cloud.status = 'loading';
   refresh();
-  await F.createUserWithEmailAndPassword(auth, email.trim(), password);
+  const cred = await F.createUserWithEmailAndPassword(auth, email.trim(), password);
+  await F.updateProfile(cred.user, { displayName: name });
+  cloud.name = name;
+});
+
+// Change son pseudo (compte et fiche de membre du club).
+export const setName = name => run(async () => {
+  name = cleanName(name);
+  if (nameErr(name)) { cloud.err = nameErr(name); return; }
+  await F.updateProfile(auth.currentUser, { displayName: name });
+  cloud.name = name;
+  if (cloud.club) await F.updateDoc(F.doc(db, 'clubs', cloud.club.id, 'members', cloud.uid), { name });
+  cloud.info = 'Pseudo enregistré.';
 });
 
 export const resetPassword = email => run(async () => {
@@ -455,8 +490,9 @@ export const createClub = name => run(async () => {
   if (!name) { cloud.err = 'Donne un nom à ton club.'; return; }
   const c = F.doc(F.collection(db, 'clubs')).id, code = newCodeValue(), now = new Date().toISOString();
   const b = F.writeBatch(db);
-  b.set(F.doc(db, 'clubs', c), { name, owner: cloud.uid, code, created: now });
-  b.set(F.doc(db, 'clubs', c, 'members', cloud.uid), { email: cloud.email, role: 'admin', joined: now });
+  // Le logo déjà choisi sur l'appareil devient celui du club.
+  b.set(F.doc(db, 'clubs', c), { name, owner: cloud.uid, code, created: now, logo: S.clubLogo || '' });
+  b.set(F.doc(db, 'clubs', c, 'members', cloud.uid), { email: cloud.email, name: cloud.name, role: 'admin', joined: now });
   b.set(F.doc(db, 'invites', code), { clubId: c });
   b.set(F.doc(db, 'users', cloud.uid), { clubId: c });
   await b.commit();
@@ -471,7 +507,7 @@ export const joinClub = code => run(async () => {
   if (!inv.exists()) { cloud.err = 'Code inconnu ou plus valable : demande le code actuel au responsable du club.'; return; }
   const c = inv.data().clubId, now = new Date().toISOString();
   const b = F.writeBatch(db);
-  b.set(F.doc(db, 'clubs', c, 'members', cloud.uid), { email: cloud.email, role: 'coach', code, joined: now });
+  b.set(F.doc(db, 'clubs', c, 'members', cloud.uid), { email: cloud.email, name: cloud.name, role: 'coach', code, joined: now });
   b.set(F.doc(db, 'users', cloud.uid), { clubId: c });
   await b.commit();
   watchMember(c);
@@ -544,4 +580,18 @@ export function cloudResync() {
   S.cloudClub = clubId();
   save();
   listen();
+}
+
+// Responsable : envoie le code d'invitation (partage du système, sinon copie).
+export async function shareCode() {
+  const k = cloud.club;
+  if (!k || !k.code) return;
+  const url = location.origin + location.pathname;
+  const text = `Rejoins le club ${k.name} sur Pick&Stats : ${url}\n`
+    + `Crée ton compte (accueil → Se connecter), puis saisis le code d'invitation : ${showCode(k.code)}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Club ' + k.name, text }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(text); toast('Invitation copiée : colle-la dans ta conversation'); }
+  catch (e) { toast('Code : ' + showCode(k.code)); }
 }

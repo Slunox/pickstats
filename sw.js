@@ -4,13 +4,13 @@
 // sauf pour ajouter un nouveau fichier à FILES (indispensable pour le mode hors ligne).
 const CACHE = 'stats-basket-2';
 const FILES = [
-  './', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
+  './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'css/style.css',
   'js/main.js', 'js/constants.js', 'js/util.js', 'js/state.js', 'js/model.js', 'js/dom.js',
-  'js/awake.js', 'js/export.js', 'js/render.js', 'js/actions.js', 'js/share.js', 'js/cloud.js', 'js/cloud-config.js',
+  'js/awake.js', 'js/export.js', 'js/render.js', 'js/actions.js', 'js/share.js', 'js/cloud.js', 'js/cloud-config.js', 'js/logo.js',
   'js/views/common.js', 'js/views/home.js', 'js/views/club.js', 'js/views/pick.js',
   'js/views/play.js', 'js/views/history.js', 'js/views/stats.js', 'js/views/archives.js',
-  'js/views/composition.js', 'js/views/settings.js', 'js/views/import.js',
+  'js/views/composition.js', 'js/views/settings.js', 'js/views/import.js', 'js/views/account.js', 'js/views/icons.js',
 ];
 
 self.addEventListener('install', e => {

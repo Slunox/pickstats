@@ -8,7 +8,7 @@ import { back } from './common.js';
 function chooseTeam() {
   const list = S.teams.length
     ? sortedTeams().map(t => `<button class="teamrow" data-x="pickteam" data-id="${t.id}"><b>${esc(t.name)}</b><span>${plural(t.players.length, 'joueur')}</span></button>`).join('')
-    : '<p class="help">Tu n’as pas encore créé d’équipe.</p><button class="btn" data-x="view" data-v="club">Gérer mon club</button>';
+    : '<p class="help">Tu n’as pas encore créé d’équipe.</p><button class="btn" data-x="view" data-v="club">Effectifs et matchs</button>';
   return back('Accueil', 'view', 'home') + `<div class="card"><h2>Quelle équipe joue ?</h2>${list}</div>`;
 }
 
@@ -24,7 +24,7 @@ export function pick() {
         <span class="pname">${esc(r.name) || 'Sans nom'}</span>
         <input data-pnum="${i}" value="${esc(r.num)}" inputmode="numeric" maxlength="3" placeholder="N°" aria-label="Numéro du match">
       </div>`).join('')
-    : '<p class="help">Cette équipe n’a aucun joueur. Ajoute-en depuis « Gérer mon club ».</p>';
+    : '<p class="help">Cette équipe n’a aucun joueur. Ajoute-en depuis « Effectifs et matchs ».</p>';
 
   return back('Choisir une autre équipe', 'pickback') + `
   <div class="card">
