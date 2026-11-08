@@ -46,6 +46,13 @@ export const LBL = {
   orb: 'Rebond offensif adverse', odr: 'Rebond défensif adverse',
 };
 
+// Corrections possibles dans l'historique : code → [code corrigé, libellé du bouton]
+export const SWAP = {
+  m2: ['m3', '3 pts'], m3: ['m2', '2 pts'],
+  ro: ['rd', 'Déf.'], rd: ['ro', 'Off.'],
+  orb: ['odr', 'Déf.'], odr: ['orb', 'Off.'],
+};
+
 // Codes des stats individuelles (les rebonds n'en font plus partie)
 export const PK = ['stl', 'fd', 'to', 'trav', 'm1', 'm2', 'm3'];
 
