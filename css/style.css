@@ -266,3 +266,11 @@ small.warn{color:#B45309;font-weight:700}
 .resrow .hbig.go{flex:1;min-width:0}.resrow .hbig.go .htx span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .resrow .hbig.arch .htx span{display:none}.resrow .hbig.go .htx b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rolesel{width:auto;min-height:40px;padding:6px 36px 6px 10px;font-size:.9rem;background-position:right 12px center}
+.codebox{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.codebox .ccode{margin:4px 0}
+/* Bouton « Copier » : coche verte animée après le clic */
+[data-x="ccopy"]{display:inline-flex;align-items:center;gap:6px;transition:background .2s,border-color .2s,color .2s}
+[data-x="ccopy"].done{background:#16A34A;border-color:#16A34A;color:#fff;animation:copypop .35s ease-out}
+[data-x="ccopy"].done svg path{stroke-dasharray:24;stroke-dashoffset:24;animation:copycheck .35s .08s ease-out forwards}
+@keyframes copypop{40%{transform:scale(1.12)}}
+@keyframes copycheck{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){[data-x="ccopy"].done,[data-x="ccopy"].done svg path{animation:none;stroke-dashoffset:0}}

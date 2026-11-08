@@ -150,7 +150,7 @@ export function members() {
   const admin = k.role === 'admin';
   const code = admin ? `<div class="card">
       <h2>Code d’invitation</h2>
-      <p class="ccode">${esc(showCode(k.code))}</p>
+      <div class="codebox"><p class="ccode">${esc(showCode(k.code))}</p><button class="btn alt sm" data-x="ccopy" aria-label="Copier le code d’invitation">Copier</button></div>
       <p class="help">Les nouveaux membres le saisissent après avoir créé leur compte et arrivent bénévoles. « Nouveau code » rend l’ancien inutilisable ; les membres actuels restent.</p>
       <div class="crow"><button class="btn" data-x="cshare">Envoyer le code</button><button class="btn alt" data-x="crenew">Nouveau code</button></div>
     </div>` : '';

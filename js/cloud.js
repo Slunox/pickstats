@@ -621,3 +621,29 @@ export async function shareCode() {
   try { await navigator.clipboard.writeText(text); toast('Invitation copiée : colle-la dans ta conversation'); }
   catch (e) { toast('Code : ' + showCode(k.code)); }
 }
+
+// Responsable : copie le code d'invitation seul (pour le coller dans un message).
+export async function copyCode() {
+  const k = cloud.club;
+  if (!k || !k.code) return;
+  const code = showCode(k.code);
+  try { await navigator.clipboard.writeText(code); }
+  catch (e) {
+    const t = document.createElement('textarea');
+    t.value = code;
+    document.body.appendChild(t);
+    t.select();
+    document.execCommand('copy');
+    t.remove();
+  }
+  // Retour visuel sur le bouton : coche verte « Copié » pendant un instant.
+  const b = document.querySelector('[data-x="ccopy"]');
+  if (b) {
+    clearTimeout(b._t);
+    b.classList.remove('done'); void b.offsetWidth; // relance l'animation à chaque clic
+    b.classList.add('done');
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Copié';
+    b._t = setTimeout(() => { b.classList.remove('done'); b.textContent = 'Copier'; }, 1600);
+  }
+  toast('Code copié : ' + code);
+}

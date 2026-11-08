@@ -13,7 +13,7 @@ import { logoFromFile } from './logo.js';
 import { render } from './render.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
-import { canEdit, memberName, shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
+import { canEdit, memberName, copyCode, shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
 
 // --- Match ---
 
@@ -282,6 +282,7 @@ const ACTIONS = {
   sheet: () => { ui.sheet = 'account'; ui.sheetFlow = !(cloud.club && !cloud.ask); cloud.err = ''; cloud.info = ''; },
   sclose: () => { ui.sheet = null; ui.sheetFlow = false; },
   cshare: () => { shareCode(); return false; },
+  ccopy: () => { copyCode(); return false; },
   csignup: () => { signup(ui.cmail || '', ($('#cpass') || {}).value || '', ui.cpseudo); return false; },
   csavename: () => { setName($('#cpseudo') ? $('#cpseudo').value : ui.cpseudo); return false; },
   cjoin: () => { joinClub(ui.ccode); return false; },
@@ -324,7 +325,7 @@ function focusAfter(x) {
 }
 
 // Actions interdites aux bénévoles.
-const EDIT_ONLY = ['tedit', 'addteam', 'delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'logopick', 'logodel', 'crenew', 'cshare', 'crole', 'ckick'];
+const EDIT_ONLY = ['tedit', 'addteam', 'delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
 
 document.addEventListener('click', e => {
   // Toucher le fond sombre ferme la fenêtre comme « Annuler ».
