@@ -2,7 +2,7 @@
 
 import { S, ui } from '../state.js';
 import { esc } from '../util.js';
-import { cloud, showCode, memberName } from '../cloud.js';
+import { cloud, showCode, memberName, ROLES } from '../cloud.js';
 import { back } from './common.js';
 import { ICON } from './icons.js';
 
@@ -31,7 +31,7 @@ export function accountBar() {
   if (c.status === 'on' && c.club && !c.ask) {
     avatar = clubAvatar(c.club.name || S.clubName);
     title = esc(c.club.name || S.clubName || 'Mon club');
-    sub = `<span class="cdot${c.offline ? ' off' : ''}"></span>${c.name ? esc(c.name) + ' · ' : ''}${c.club.role === 'admin' ? 'responsable' : 'coach'} · ${syncText(c)}`;
+    sub = `<span class="cdot${c.offline ? ' off' : ''}"></span>${c.name ? esc(c.name) + ' · ' : ''}${(ROLES[c.club.role] || 'Coach').toLowerCase()} · ${syncText(c)}`;
     cls = ' on';
   } else if (c.status === 'on') {
     avatar = `<span class="av ghost">${ICON.cloud}</span>`;
@@ -85,6 +85,14 @@ function clubStep(c) {
 function askStep(c) {
   const a = c.ask, s = n => (n > 1 ? 's' : '');
   const what = [a.teams && `${a.teams} équipe${s(a.teams)}`, a.matches && `${a.matches} match${s(a.matches)} archivé${s(a.matches)}`].filter(Boolean).join(' et ');
+  if (c.club.role === 'benevole') {
+    return `<h2>Bienvenue dans ${esc(c.club.name || 'le club')}</h2>
+    <p>Tu rejoins le club comme <b>bénévole</b> : tu saisis les stats des matchs, les équipes sont gérées par les coachs.</p>
+    <p>Cette tablette contient déjà ${what}.</p>
+    ${a.matches ? '<button class="btn wide" data-x="cmerge" data-v="1">Ajouter mes matchs archivés au club</button>' : ''}
+    <button class="btn ${a.matches ? 'bad' : ''} wide" data-x="cmerge" data-v="0">${a.matches ? 'Tout retirer de la tablette' : 'Continuer'}</button>
+    <p class="help">Les équipes de cette tablette sont remplacées par celles du club. Fais d’abord une sauvegarde si tu veux les garder.</p>`;
+  }
   return `<h2>Bienvenue dans ${esc(c.club.name || 'le club')}</h2>
     <p>Cette tablette contient déjà ${what}. Les ajouter au club ?</p>
     <button class="btn wide" data-x="cmerge" data-v="1">Les ajouter au club</button>
@@ -104,7 +112,7 @@ function pseudoField(c) {
 function summaryStep(c) {
   const k = c.club;
   return `<div class="sumhead">${clubAvatar(k.name, 'big')}
-      <div><h2>${esc(k.name)}</h2><p class="help">${k.role === 'admin' ? 'Responsable' : 'Coach'} · ${esc(c.email)}</p></div></div>
+      <div><h2>${esc(k.name)}</h2><p class="help">${ROLES[k.role] || 'Coach'} · ${esc(c.email)}</p></div></div>
     <p class="cstate"><span class="cdot${c.offline ? ' off' : ''}"></span>${c.offline ? 'Hors ligne : les modifications partiront au retour du réseau.' : c.pending ? 'Envoi en cours…' : 'Données à jour.'}</p>
     ${pseudoField(c)}
     ${msgs(c)}
@@ -124,15 +132,16 @@ export function sheet() {
 // --- Page « Club et membres » ---
 
 function memberRow(m, c, admin) {
-  const me = m.uid === c.uid, isAdmin = m.role === 'admin';
+  const me = m.uid === c.uid, role = ROLES[m.role] ? m.role : 'coach';
+  // Le responsable choisit le rôle de chacun dans une liste.
   const acts = me ? '<span class="tag">toi</span>'
-    : admin ? `<button class="btn alt sm" data-x="crole" data-u="${esc(m.uid)}" data-v="${isAdmin ? 'coach' : 'admin'}">${isAdmin ? 'Passer coach' : 'Nommer responsable'}</button>`
+    : admin ? `<select class="rolesel" data-crole="${esc(m.uid)}" aria-label="Rôle de ${esc(memberName(m))}">`
+      + Object.entries(ROLES).map(([v, l]) => `<option value="${v}"${v === role ? ' selected' : ''}>${l}</option>`).join('') + '</select>'
       + `<button class="btn bad sm" data-x="ckick" data-u="${esc(m.uid)}">Retirer</button>`
     : '';
-  // L'e-mail n'est montré qu'aux responsables (pour reconnaître un compte sans pseudo).
   const name = memberName(m);
   return `<div class="mrow${me || !admin ? ' self' : ''}"><span class="av sm">${esc(name[0].toUpperCase())}</span>
-    <div class="mname"><b>${esc(name)}</b><span>${isAdmin ? 'Responsable' : 'Coach'}${admin && m.email ? ' · ' + esc(m.email) : ''}</span></div><div class="macts">${acts}</div></div>`;
+    <div class="mname"><b>${esc(name)}</b><span>${ROLES[role]}</span></div><div class="macts">${acts}</div></div>`;
 }
 
 export function members() {
@@ -142,20 +151,20 @@ export function members() {
   const code = admin ? `<div class="card">
       <h2>Code d’invitation</h2>
       <p class="ccode">${esc(showCode(k.code))}</p>
-      <p class="help">Les coachs le saisissent après avoir créé leur compte. « Nouveau code » rend l’ancien inutilisable ; les membres actuels restent.</p>
+      <p class="help">Les nouveaux membres le saisissent après avoir créé leur compte et arrivent bénévoles. « Nouveau code » rend l’ancien inutilisable ; les membres actuels restent.</p>
       <div class="crow"><button class="btn" data-x="cshare">Envoyer le code</button><button class="btn alt" data-x="crenew">Nouveau code</button></div>
     </div>` : '';
   return back('Accueil', 'view', 'home') + `
     <div class="card clubhead">${clubAvatar(k.name, 'big')}
-      <div><h2>${esc(k.name)}</h2><p class="help"><span class="cdot${c.offline ? ' off' : ''}"></span>${admin ? 'Tu es responsable' : 'Tu es coach'} · ${syncText(c)}</p></div></div>
+      <div><h2>${esc(k.name)}</h2><p class="help"><span class="cdot${c.offline ? ' off' : ''}"></span>Tu es ${(ROLES[k.role] || 'Coach').toLowerCase()} · ${syncText(c)}</p></div></div>
     ${msgs(c)}
-    <div class="card"><h2>Nom du club</h2>
+    ${k.role === 'benevole' ? '' : `<div class="card"><h2>Nom du club</h2>
       <input data-cn="1" value="${esc(S.clubName || '')}" placeholder="Nom de ton club" maxlength="40" aria-label="Nom du club">
-      <p class="help">Affiché en haut des exports PDF et pour tous les membres.</p></div>
+      <p class="help">Affiché en haut des exports PDF et pour tous les membres.</p></div>`}
     ${admin ? logoCard() : ''}
     ${code}
     <div class="card"><h2>Membres (${c.members.length})</h2>${c.members.map(m => memberRow(m, c, admin)).join('')}
-      ${admin ? '' : '<p class="help">Seuls les responsables peuvent inviter ou retirer des membres.</p>'}</div>
+      <p class="help">${admin ? 'Les nouveaux membres arrivent bénévoles. ' : ''}Responsable : gère le club et ses membres. Coach : modifie les équipes et les matchs. Bénévole : saisit les stats et archive les matchs.</p></div>
     <div class="card"><h2>Quitter le club</h2>
       <p class="help" style="margin-bottom:10px">Tu n’auras plus accès aux données en ligne du club. Il te faudra un nouveau code pour revenir.</p>
       <button class="btn bad" data-x="cleave">Quitter le club</button></div>`;

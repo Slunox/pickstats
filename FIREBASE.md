@@ -2,7 +2,16 @@
 
 Avec Firebase, chacun peut créer son compte dans l'appli, puis :
 - **créer un club** : il en devient le **responsable** et obtient un **code d'invitation** ;
-- ou **rejoindre un club** avec le code que lui donne un responsable : il en devient **coach**.
+- ou **rejoindre un club** avec le code que lui donne un responsable : il arrive **bénévole**,
+  et le responsable le passe **coach** ou **responsable** si besoin.
+
+| Rôle | Peut faire |
+|---|---|
+| Responsable | tout, plus le code d'invitation, le logo et les membres |
+| Coach | modifier les équipes, les joueurs, les matchs archivés et le nom du club |
+| Bénévole | saisir les stats, archiver des matchs, consulter les équipes et les matchs |
+
+Ces limites sont imposées par les règles Firestore, pas seulement par l'appli.
 
 Les **équipes**, leur **composition**, les **matchs archivés** et le nom du club sont partagés
 entre les membres du club, sur chaque tablette ou téléphone. Un membre ne voit **que son club**.
@@ -45,14 +54,15 @@ Firebase est gratuit pour cet usage (offre « Spark », sans carte bancaire).
 3. **Créer un club** : la tablette propose d'y ajouter les équipes et matchs qu'elle contient déjà.
    Fais-le d'abord sur la tablette qui a le plus de données.
 4. Le **code d'invitation** s'affiche dans **Club et membres** (bouton « Envoyer le code ») : donne-le aux autres coachs.
-   Ils créent leur compte, saisissent le code dans « Rejoindre un club », et c'est tout.
+   Ils créent leur compte, saisissent le code dans « Rejoindre un club » et arrivent bénévoles.
+   Passe coach ceux qui doivent gérer les équipes (Club et membres → liste des membres).
 
 ## Gérer le club (responsable)
 
 Sur l'accueil, bouton **Club et membres** :
 - **Nouveau code** : l'ancien code ne permet plus de rejoindre le club (les membres actuels restent).
   Utile si le code a circulé trop largement.
-- **Membres** : nommer un autre responsable, repasser quelqu'un coach, ou retirer un membre.
+- **Membres** : choisir le rôle de chacun (responsable, coach, bénévole), ou retirer un membre.
   Un membre retiré n'a plus accès aux données en ligne du club.
 - Le club garde toujours au moins un responsable.
 

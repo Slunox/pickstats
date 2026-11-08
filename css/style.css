@@ -263,3 +263,6 @@ small.warn{color:#B45309;font-weight:700}
 .logorow{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px}.logorow .btn{margin:4px 8px 4px 0}
 .lastg{margin-top:6px}.lgh{display:flex;justify-content:space-between;align-items:center;margin:0 2px 8px}
 .lgh h3{margin:0;font-size:.95rem;color:var(--mut)}.lgh .link{margin:0;padding:4px 0}
+.resrow .hbig.go{flex:1;min-width:0}.resrow .hbig.go .htx span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resrow .hbig.arch .htx span{display:none}.resrow .hbig.go .htx b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rolesel{width:auto;min-height:40px;padding:6px 36px 6px 10px;font-size:.9rem;background-position:right 12px center}

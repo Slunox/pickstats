@@ -124,6 +124,13 @@ function setStatus() {
 }
 
 const clubId = () => (cloud.club && !cloud.ask ? cloud.club.id : null);
+
+// Rôles dans un club. Un bénévole saisit les stats et archive des matchs, mais ne modifie
+// ni les équipes, ni les matchs déjà en ligne, ni le club.
+export const ROLES = { admin: 'Responsable', coach: 'Coach', benevole: 'Bénévole' };
+const readOnly = () => !!(cloud.club && cloud.club.role === 'benevole');
+// Peut modifier les équipes, les matchs archivés et le club (vrai aussi sans club en ligne).
+export const canEdit = () => !readOnly();
 const col = (kind) => F.collection(db, 'clubs', clubId(), kind);
 const ref = (kind, id) => F.doc(db, 'clubs', clubId(), kind, id);
 
@@ -144,7 +151,7 @@ function onSnap(kind, snap) {
     }
     const remote = ch.doc.data(), rh = canon(remote), s = seen[key];
     if (lh === rh) { seen[key] = rh; return; }
-    if (s !== undefined && lh !== null && lh !== s && rh === s) return; // modifié ici seulement : flush l'enverra
+    if (!readOnly() && s !== undefined && lh !== null && lh !== s && rh === s) return; // modifié ici seulement : flush l'enverra
     K.put(id, remote);
     seen[key] = rh;
     changed = true;
@@ -170,7 +177,7 @@ function onClubSnap(snap) {
     CLUB_FIELDS.forEach(([f, k]) => {
       const key = c + '/' + f, s = seen[key], lh = S[k] || '', rh = d[f] || '';
       if (lh === rh) seen[key] = rh;
-      else if (!(s !== undefined && lh !== s && rh === s)) { S[k] = rh; seen[key] = rh; changed = true; }
+      else if (readOnly() || !(s !== undefined && lh !== s && rh === s)) { S[k] = rh; seen[key] = rh; changed = true; }
     });
   }
   ready.club = true;
@@ -191,6 +198,22 @@ function afterSnap(changed) {
 function flush() {
   const c = clubId();
   if (!db || !c) return;
+  if (readOnly()) {
+    // Bénévole : n'envoie que les nouveaux matchs archivés (rien n'est modifié ni supprimé en ligne).
+    tombs = tombs.filter(k => !k.startsWith(c + '/'));
+    keepTombs();
+    if (ready.matches) {
+      KINDS.matches.ids().forEach(id => {
+        const key = c + '/matches/' + id;
+        if (seen[key] !== undefined) return;
+        const d = KINDS.matches.get(id);
+        seen[key] = canon(d);
+        F.setDoc(ref('matches', id), plain(d)).catch(fail);
+      });
+    }
+    keepSeen();
+    return;
+  }
   tombs.filter(k => k.startsWith(c + '/')).forEach(key => {
     const [, kind, id] = key.split('/');
     F.deleteDoc(ref(kind, id)).then(() => {
@@ -247,7 +270,7 @@ function listen() {
   unsubs.push(F.onSnapshot(F.doc(db, 'clubs', c), onClubSnap, fail));
   unsubs.push(F.onSnapshot(col('members'), snap => {
     cloud.members = snap.docs.map(d => ({ uid: d.id, ...d.data() }))
-      .sort((a, b) => (a.role === b.role ? memberName(a).localeCompare(memberName(b), 'fr') : a.role === 'admin' ? -1 : 1));
+      .sort((a, b) => (a.role === b.role ? memberName(a).localeCompare(memberName(b), 'fr') : rank(a) - rank(b)));
     refresh();
   }, () => {}));
 }
@@ -434,8 +457,8 @@ export const login = (email, password) => run(async () => {
 const cleanName = n => String(n || '').trim().replace(/\s+/g, ' ');
 const nameErr = n => (n.length < 2 ? 'Choisis un pseudo (2 caractères minimum).' : n.length > 20 ? 'Pseudo trop long : 20 caractères maximum.' : '');
 
-// Nom à afficher pour un membre : son pseudo, sinon le début de son e-mail.
-export const memberName = m => cleanName(m && m.name) || String((m && m.email) || '?').split('@')[0];
+// Nom à afficher pour un membre : son pseudo (l'e-mail n'est jamais montré aux autres).
+export const memberName = m => cleanName(m && m.name) || 'Sans pseudo';
 
 export const signup = (email, password, name) => run(async () => {
   name = cleanName(name);
@@ -507,7 +530,7 @@ export const joinClub = code => run(async () => {
   if (!inv.exists()) { cloud.err = 'Code inconnu ou plus valable : demande le code actuel au responsable du club.'; return; }
   const c = inv.data().clubId, now = new Date().toISOString();
   const b = F.writeBatch(db);
-  b.set(F.doc(db, 'clubs', c, 'members', cloud.uid), { email: cloud.email, name: cloud.name, role: 'coach', code, joined: now });
+  b.set(F.doc(db, 'clubs', c, 'members', cloud.uid), { email: cloud.email, name: cloud.name, role: 'benevole', code, joined: now });
   b.set(F.doc(db, 'users', cloud.uid), { clubId: c });
   await b.commit();
   watchMember(c);
@@ -518,6 +541,7 @@ export function keepLocal(add) {
   const c = cloud.club && cloud.club.id;
   if (!c) return;
   if (!add) { S.teams = []; S.arch = []; }
+  else if (readOnly()) S.teams = []; // bénévole : seuls ses matchs archivés partent, les équipes viennent du club
   S.cloudClub = c;
   cloud.ask = null;
   save();
@@ -536,9 +560,11 @@ export const renewCode = () => run(async () => {
 });
 
 const admins = () => cloud.members.filter(m => m.role === 'admin');
+const rank = m => ['admin', 'coach', 'benevole'].indexOf(m.role || 'coach');
 
 export const setRole = (uid, role) => run(async () => {
-  if (role === 'coach' && admins().length < 2 && admins().some(m => m.uid === uid)) {
+  if (!ROLES[role]) return;
+  if (role !== 'admin' && admins().length < 2 && admins().some(m => m.uid === uid)) {
     cloud.err = 'Le club doit garder au moins un responsable.';
     return;
   }

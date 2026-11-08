@@ -22,11 +22,13 @@ export function home() {
     setTimeout(() => toast('Connecté au club ' + name), 0);
   }
 
-  const resume = S.active ? `
+  // Bouton principal : reprendre le match en cours (avec « Archiver » à côté), sinon en commencer un.
+  const main = S.active ? `
     <div class="resrow">
-      ${big('data-x="resume"', ' resume', ICON.ball, 'Reprendre le match', `${esc(S.me)} contre ${esc(S.opp)}`)}
+      ${big('data-x="resume"', ' go', ICON.ball, 'Reprendre le match', `${esc(S.me)} contre ${esc(S.opp)}`)}
       ${big('data-x="harchive" aria-label="Archiver le match"', ' arch', ICON.archive, 'Archiver', 'Terminer le match')}
-    </div>` : '';
+    </div>`
+    : big('data-x="startpick"', ' go', ICON.play, 'Commencer un match', 'Choisir l’équipe et les joueurs');
 
   const inClub = cloud.club && !cloud.ask;
   const nTeams = S.teams.length, nGames = (S.arch || []).length;
@@ -38,9 +40,7 @@ export function home() {
   return `<div class="homewrap">
     <div class="htop">${accountBar() || '<span></span>'}<button class="gear2" data-x="view" data-v="set" aria-label="Réglages">${ICON.gear}</button></div>
     <div class="hmain">
-    ${resume}
-    ${big(`data-x="startpick"${S.active ? ' disabled' : ''}`, ' go', ICON.play, 'Commencer un match',
-      S.active ? 'Archive le match en cours pour en commencer un nouveau' : 'Choisir l’équipe et les joueurs')}
+    ${main}
     ${big('data-x="view" data-v="club"', '', ICON.team, 'Effectifs et matchs',
       `${plural(nTeams, 'équipe')} · ${plural(nGames, 'match archivé').replace('matchs archivé', 'matchs archivés')}`)}
     ${clubBtn}

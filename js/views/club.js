@@ -5,7 +5,7 @@ import { CATS, SEXES } from '../constants.js';
 import { esc, plural } from '../util.js';
 import { sortedTeams, tm, teamColor, TEAM_COLORS } from '../model.js';
 import { back } from './common.js';
-import { cloud } from '../cloud.js';
+import { cloud, canEdit } from '../cloud.js';
 import { logoCard } from './account.js';
 
 export function club() {
@@ -13,7 +13,7 @@ export function club() {
   const teams = S.teams.length
     ? sortedTeams().map(t => `<div class="grow">
         <div><b><i class="tdot" style="background:${teamColor(t)}"></i>${esc(t.name)}</b><span>${plural(t.players.length, 'joueur')}</span></div>
-        <button class="btn" data-x="tedit" data-id="${t.id}">Modifier</button>
+        ${canEdit() ? `<button class="btn" data-x="tedit" data-id="${t.id}">Modifier</button>` : ''}
       </div>`).join('')
     : '<p class="help">Aucune équipe pour l’instant.</p>';
 
@@ -29,7 +29,7 @@ export function club() {
   <div class="card">
     <h2>Équipes</h2>
     ${teams}
-    <button class="btn" data-x="addteam" style="margin-top:12px">+ Ajouter une équipe</button>
+    ${canEdit() ? '<button class="btn" data-x="addteam" style="margin-top:12px">+ Ajouter une équipe</button>' : '<p class="help" style="margin-top:10px">En tant que bénévole, tu ne peux pas modifier les équipes : demande à un coach ou au responsable.</p>'}
   </div>
   <div class="card">
     <h2>Matchs archivés</h2>

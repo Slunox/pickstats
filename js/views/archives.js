@@ -4,6 +4,7 @@ import { S, ui, withMatch } from '../state.js';
 import { esc, fdate } from '../util.js';
 import { sortedTeams, curG, inTeam, tally, cnt, miss, teamColor } from '../model.js';
 import { back, periodChips, exportButtons, sendCard, tables } from './common.js';
+import { canEdit } from '../cloud.js';
 
 // Équipe d'un match archivé (pour sa couleur), même si l'équipe a été supprimée.
 const matchTeamOf = (m, teams) => teams.find(t => inTeam(m, t));
@@ -33,7 +34,7 @@ export function gameCard(m, teams, del = true) {
       ${m.by ? `<span class="mby">Stats : ${esc(m.by)}</span>` : ''}
       <span class="mstats">${keyStats(m).map(([v, l]) => `<span><b>${v}</b>${l}</span>`).join('')}</span>
     </button>
-    ${del ? `<button class="mdel" data-x="gdel" data-id="${m.id}" aria-label="Supprimer le match contre ${esc(m.opp)}">✕</button>` : ''}
+    ${del && canEdit() ? `<button class="mdel" data-x="gdel" data-id="${m.id}" aria-label="Supprimer le match contre ${esc(m.opp)}">✕</button>` : ''}
   </div>`;
 }
 
@@ -85,6 +86,6 @@ export function game() {
       + `<div class="card"><h2>${esc(S.me)} contre ${esc(S.opp)} — ${fdate(m)}</h2>${m.by ? `<p class="help" style="margin:-4px 0 10px">Stats saisies par ${esc(m.by)}</p>` : ''}${tables(q)}</div>`
       + exportButtons()
       + sendCard()
-      + `<button class="btn bad" data-x="gdel" data-id="${m.id}">Supprimer ce match</button>`;
+      + (canEdit() ? `<button class="btn bad" data-x="gdel" data-id="${m.id}">Supprimer ce match</button>` : '');
   });
 }

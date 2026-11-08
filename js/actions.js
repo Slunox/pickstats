@@ -13,7 +13,7 @@ import { logoFromFile } from './logo.js';
 import { render } from './render.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
-import { shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
+import { canEdit, memberName, shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
 
 // --- Match ---
 
@@ -213,7 +213,7 @@ const ACTIONS = {
   },
   cnew: () => {
     const t = matchTeam(), r = { n: '', name: '', in: true };
-    if (t) { const p = { id: uid(), name: '', num: '' }; t.players.push(p); r.pid = p.id; }
+    if (t && canEdit()) { const p = { id: uid(), name: '', num: '' }; t.players.push(p); r.pid = p.id; }
     S.roster.push(r);
     save();
   },
@@ -294,7 +294,7 @@ const ACTIONS = {
   crole: el => { setRole(el.dataset.u, el.dataset.v); return false; },
   ckick: el => {
     const m = cloud.members.find(z => z.uid === el.dataset.u);
-    ask('Retirer ' + (m ? m.email : 'ce membre') + ' du club ? Il n’aura plus accès aux données du club.', 'Retirer', () => removeMember(el.dataset.u), true);
+    ask('Retirer ' + (m ? memberName(m) : 'ce membre') + ' du club ? Il n’aura plus accès aux données du club.', 'Retirer', () => removeMember(el.dataset.u), true);
     return false;
   },
   cleave: () => {
@@ -323,6 +323,9 @@ function focusAfter(x) {
   if (x === 'addpl') { const a = document.querySelectorAll('[data-pn]'); if (a.length) a[a.length - 1].focus(); }
 }
 
+// Actions interdites aux bénévoles.
+const EDIT_ONLY = ['tedit', 'addteam', 'delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'logopick', 'logodel', 'crenew', 'cshare', 'crole', 'ckick'];
+
 document.addEventListener('click', e => {
   // Toucher le fond sombre ferme la fenêtre comme « Annuler ».
   if (e.target.id === 'modal') {
@@ -337,6 +340,8 @@ document.addEventListener('click', e => {
     return;
   }
   const x = el.dataset.x, f = ACTIONS[x];
+  // Bénévole d'un club : saisie seulement (les règles Firestore l'imposent aussi).
+  if (!canEdit() && EDIT_ONLY.includes(x)) { note('Réservé aux coachs et responsables du club.'); return; }
   if (!f || f(el) === false) return;
   render();
   focusAfter(x);
@@ -368,7 +373,7 @@ const INPUTS = {
   cname: (d, t) => {
     const r = S.roster[+d.cname];
     r.name = t.value;
-    const team = matchTeam(), p = team && r.pid && team.players.find(z => z.id === r.pid);
+    const team = canEdit() && matchTeam(), p = team && r.pid && team.players.find(z => z.id === r.pid);
     if (p) p.name = r.name;
     save();
   },
@@ -423,6 +428,7 @@ document.addEventListener('change', e => {
     });
     return;
   }
+  if (d.crole !== undefined) { setRole(d.crole, t.value); return; }
   if (d.pc !== undefined) { ui.P.rows[+d.pc].in = t.checked; markDup(); return; }
   if (d.cin !== undefined) { S.roster[+d.cin].in = t.checked; save(); return; }
   if (d.cnum !== undefined) { renumber(t, +d.cnum); return; }
