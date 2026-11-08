@@ -17,6 +17,8 @@ js/dom.js               Notifications et fenêtre de confirmation
 js/actions.js           Réactions aux clics et à la saisie
 js/render.js            Choix et affichage de l'écran courant
 js/export.js            Partage, PDF, CSV, sauvegarde
+js/cloud.js             Données partagées du club (Firebase), voir FIREBASE.md
+js/cloud-config.js      Configuration Firebase du club (null = désactivé)
 js/awake.js             Écran toujours allumé
 js/views/*.js           Un fichier par écran
 sw.js                   Service worker (mode hors ligne)

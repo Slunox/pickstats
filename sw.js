@@ -7,7 +7,7 @@ const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'css/style.css',
   'js/main.js', 'js/constants.js', 'js/util.js', 'js/state.js', 'js/model.js', 'js/dom.js',
-  'js/awake.js', 'js/export.js', 'js/render.js', 'js/actions.js', 'js/share.js',
+  'js/awake.js', 'js/export.js', 'js/render.js', 'js/actions.js', 'js/share.js', 'js/cloud.js', 'js/cloud-config.js',
   'js/views/common.js', 'js/views/home.js', 'js/views/club.js', 'js/views/pick.js',
   'js/views/play.js', 'js/views/history.js', 'js/views/stats.js', 'js/views/archives.js',
   'js/views/composition.js', 'js/views/settings.js', 'js/views/import.js',
@@ -31,6 +31,10 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // Autres sites : seul le SDK Firebase (gstatic) est gardé pour le hors ligne.
+  // Les échanges avec Firebase (connexion, données) passent sans le service worker.
+  const url = new URL(e.request.url);
+  if (url.origin !== location.origin && url.hostname !== 'www.gstatic.com') return;
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
     try {

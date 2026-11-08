@@ -58,8 +58,12 @@ export let S = load();
 
 export function setS(v) { S = v; }
 
+// Fonctions appelées après chaque enregistrement (partage des données du club).
+export const saveHooks = [];
+
 export function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (e) {}
+  saveHooks.forEach(f => f());
 }
 
 // Exécute f() comme si le match archivé m était le match en cours
@@ -85,4 +89,7 @@ export const ui = {
   imp: null,      // match reçu en attente d'import
   impErr: '',     // erreur d'import
   impText: '',    // texte collé dans l'écran d'import
+  cmail: '',      // e-mail saisi pour la connexion au club
+  ccode: '',      // code d'invitation saisi
+  cclub: '',      // nom du club à créer
 };

@@ -12,6 +12,7 @@ import { markDup } from './views/pick.js';
 import { render } from './render.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
+import { login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
 
 // --- Match ---
 
@@ -153,6 +154,7 @@ const ACTIONS = {
     const id = el.dataset.id;
     ask('Supprimer définitivement ce match archivé ?', 'Supprimer', () => {
       S.arch = S.arch.filter(m => String(m.id) !== id);
+      cloudDel('matches', id);
       ui.view = 'games';
       save();
     }, true);
@@ -230,6 +232,7 @@ const ACTIONS = {
     if (t && !t.players.some(p => String(p.name).trim())) {
       ask('Cette nouvelle équipe n’a aucun joueur. La supprimer ?', 'Supprimer', () => {
         S.teams = S.teams.filter(z => z.id !== t.id);
+        cloudDel('teams', t.id);
         save();
       }, true);
     }
@@ -240,6 +243,7 @@ const ACTIONS = {
     const id = ui.tid;
     ask('Supprimer cette équipe et tous ses joueurs ? Les matchs archivés sont conservés.', 'Supprimer', () => {
       S.teams = S.teams.filter(z => z.id !== id);
+      cloudDel('teams', id);
       ui.tnew = null; ui.view = 'club';
       save();
     }, true);
@@ -263,6 +267,30 @@ const ACTIONS = {
   },
   backup: () => { backup(); return false; },
   restore: () => { $('#restore').click(); return false; },
+
+  // Données partagées du club
+  clogin: () => { login(ui.cmail || '', ($('#cpass') || {}).value || ''); return false; },
+  creset: () => { resetPassword(ui.cmail || ''); return false; },
+  clogout: () => { logout(); return false; },
+  cmode: el => { setMode(el.dataset.v); },
+  csignup: () => { signup(ui.cmail || '', ($('#cpass') || {}).value || ''); return false; },
+  cjoin: () => { joinClub(ui.ccode); return false; },
+  ccreate: () => { createClub(ui.cclub || S.clubName || ''); return false; },
+  cmerge: el => { keepLocal(el.dataset.v === '1'); },
+  crenew: () => {
+    ask('Créer un nouveau code d’invitation ? L’ancien ne permettra plus de rejoindre le club.', 'Nouveau code', renewCode);
+    return false;
+  },
+  crole: el => { setRole(el.dataset.u, el.dataset.v); return false; },
+  ckick: el => {
+    const m = cloud.members.find(z => z.uid === el.dataset.u);
+    ask('Retirer ' + (m ? m.email : 'ce membre') + ' du club ? Il n’aura plus accès aux données du club.', 'Retirer', () => removeMember(el.dataset.u), true);
+    return false;
+  },
+  cleave: () => {
+    ask('Quitter le club ' + (cloud.club ? cloud.club.name : '') + ' ? Tu n’auras plus accès à ses données en ligne (il te faudra un code pour revenir).', 'Quitter', leaveClub, true);
+    return false;
+  },
 };
 
 // Après certaines actions, place le curseur dans le bon champ.
@@ -322,6 +350,9 @@ const INPUTS = {
   pu: (d, t) => { tm().players[+d.pu].num = t.value; save(); },
   po: (d, t) => { ui.P.opp = t.value; },
   imp: (d, t) => { ui.impText = t.value; },
+  cm: (d, t) => { ui.cmail = t.value; },
+  ccode: (d, t) => { ui.ccode = t.value; },
+  cclub: (d, t) => { ui.cclub = t.value; },
   pnum: (d, t) => { ui.P.rows[+d.pnum].num = t.value; markDup(); },
   cname: (d, t) => {
     const r = S.roster[+d.cname];

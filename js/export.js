@@ -6,6 +6,7 @@ import { $, esc, qLabel } from './util.js';
 import { periods, tally, cnt, miss, curG } from './model.js';
 import { toast, ask, note } from './dom.js';
 import { tables } from './views/common.js';
+import { cloudResync } from './cloud.js';
 
 // Sur la fiche d'un match archivé, les exports portent sur ce match.
 export const inCtx = f => (ui.view === 'game' ? withMatch(curG(), f) : f());
@@ -124,6 +125,7 @@ export async function restoreFile(f, render) {
     ask('Remplacer toutes les données actuelles (match en cours et archives) par cette sauvegarde ?', 'Remplacer', () => {
       setS(migrate({ ...x }));
       save();
+      cloudResync();
       ui.sel = null;
       ui.view = 'home';
       toast('Sauvegarde restaurée');
