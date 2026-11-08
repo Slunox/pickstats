@@ -254,6 +254,8 @@ html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2
 .mdel{position:absolute;top:8px;right:8px;width:36px;height:36px;border-radius:50%;color:var(--mut);font-weight:800}
 .mdel:active{background:#F5C6C0;color:#16242C}
 .mby{font-size:.85rem;color:var(--mut)}
+.gby{display:flex;align-items:center;gap:10px;margin:-4px 0 12px;font-size:.9rem;color:var(--mut)}
+.gby input{flex:1;max-width:220px;margin:0;padding:6px 10px;font-size:.95rem}
 .inrow{display:flex;gap:8px;align-items:stretch}.inrow input{flex:1;min-width:0}.inrow .btn{margin:0}
 small.warn{color:#B45309;font-weight:700}
 .swatches{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 6px}

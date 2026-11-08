@@ -77,13 +77,18 @@ export function games() {
     + (L.length ? gameCards(L, teams) : '<div class="card"><p class="help">Aucun match archivé pour ce filtre.</p></div>');
 }
 
+// Auteur des stats : modifiable par les coachs et responsables (match archivé sans pseudo, ou erreur)
+const byLine = m => canEdit()
+  ? `<label class="gby">Stats saisies par <input data-mby="${m.id}" value="${esc(m.by || '')}" maxlength="20" placeholder="Pseudo" autocomplete="off"></label>`
+  : (m.by ? `<p class="help" style="margin:-4px 0 10px">Stats saisies par ${esc(m.by)}</p>` : '');
+
 export function game() {
   const m = curG();
   if (!m) return '<div class="card"><p class="help">Match introuvable.</p></div>';
   return back('Matchs archivés', 'gback') + withMatch(m, () => {
     const q = ui.sq === 'all' ? null : +ui.sq;
     return periodChips(ui.sq, 'sq', 'Total match')
-      + `<div class="card"><h2>${esc(S.me)} contre ${esc(S.opp)} — ${fdate(m)}</h2>${m.by ? `<p class="help" style="margin:-4px 0 10px">Stats saisies par ${esc(m.by)}</p>` : ''}${statsView(q)}</div>`
+      + `<div class="card"><h2>${esc(S.me)} contre ${esc(S.opp)} — ${fdate(m)}</h2>${byLine(m)}${statsView(q)}</div>`
       + exportButtons()
       + sendCard()
       + (canEdit() ? `<button class="btn bad" data-x="gdel" data-id="${m.id}">Supprimer ce match</button>` : '');

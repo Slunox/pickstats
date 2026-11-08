@@ -353,6 +353,14 @@ document.addEventListener('click', e => {
 const INPUTS = {
   f: (d, t) => { S[d.f] = t.value; save(); },
   cn: (d, t) => { S.clubName = t.value; save(); },
+  mby: (d, t) => {
+    if (!canEdit()) return;
+    const m = (S.arch || []).find(z => String(z.id) === d.mby);
+    if (!m) return;
+    const v = t.value.trim().slice(0, 20);
+    if (v) m.by = v; else delete m.by;
+    save();
+  },
   tn: (d, t) => {
     const team = tm();
     team.suf = t.value;
