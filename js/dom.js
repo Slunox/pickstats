@@ -31,6 +31,26 @@ export function ask(msg, ok, yes, bad, no) {
 
 export const note = msg => ask(msg, null, null);
 
+// Fenêtre à plusieurs choix : list = [{ label, sub, cls, fn }].
+// Toucher en dehors de la fenêtre la ferme sans rien faire.
+let choices = [];
+export function choose(title, list) {
+  onYes = onNo = null;
+  choices = list.map(o => o.fn || null);
+  const m = $('#modal');
+  m.innerHTML = `<div class="mbox"><p>${esc(title)}</p><div class="mopts">`
+    + list.map((o, i) => `<button class="mopt ${o.cls || ''}" data-x="mopt" data-i="${i}"><b>${esc(o.label)}</b>${o.sub ? `<span>${esc(o.sub)}</span>` : ''}</button>`).join('')
+    + '</div></div>';
+  m.classList.add('on');
+}
+
+export function chosen(i) {
+  const f = choices[i] || null;
+  choices = [];
+  answer(false);
+  return f;
+}
+
 // Ferme la fenêtre et renvoie l'action correspondant à la réponse.
 export function answer(yes) {
   const f = yes ? onYes : onNo;

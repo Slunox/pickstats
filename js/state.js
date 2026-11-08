@@ -74,7 +74,7 @@ export function withMatch(m, f) {
 // État de l'écran (non enregistré).
 export const ui = {
   view: 'home',   // écran affiché
-  sel: null,      // joueur sélectionné sur la saisie ('__team', '__opp' ou un numéro)
+  sel: null,      // numéro du joueur sélectionné sur la saisie
   tid: null,      // équipe en cours de modification
   tnew: null,     // équipe tout juste créée
   gid: null,      // match archivé affiché

@@ -1,27 +1,26 @@
 // Écran de saisie pendant le match.
 
 import { S, ui } from '../state.js';
-import { ACTS, TACTS, OACTS, WON, SG } from '../constants.js';
+import { ACTS, WON, SG, TEAM_REB, OPP_REB } from '../constants.js';
 import { esc, qLabel } from '../util.js';
 import { allP, tally, cnt, roster1, evText, statsMode, lastAction } from '../model.js';
 
-// Barre du bas avec les boutons d'action du joueur (ou de l'équipe) sélectionné.
+// Barre du bas avec les boutons d'action du joueur sélectionné.
 function actionBar() {
-  const sel = ui.sel;
-  if (!sel) return '';
-  const k = sel === '__team' ? 't' : sel === '__opp' ? 'o' : 'p';
-  const p = roster1(sel);
-  const list = k === 't' ? TACTS : k === 'o' ? OACTS : ACTS;
-  const title = k === 't' ? esc(S.me) + ' : ballons gagnés'
-    : k === 'o' ? esc(S.opp) + ' : rebonds'
-    : '#' + esc(p.n) + ' ' + esc(p.name);
+  if (!ui.sel) return '';
+  const p = roster1(ui.sel);
   return `<div class="bar"><div class="in">
-    <div class="who"><span>${title}</span><button data-x="desel">Fermer</button></div>
-    <div class="acts${k === 't' ? ' t4' : k === 'o' ? ' t2' : ''}">
-      ${list.map(a => `<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')}
+    <div class="who"><span>#${esc(p.n)} ${esc(p.name)}</span><button data-x="desel">Fermer</button></div>
+    <div class="acts t4">
+      ${ACTS.map(a => `<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')}
     </div>
   </div></div>`;
 }
+
+// Groupe de boutons d'équipe : chaque bouton ajoute directement +1.
+const teamGroup = (title, list, label) => `<div class="tbg"><small>${title}</small><div class="tbs">`
+  + list.map(w => `<button class="tb" data-x="tact" data-a="${w[0]}" aria-label="Ajouter : ${label} ${w[1]}"><small><span class="tbp">+</span> ${w[1]}</small><b>${cnt(w[0], S.q)}</b></button>`).join('')
+  + '</div></div>';
 
 function playerButton(p, r, stk, mode) {
   let c = [];
@@ -43,8 +42,8 @@ export function play() {
   return `<div class="top">
     <div class="me">
       <div class="nm">${esc(S.me)}</div>
-      <button class="open${ui.sel === '__team' ? ' on' : ''}" data-x="pl" data-p="__team">Ajouter un ballon gagné</button>
-      <div class="tiles">${WON.map(w => `<div class="tile"><small>${w[2] || w[1]}</small><b>${cnt(w[0], S.q)}</b></div>`).join('')}</div>
+      ${teamGroup('Rebonds', TEAM_REB, 'Rebond')}
+      ${teamGroup('Ballons gagnés', WON, 'Ballon gagné')}
     </div>
     <div class="mid">
       <div class="q">
@@ -59,11 +58,7 @@ export function play() {
     </div>
     <div class="opp">
       <div class="nm">${esc(S.opp)}</div>
-      <button class="open${ui.sel === '__opp' ? ' on' : ''}" data-x="pl" data-p="__opp">Ajouter un rebond</button>
-      <div class="tiles">
-        <div class="tile"><small>Off.</small><b>${cnt('orb', S.q)}</b></div>
-        <div class="tile"><small>Déf.</small><b>${cnt('odr', S.q)}</b></div>
-      </div>
+      ${teamGroup('Rebonds', OPP_REB, 'Rebond adverse')}
     </div>
   </div>
   ${shw ? `<div class="qnote">Stats du quart en cours : ${qLabel(S.q)}</div>` : ''}

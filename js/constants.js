@@ -1,13 +1,12 @@
 // Données fixes de l'appli : libellés, listes d'actions, catégories.
 
-export const APP_VERSION = '2.9';
+export const APP_VERSION = '3.2';
 export const STORAGE_KEY = 'bb-stats-2';
 
 // Actions d'un joueur : [code, libellé du bouton, couleur]
 // Couleurs : n = positif (vert), f = faute (jaune), r = raté (rouge)
+// Les rebonds sont des stats d'équipe (boutons directs sur la saisie), plus des stats individuelles.
 export const ACTS = [
-  ['ro', 'Rebond off.', 'n'],
-  ['rd', 'Rebond déf.', 'n'],
   ['stl', 'Interception', 'n'],
   ['fd', 'Faute provoquée', 'n'],
   ['to', 'Balle perdue', 'f'],
@@ -17,26 +16,19 @@ export const ACTS = [
   ['m1', 'Raté LF', 'r'],
 ];
 
-// Ballons gagnés par l'équipe
-export const TACTS = [
-  ['w5', '5 secondes', 'n'],
-  ['w8', '8 secondes', 'n'],
-  ['w24', '24 secondes', 'n'],
-  ['wr', 'Ballon récupéré', 'n'],
-];
+// Tirs ratés : après l'un d'eux, l'appli demande qui a pris le rebond.
+export const MISS = ['m1', 'm2', 'm3'];
 
-// Rebonds de l'adversaire
-export const OACTS = [
-  ['orb', 'Rebond offensif', 'n'],
-  ['odr', 'Rebond défensif', 'n'],
-];
+// Boutons directs des équipes sur la saisie : [code, libellé]
+export const TEAM_REB = [['ro', 'Offensif'], ['rd', 'Défensif']];
+export const OPP_REB = [['orb', 'Offensif'], ['odr', 'Défensif']];
 
 // Ballons gagnés : [code, libellé, libellé court pour les tuiles]
 export const WON = [['w5', '5 s'], ['w8', '8 s'], ['w24', '24 s'], ['wr', 'Récup.', 'Rec.']];
 
 // Pastilles de stats sur les boutons joueurs : [code, abréviation, couleur]
 export const SG = [
-  ['ro', 'RO', 'g'], ['rd', 'RD', 'g'], ['stl', 'Int', 'g'], ['fd', 'FP', 'g'],
+  ['stl', 'Int', 'g'], ['fd', 'FP', 'g'],
   ['to', 'BP', 'f'], ['trav', 'Mar', 'f'],
   ['m2', '2pts ✗', 'r'], ['m3', '3pts ✗', 'r'], ['m1', 'LF ✗', 'r'],
 ];
@@ -54,8 +46,8 @@ export const LBL = {
   orb: 'Rebond offensif adverse', odr: 'Rebond défensif adverse',
 };
 
-// Codes des stats individuelles
-export const PK = ['ro', 'rd', 'stl', 'fd', 'to', 'trav', 'm1', 'm2', 'm3'];
+// Codes des stats individuelles (les rebonds n'en font plus partie)
+export const PK = ['stl', 'fd', 'to', 'trav', 'm1', 'm2', 'm3'];
 
 // Catégories du plus âgé au plus jeune : c'est aussi l'ordre de tri des équipes.
 export const CATS = ['Vétéran', 'Sénior', 'Loisir', 'U21', 'U20', 'U18', 'U17', 'U15', 'U13', 'U11', 'U9', 'U7', 'Baby', 'Autre'];

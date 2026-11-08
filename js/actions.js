@@ -5,7 +5,8 @@
 import { S, ui, save } from './state.js';
 import { $, uid, cmpN } from './util.js';
 import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam } from './model.js';
-import { toast, ask, note, answer } from './dom.js';
+import { toast, ask, note, answer, choose, chosen } from './dom.js';
+import { MISS } from './constants.js';
 import { inCtx, share, copyText, pdf, csv, backup, restoreFile } from './export.js';
 import { markDup } from './views/pick.js';
 import { render } from './render.js';
@@ -56,6 +57,21 @@ function startMatch() {
   go();
 }
 
+function addEvent(ev) {
+  S.ev.push(ev);
+  toast(evText(ev) + ' ✓');
+  save();
+}
+
+// Après un tir raté : qui a pris le rebond ?
+function askRebound() {
+  choose('Qui a pris le rebond ?', [
+    { label: 'Nous', sub: 'Rebond offensif', cls: 'us', fn: () => addEvent({ a: 'ro', q: S.q, p: '__team' }) },
+    { label: 'Eux', sub: 'Rebond défensif', cls: 'them', fn: () => addEvent({ a: 'odr', q: S.q }) },
+    { label: 'Personne', sub: 'Ballon dehors, faute…' },
+  ]);
+}
+
 const ACTIONS = {
   // Fenêtre de confirmation
   myes: () => { const f = answer(true); if (!f) return false; f(); },
@@ -75,13 +91,19 @@ const ACTIONS = {
   desel: () => { ui.sel = null; },
   act: el => {
     if (!ui.sel) return false;
-    const ev = { a: el.dataset.a, q: S.q };
-    if (ui.sel !== '__opp') ev.p = ui.sel;
-    S.ev.push(ev);
-    toast(evText(ev) + ' ✓');
+    const ev = { a: el.dataset.a, q: S.q, p: ui.sel };
+    addEvent(ev);
     ui.sel = null;
-    save();
+    if (MISS.includes(ev.a) && S.askReb !== false) askRebound();
   },
+  // Boutons directs des équipes (rebonds, ballons gagnés)
+  tact: el => {
+    const a = el.dataset.a, ev = { a, q: S.q };
+    if (a !== 'orb' && a !== 'odr') ev.p = '__team';
+    ui.sel = null;
+    addEvent(ev);
+  },
+  mopt: el => { const f = chosen(+el.dataset.i); if (f) f(); },
   undo: () => {
     if (!S.ev.length) return false;
     const u = S.ev.pop();
@@ -221,6 +243,7 @@ const ACTIONS = {
   theme: el => { S.theme = el.dataset.t; save(); },
   lay: el => { S.layout = el.dataset.l; save(); },
   pst: el => { S.pstats = el.dataset.v; save(); },
+  askreb: el => { S.askReb = el.dataset.v === '1'; save(); },
   awake: el => {
     S.awake = el.dataset.v === '1';
     save();
@@ -236,6 +259,19 @@ const ACTIONS = {
 };
 
 // Après certaines actions, place le curseur dans le bon champ.
+// Animation « +1 » sur le bouton d'équipe qui vient d'être touché (après le rendu).
+function popPlus(a) {
+  const btn = document.querySelector('[data-x="tact"][data-a="' + a + '"]');
+  if (!btn) return;
+  const s = document.createElement('span');
+  s.className = 'plus1';
+  s.textContent = '+1';
+  btn.appendChild(s);
+  const b = btn.querySelector('b');
+  if (b) b.classList.add('bump');
+  setTimeout(() => s.remove(), 800);
+}
+
 function focusAfter(x) {
   if (x === 'cnew') { const a = document.querySelectorAll('[data-cname]'); if (a.length) a[a.length - 1].focus(); }
   if (x === 'cadd') { const a = document.querySelectorAll('[data-cnum]'), l = a[a.length - 1]; if (l && !l.value) l.focus(); }
@@ -243,12 +279,23 @@ function focusAfter(x) {
 }
 
 document.addEventListener('click', e => {
+  // Toucher le fond sombre ferme la fenêtre comme « Annuler ».
+  if (e.target.id === 'modal') {
+    const f = answer(false);
+    if (f) { f(); render(); }
+    return;
+  }
   const el = e.target.closest('[data-x]');
-  if (!el) return;
+  if (!el) {
+    // Toucher en dehors du menu d'actions le ferme.
+    if (ui.sel && !e.target.closest('.bar')) { ui.sel = null; render(); }
+    return;
+  }
   const x = el.dataset.x, f = ACTIONS[x];
   if (!f || f(el) === false) return;
   render();
   focusAfter(x);
+  if (x === 'tact') popPlus(el.dataset.a);
 });
 
 // --- Saisie au clavier (enregistrée au fil de la frappe) ---

@@ -28,8 +28,11 @@ export function settings() {
       <p class="help">Liste détaillée : le numéro à gauche, le nom et les stats à droite. Numéro en grand : le numéro en gros en haut de chaque bloc, le nom et les stats en plus petit dessous.</p>
       <h3>Stats sur les boutons joueurs</h3>
       ${choice('pst', 'v', [['all', 'Toutes'], ['last', 'La dernière'], ['off', 'Masquées']], statsMode())}
-      <p class="help">Toutes : les stats non nulles du quart en cours. La dernière : seulement la dernière action saisie pour le joueur dans le quart en cours, avec son total sur le quart. RO / RD : rebonds offensifs / défensifs, Int : interceptions, FP : fautes provoquées, BP : balles perdues, Mar : marchers, ✗ : tirs ratés.</p>
+      <p class="help">Toutes : les stats non nulles du quart en cours. La dernière : seulement la dernière action saisie pour le joueur dans le quart en cours, avec son total sur le quart. Int : interceptions, FP : fautes provoquées, BP : balles perdues, Mar : marchers, ✗ : tirs ratés.</p>
     </div>`
+    + card('Tirs ratés',
+      choice('askreb', 'v', [['1', 'Demander qui a le rebond'], ['0', 'Ne pas demander']], onOff(S.askReb)),
+      'Après un tir raté, une fenêtre propose : nous (rebond offensif), eux (rebond défensif adverse) ou personne.')
     + match
     + card('Écran',
       choice('awake', 'v', [['1', 'Toujours allumé'], ['0', 'Veille normale']], onOff(S.awake)),
