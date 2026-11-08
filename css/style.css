@@ -274,3 +274,45 @@ small.warn{color:#B45309;font-weight:700}
 @keyframes copypop{40%{transform:scale(1.12)}}
 @keyframes copycheck{to{stroke-dashoffset:0}}
 @media (prefers-reduced-motion:reduce){[data-x="ccopy"].done,[data-x="ccopy"].done svg path{animation:none;stroke-dashoffset:0}}
+
+/* --- Stats à l'écran --- */
+.statsv{--gn:#BDE7C9;--gf:#F6D98B;--gr:#F5C6C0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.tile{padding:12px 14px;border-radius:14px;background:var(--bg);border-left:5px solid var(--gn);display:flex;flex-direction:column;gap:2px}
+.tile.f{border-left-color:var(--gf)}.tile.r{border-left-color:var(--gr)}
+.tile b{font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}.tile span{color:var(--mut);font-size:.85rem;font-weight:600}
+.tscroll{overflow-x:auto;margin:0 -14px;padding:0 14px;-webkit-overflow-scrolling:touch}
+table.st{border-collapse:separate;border-spacing:0;min-width:640px}
+table.st th,table.st td{padding:10px 8px;border-bottom:1px solid var(--line)}
+table.st thead th{font-size:.8rem;color:var(--mut);font-weight:700;white-space:normal;line-height:1.2;vertical-align:bottom}
+table.st .grp th{border-bottom:0;padding:0 4px 2px}
+table.st .grp .g{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#16242C;border-radius:8px 8px 0 0;padding:4px}
+table.st .grp .g.n{background:var(--gn)}table.st .grp .g.f{background:var(--gf)}table.st .grp .g.r{background:var(--gr)}
+table.st thead tr:last-child th.n{box-shadow:inset 0 3px 0 var(--gn)}table.st thead tr:last-child th.f{box-shadow:inset 0 3px 0 var(--gf)}table.st thead tr:last-child th.r{box-shadow:inset 0 3px 0 var(--gr)}
+table.st tbody th,table.st tfoot th{text-align:left;font-weight:700;position:sticky;left:0;background:var(--card);z-index:1;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+table.st thead th:first-child{position:sticky;left:0;background:var(--card);z-index:1;text-align:left}
+table.st tbody tr:nth-child(even) td,table.st tbody tr:nth-child(even) th{background:color-mix(in srgb,var(--bg) 45%,var(--card))}
+table.st td{font-size:1.05rem;font-weight:600}
+table.st td.z{color:var(--line);font-weight:400}
+table.st tbody td:nth-child(6){font-weight:800}
+table.st tfoot th,table.st tfoot td{font-weight:800;background:var(--bg);border-bottom:0;border-top:2px solid var(--ink)}
+table.st tfoot th{border-radius:10px 0 0 10px}table.st tfoot td:last-child{border-radius:0 10px 10px 0}
+.pn{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;padding:0 6px;margin-right:8px;border-radius:8px;color:#fff;font-weight:800;font-size:.9rem;font-variant-numeric:tabular-nums}
+.tnote{margin:8px 0 0;font-size:.8rem}
+.sboxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+.sbox{padding:14px;border-radius:14px;background:var(--bg)}
+.sbox h3{margin:0 0 10px;font-size:1rem}
+.dhead{display:flex;justify-content:space-between;font-weight:800;font-size:.85rem;margin-bottom:6px}.dhead .them{color:var(--b)}
+.duel{margin-bottom:10px}.duel:last-child{margin-bottom:0}
+.dl{display:flex;justify-content:space-between;align-items:baseline}
+.dl b{font-size:1.3rem;font-variant-numeric:tabular-nums;min-width:28px}.dl b:last-child{text-align:right}.dl span{color:var(--mut);font-size:.85rem;font-weight:600}
+.dbar{height:8px;border-radius:99px;background:var(--b);overflow:hidden;margin-top:3px}
+.dbar i{display:block;height:100%;background:var(--tc);border-right:2px solid var(--card)}
+.wgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.wgrid div{display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:10px;background:var(--card)}
+.wgrid b{font-size:1.4rem;font-variant-numeric:tabular-nums}.wgrid span{font-size:.8rem;color:var(--mut);font-weight:600}
+.wgrid .wt{background:var(--tc);color:#fff}.wgrid .wt span{color:rgba(255,255,255,.85)}
+html[data-theme="dark"] table.st td.z{color:#41545F}
+table.st .best{display:inline-block;min-width:32px;padding:3px 8px;border-radius:999px;font-weight:800;color:#16242C;line-height:1.3}
+table.st .best.n{background:var(--gn)}table.st .best.f{background:var(--gf)}table.st .best.r{background:var(--gr)}
+table.st .grp .g{box-shadow:inset 3px 0 0 var(--card),inset -3px 0 0 var(--card)}

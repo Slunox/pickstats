@@ -7,7 +7,8 @@ import { $, uid, cmpN } from './util.js';
 import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam } from './model.js';
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP } from './constants.js';
-import { inCtx, share, copyText, pdf, csv, backup, restoreFile } from './export.js';
+import { inCtx, pdf, backup, restoreFile } from './export.js';
+import { shareImage } from './statimage.js';
 import { markDup } from './views/pick.js';
 import { logoFromFile } from './logo.js';
 import { render } from './render.js';
@@ -128,10 +129,8 @@ const ACTIONS = {
     toast('Corrigé : ' + evText(e));
     save();
   },
-  share: () => { inCtx(share); return false; },
-  copy: () => { inCtx(copyText); return false; },
+  share: () => { shareImage(); return false; },
   pdf: () => { inCtx(pdf); return false; },
-  csv: () => { inCtx(csv); return false; },
 
   // Fin de match
   archive: () => {

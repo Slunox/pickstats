@@ -16,7 +16,8 @@ js/model.js             Calculs : effectif, stats, équipes
 js/dom.js               Notifications et fenêtre de confirmation
 js/actions.js           Réactions aux clics et à la saisie
 js/render.js            Choix et affichage de l'écran courant
-js/export.js            Partage, PDF, CSV, sauvegarde
+js/export.js            PDF et sauvegarde
+js/statimage.js         Image des stats à partager (dessinée sur un canvas)
 js/cloud.js             Données partagées du club (Firebase), voir FIREBASE.md
 js/cloud-config.js      Configuration Firebase du club (null = désactivé)
 js/logo.js              Logo du club : réduction de l’image choisie
