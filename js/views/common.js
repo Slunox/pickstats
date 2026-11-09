@@ -3,7 +3,7 @@
 import { S } from '../state.js';
 import { WON } from '../constants.js';
 import { esc, qLabel } from '../util.js';
-import { periods, tally, cnt, miss, curTeamColor } from '../model.js';
+import { periods, tally, cnt, miss, curTeamColor, oppInk } from '../model.js';
 
 export const back = (label, x, v) =>
   `<button class="btn alt" data-x="${x}"${v ? ` data-v="${v}"` : ''}>‹ ${label}</button>`;
@@ -104,11 +104,11 @@ export function statsView(q) {
   <p class="help tnote">Le plus haut total de chaque colonne est surligné.</p>`;
 
   const reb = `<div class="sbox"><h3>Rebonds</h3>
-    <div class="dhead"><span style="color:${col}">${esc(S.me)}</span><span class="them">${esc(S.opp)}</span></div>
+    <div class="dhead"><span style="color:${col}">${esc(S.me)}</span><span class="them" style="color:${oppInk()}">${esc(S.opp)}</span></div>
     ${duel('Offensifs', ro, orb)}${duel('Défensifs', rd, odr)}${duel('Total', ro + rd, orb + odr)}</div>`;
   const wonBox = `<div class="sbox"><h3>Ballons gagnés</h3><div class="wgrid">
     ${WON.map((w, i) => `<div><b>${won[i]}</b><span>${w[1]}</span></div>`).join('')}
     <div class="wt"><b>${wonT}</b><span>Total</span></div></div></div>`;
 
-  return `<div class="statsv" style="--tc:${col}">${tiles}${table}<div class="sboxes">${reb}${wonBox}</div></div>`;
+  return `<div class="statsv" style="--tc:${col};--b:${oppInk()}">${tiles}${table}<div class="sboxes">${reb}${wonBox}</div></div>`;
 }

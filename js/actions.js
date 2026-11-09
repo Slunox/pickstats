@@ -4,7 +4,7 @@
 
 import { S, ui, save } from './state.js';
 import { $, uid, cmpN } from './util.js';
-import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam } from './model.js';
+import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curTeamColor, oppColor, isLight, colorVars } from './model.js';
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP } from './constants.js';
 import { inCtx, pdf, backup, restoreFile } from './export.js';
@@ -19,13 +19,13 @@ import { canEdit, memberName, copyCode, shareCode, setName, login, signup, logou
 // --- Match ---
 
 function endMatch() {
-  S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.roster = []; S.active = false; S.matchId = null;
+  S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.oppColor = null; S.roster = []; S.active = false; S.matchId = null;
   ui.sel = null; ui.sq = 'all';
 }
 
 function archiveMatch() {
   S.arch.push({
-    id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp, teamId: S.teamId, q: S.q,
+    id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp, oppColor: S.oppColor || null, teamId: S.teamId, q: S.q,
     ev: S.ev.slice(), roster: roster().map(p => ({ n: p.n, name: p.name, in: true })),
     ...(cloud.name ? { by: cloud.name } : {}), // pseudo de celui qui a fait les stats
   });
@@ -47,6 +47,7 @@ function startMatch() {
   const go = () => {
     S.me = t.name;
     S.opp = (P.opp || '').trim() || 'Adversaire';
+    S.oppColor = P.oppColor || null;
     S.teamId = t.id;
     S.roster = ch.map(r => ({ n: String(r.num).trim(), name: r.name, in: true, pid: r.id })).sort(cmpN);
     S.ev = []; S.q = 1; S.active = true;
@@ -70,8 +71,8 @@ function addEvent(ev) {
 // Après un tir raté : qui a pris le rebond ?
 function askRebound() {
   choose('Qui a pris le rebond ?', [
-    { label: 'Nous', sub: 'Rebond offensif', cls: 'us', fn: () => addEvent({ a: 'ro', q: S.q, p: '__team' }) },
-    { label: 'Eux', sub: 'Rebond défensif', cls: 'them', fn: () => addEvent({ a: 'odr', q: S.q }) },
+    { label: (cloud.club && cloud.club.name) || S.clubName || S.me, sub: 'Rebond offensif', cls: 'tc', style: colorVars(curTeamColor()), fn: () => addEvent({ a: 'ro', q: S.q, p: '__team' }) },
+    { label: S.opp, sub: 'Rebond défensif', cls: 'tc' + (isLight(oppColor()) ? ' lt' : ''), style: colorVars(oppColor()), fn: () => addEvent({ a: 'odr', q: S.q }) },
     { label: 'Personne', sub: 'Ballon dehors, faute…' },
   ]);
 }
@@ -184,11 +185,16 @@ const ACTIONS = {
   // Démarrage d'un match
   startpick: () => {
     if (S.active) return false;
-    ui.P = { teamId: null, opp: '', rows: [] };
+    ui.P = { teamId: null, opp: '', oppColor: null, rows: [] };
     ui.view = 'pick';
     if (S.teams.length === 1) selTeam(S.teams[0].id);
   },
   pickteam: el => { selTeam(el.dataset.id); },
+  // Couleur de maillot adverse : à la composition avant le match, ou pendant le match
+  ocol: el => {
+    if (ui.view === 'pick' && ui.P) ui.P.oppColor = el.dataset.v;
+    else { S.oppColor = el.dataset.v; save(); }
+  },
   pickback: () => { ui.P.teamId = null; ui.P.rows = []; },
   pallin: el => { ui.P.rows.forEach(r => { r.in = el.dataset.v === '1'; }); },
   pstart: startMatch,

@@ -123,3 +123,39 @@ export function curTeamColor() {
   const t = S.teams.find(z => z.id === S.teamId) || S.teams.find(z => z.name === S.me);
   return teamColor(t || S.me);
 }
+
+// --- Couleur de maillot de l'adversaire ---
+
+// Couleurs de maillot proposées pour l'adversaire : [couleur, nom].
+export const OPP_COLORS = [['#FFFFFF', 'Blanc'], ['#9CA3AF', 'Gris'], ['#111827', 'Noir'], ['#FACC15', 'Jaune'],
+  ['#C2410C', 'Orange'], ['#DC2626', 'Rouge'], ['#881337', 'Bordeaux'], ['#EC4899', 'Rose'], ['#7C3AED', 'Violet'],
+  ['#38BDF8', 'Bleu ciel'], ['#2563EB', 'Bleu'], ['#1E3A8A', 'Bleu marine'], ['#16A34A', 'Vert'], ['#14532D', 'Vert foncé']];
+
+export const OPP_DEFAULT = '#C2410C';
+
+// Couleur claire (texte foncé nécessaire) ?
+export function isLight(c) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(c || ''));
+  if (!m) return false;
+  const v = parseInt(m[1], 16), ch = [v >> 16, (v >> 8) & 255, v & 255].map(x => {
+    x /= 255;
+    return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2] > 0.4;
+}
+
+// Couleur de maillot de l'adversaire du match en cours (ou du match archivé affiché).
+export const oppColor = () => S.oppColor || OPP_DEFAULT;
+
+// Couleur lisible sur fond blanc (texte, barres) : les maillots clairs passent en gris.
+export const oppInk = (c = oppColor()) => (isLight(c) ? '#667279' : c);
+
+// Variables CSS d'un bloc coloré : --c (fond), --ct (texte), --cx (texte sur bouton blanc).
+export function colorVars(c) {
+  const lt = isLight(c);
+  return `--c:${c};--ct:${lt ? '#16242C' : '#fff'};--cx:${lt ? '#16242C' : c}`;
+}
+
+// Choix de la couleur de maillot adverse (écran de composition).
+export const oppSwatches = cur => `<label>Couleur du maillot adverse</label>
+  <div class="swatches">${OPP_COLORS.map(([c, n]) => `<button class="sw${(cur || OPP_DEFAULT) === c ? ' on' : ''}" style="background:${c}" data-x="ocol" data-v="${c}" aria-label="Maillot ${n}" title="${n}"></button>`).join('')}</div>`;

@@ -3,7 +3,7 @@
 import { S, ui } from '../state.js';
 import { ACTS, WON, SG, TEAM_REB, OPP_REB } from '../constants.js';
 import { esc, qLabel } from '../util.js';
-import { allP, tally, cnt, roster1, evText, statsMode, lastAction, curTeamColor } from '../model.js';
+import { allP, tally, cnt, roster1, evText, statsMode, lastAction, curTeamColor, oppColor, isLight, colorVars } from '../model.js';
 
 // Barre du bas avec les boutons d'action du joueur sélectionné.
 function actionBar() {
@@ -56,7 +56,7 @@ export function play() {
         <button class="undo hb" data-x="view" data-v="hist">Historique</button>
       </div>
     </div>
-    <div class="opp">
+    <div class="opp${isLight(oppColor()) ? ' lt' : ''}" style="${colorVars(oppColor())}">
       <div class="nm">${esc(S.opp)}</div>
       ${teamGroup('Rebonds', OPP_REB, 'Rebond adverse')}
     </div>

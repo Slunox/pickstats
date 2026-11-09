@@ -4,7 +4,7 @@
 import { S, ui, withMatch } from './state.js';
 import { WON } from './constants.js';
 import { qLabel } from './util.js';
-import { tally, cnt, miss, curG, curTeamColor } from './model.js';
+import { tally, cnt, miss, curG, curTeamColor, oppInk } from './model.js';
 import { toast, ask } from './dom.js';
 
 const W = 1080, PAD = 40;
@@ -51,7 +51,7 @@ export function drawStats(q, date, logo) {
   const max = k => Math.max(0, ...T.map(r => r[k]));
   const won = WON.map(w => cnt(w[0], q)), wonT = won.reduce((a, b) => a + b, 0);
   const ro = cnt('ro', q), rd = cnt('rd', q), orb = cnt('orb', q), odr = cnt('odr', q);
-  const tc = curTeamColor();
+  const tc = curTeamColor(), oc = oppInk();
 
   const ROW = 58, HEAD = 190, TILE = 110, TILES = TILE * 2 + 14, TH = 96;
   const tableH = TH + Math.max(1, T.length) * ROW + ROW + 20;
@@ -161,7 +161,7 @@ export function drawStats(q, date, logo) {
   g.fillStyle = C.card; rrect(g, PAD, y, bw, bh, 22); g.fill();
   g.fillStyle = C.ink; g.font = font(800, 28); g.fillText('Rebonds', PAD + 24, y + 38);
   g.font = font(800, 20); g.fillStyle = tc; g.fillText(fit(g, S.me, bw / 2 - 30), PAD + 24, y + 76);
-  g.textAlign = 'right'; g.fillStyle = C.opp; g.fillText(fit(g, S.opp, bw / 2 - 30), PAD + bw - 24, y + 76);
+  g.textAlign = 'right'; g.fillStyle = oc; g.fillText(fit(g, S.opp, bw / 2 - 30), PAD + bw - 24, y + 76);
   [['Offensifs', ro, orb], ['Défensifs', rd, odr], ['Total', ro + rd, orb + odr]].forEach(([l, a, b], i) => {
     const yy = y + 116 + i * 62, x1 = PAD + 24, x2 = PAD + bw - 24, t = a + b, p = t ? a / t : 0.5;
     g.font = font(800, 30); g.fillStyle = C.ink;
@@ -169,7 +169,7 @@ export function drawStats(q, date, logo) {
     g.textAlign = 'right'; g.fillText(String(b), x2, yy);
     g.textAlign = 'center'; g.font = font(600, 20); g.fillStyle = C.mut; g.fillText(l, (x1 + x2) / 2, yy);
     const by = yy + 24, len = x2 - x1;
-    g.fillStyle = C.opp; rrect(g, x1, by, len, 10, 5); g.fill();
+    g.fillStyle = oc; rrect(g, x1, by, len, 10, 5); g.fill();
     g.fillStyle = tc; rrect(g, x1, by, Math.max(len * p - 2, 0), 10, [5, 0, 0, 5]); g.fill();
   });
   const bx = PAD + bw + 20;

@@ -39,7 +39,7 @@ export function choose(title, list) {
   choices = list.map(o => o.fn || null);
   const m = $('#modal');
   m.innerHTML = `<div class="mbox"><p>${esc(title)}</p><div class="mopts">`
-    + list.map((o, i) => `<button class="mopt ${o.cls || ''}" data-x="mopt" data-i="${i}"><b>${esc(o.label)}</b>${o.sub ? `<span>${esc(o.sub)}</span>` : ''}</button>`).join('')
+    + list.map((o, i) => `<button class="mopt ${o.cls || ''}"${o.style ? ` style="${o.style}"` : ''} data-x="mopt" data-i="${i}"><b>${esc(o.label)}</b>${o.sub ? `<span>${esc(o.sub)}</span>` : ''}</button>`).join('')
     + '</div></div>';
   m.classList.add('on');
 }

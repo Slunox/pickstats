@@ -44,6 +44,7 @@ export function encodeMatch(m) {
   ]);
   const o = { v: 1, i: m.id, d: m.date, me: m.me, op: m.opp, q: m.q, r };
   if (m.by) o.b = m.by;
+  if (m.oppColor) o.oc = m.oppColor;
   if (r.length <= 34 && ev.every(x => x[1] < 36)) {
     o.e = ev.map(x => B36[x[0]] + B36[x[1]] + (typeof x[2] === 'number' ? B36[x[2]] : x[2])).join('');
   } else {
@@ -96,6 +97,7 @@ export function decodeMatch(code) {
       ev,
       roster: rr.filter(p => p.n),
       ...(o.b ? { by: str(o.b, 20) } : {}),
+      ...(/^#[0-9a-f]{6}$/i.test(o.oc || '') ? { oppColor: o.oc } : {}),
     };
   } catch (e) {
     return null;
@@ -113,7 +115,7 @@ export function extractCode(txt) {
 function matchToSend() {
   if (ui.view === 'game') return curG();
   if (!S.matchId) { S.matchId = Date.now() * 1000 + Math.floor(Math.random() * 1000); save(); }
-  return { id: S.matchId, date: new Date().toISOString(), me: S.me, opp: S.opp, q: S.q, ev: S.ev, roster: roster() };
+  return { id: S.matchId, date: new Date().toISOString(), me: S.me, opp: S.opp, oppColor: S.oppColor || null, q: S.q, ev: S.ev, roster: roster() };
 }
 
 const linkFor = m => location.origin + location.pathname + '#m=' + encodeMatch(m);
@@ -187,7 +189,7 @@ export function importStatus(m) {
 
 export function addImported(m) {
   const t = teamFor(m);
-  const entry = { id: m.id, date: m.date, me: m.me, opp: m.opp, teamId: t ? t.id : null, q: m.q, ev: m.ev, roster: m.roster, ...(m.by ? { by: m.by } : {}) };
+  const entry = { id: m.id, date: m.date, me: m.me, opp: m.opp, teamId: t ? t.id : null, q: m.q, ev: m.ev, roster: m.roster, ...(m.by ? { by: m.by } : {}), ...(m.oppColor ? { oppColor: m.oppColor } : {}) };
   const i = S.arch.findIndex(a => String(a.id) === String(m.id));
   if (i >= 0) S.arch[i] = entry; else S.arch.push(entry);
   save();
