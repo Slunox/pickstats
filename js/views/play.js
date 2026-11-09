@@ -3,14 +3,14 @@
 import { S, ui } from '../state.js';
 import { ACTS, WON, SG, TEAM_REB, OPP_REB } from '../constants.js';
 import { esc, qLabel } from '../util.js';
-import { allP, tally, cnt, roster1, evText, statsMode, lastAction, curTeamColor, oppColor, isLight, colorVars } from '../model.js';
+import { allP, tally, cnt, roster1, evText, statsMode, lastAction, shortNames, curTeamColor, oppColor, isLight, colorVars } from '../model.js';
 
 // Barre du bas avec les boutons d'action du joueur sélectionné.
 function actionBar() {
   if (!ui.sel) return '';
-  const p = roster1(ui.sel);
+  const p = roster1(ui.sel), nm = shortNames(allP())[p.n] || p.name;
   return `<div class="bar"><div class="in">
-    <div class="who"><span>#${esc(p.n)} ${esc(p.name)}</span><button data-x="desel">Fermer</button></div>
+    <div class="who"><span>#${esc(p.n)} ${esc(nm)}</span><button data-x="desel">Fermer</button></div>
     <div class="acts t4">
       ${ACTS.map(a => `<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')}
     </div>
@@ -22,7 +22,7 @@ const teamGroup = (title, list, label) => `<div class="tbg"><small>${title}</sma
   + list.map(w => `<button class="tb" data-x="tact" data-a="${w[0]}" aria-label="Ajouter : ${label} ${w[1]}"><small><span class="tbp">+</span> ${w[1]}</small><b>${cnt(w[0], S.q)}</b></button>`).join('')
   + '</div></div>';
 
-function playerButton(p, r, stk, mode) {
+function playerButton(p, r, stk, mode, nm) {
   let c = [];
   if (mode === 'all') c = SG.filter(k => r[k[0]] > 0);
   else if (mode === 'last') {
@@ -31,13 +31,13 @@ function playerButton(p, r, stk, mode) {
   }
   const chips = c.length ? `<div class="sg">${c.map(k => `<span class="${k[2]}">${k[1]} ${r[k[0]]}</span>`).join('')}</div>` : '';
   return `<button class="pl${stk ? ' st' : ''}${c.length ? '' : ' ns'}${ui.sel === p.n ? ' on' : ''}" data-x="pl" data-p="${esc(p.n)}">`
-    + `<b>${esc(p.n)}</b><span>${esc(p.name) || '&nbsp;'}</span>${chips}</button>`;
+    + `<b>${esc(p.n)}</b><span>${esc(nm) || '&nbsp;'}</span>${chips}</button>`;
 }
 
 export function play() {
   const T = tally(S.q);
   const stk = S.layout === 'stack', mode = statsMode(), shw = mode !== 'off';
-  const last = S.ev[S.ev.length - 1];
+  const last = S.ev[S.ev.length - 1], names = shortNames(allP());
 
   return `<div class="top">
     <div class="me" style="--a:${curTeamColor()}">
@@ -63,7 +63,7 @@ export function play() {
   </div>
   ${shw ? `<div class="qnote">Stats du quart en cours : ${qLabel(S.q)}</div>` : ''}
   <div class="grid${stk ? ' stk' : ''}">
-    ${allP().filter(p => p.in).map(p => playerButton(p, T[p.n], stk, mode)).join('')}
+    ${allP().filter(p => p.in).map(p => playerButton(p, T[p.n], stk, mode, names[p.n])).join('')}
   </div>
   ${actionBar()}`;
 }

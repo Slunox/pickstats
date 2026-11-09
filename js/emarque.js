@@ -1,9 +1,10 @@
 // Lecture du « résumé » PDF de l'e-Marque V2 (FFBB).
 //
 // Ce PDF ne contient pas de texte : chaque caractère y est dessiné comme une forme.
-// On récupère ces formes avec pdf.js, puis on reconnaît les chiffres en les comparant
-// à des modèles (GLYPHS, relevés sur un vrai résumé). Les lettres ne sont pas reconnues :
-// les joueurs sont associés par numéro de maillot.
+// On récupère ces formes avec pdf.js, puis on reconnaît les caractères en les comparant
+// à des modèles (GLYPHS, relevés sur de vrais PDF). Les chiffres sont fiables ; pour les lettres,
+// une forme inconnue donne « ? » (les noms restent à vérifier). Les joueurs d'un match sont
+// associés par numéro de maillot.
 
 import { GLYPHS } from './emarque-glyphs.js';
 
@@ -115,11 +116,24 @@ export function classify(s, glyphs = GLYPHS) {
   return best;
 }
 
-// Regroupe les formes en lignes puis en mots : [{ y, toks: [{ x, s }] }], de haut en bas.
-// Chaque tracé de texte devient un mot ; les mots sont rangés par ligne (centre vertical proche).
+// « I » majuscule et « l » minuscule ont la même forme : dans un mot qui contient des minuscules,
+// ce n'est un « I » qu'en première lettre (« FIorent » → « Florent », mais « Ilan »).
+const fixL = s => s.split(' ').map(w => (/[a-zà-ÿ]/.test(w) ? w[0] + w.slice(1).replace(/I/g, 'l') : w)).join(' ');
+
+// Texte d'un tracé, avec les espaces (écart entre deux caractères supérieur au tiers de la hauteur).
+function runText(r, cls) {
+  const h = r.y1 - r.y0 || 1;
+  return fixL(r.glyphs.map((g, i) => (i && (g.x0 - r.glyphs[i - 1].x1) / h > 0.33 ? ' ' : '') + cls(g)).join(''));
+}
+
+// Regroupe les formes en lignes puis en mots : [{ y, toks: [{ x, s, w }] }], de haut en bas.
+// Chaque tracé de texte devient un mot (s : sans espace, w : avec les espaces) ;
+// les mots sont rangés par ligne (centre vertical proche).
 export function lines(runs, cls = classify) {
-  const toks = runs.filter(r => r.y1 - r.y0 >= 3)
-    .map(r => ({ x: r.x0, x1: r.x1, y: (r.y0 + r.y1) / 2, col: r.col, s: r.glyphs.map(g => cls(g)).join('') }));
+  const toks = runs.filter(r => r.y1 - r.y0 >= 3).map(r => {
+    const w = runText(r, cls);
+    return { x: r.x0, x1: r.x1, y: (r.y0 + r.y1) / 2, col: r.col, w, s: w.replace(/ /g, '') };
+  });
   const rows = [];
   toks.sort((a, b) => b.y - a.y);
   toks.forEach(t => {
@@ -151,9 +165,9 @@ export function parseResume(allLines) {
     const row = { min: ti >= 0 ? t[ti].s : '', pts: v[0], fg: v[1], p3: v[2], p2i: v[3], p2e: v[4], lf: v[5], f: v[6] };
     const first = t[0];
     // Joueur : commence par un numéro suivi d'un nom (lettres)
-    if (ti > 1 && isNum(first.s) && t.slice(1, ti).some(k => /\?/.test(k.s))) {
+    if (ti > 1 && isNum(first.s) && t.slice(1, ti).some(k => /\D/.test(k.s))) {
       if (!cur || cur.done) { cur = { players: [], totals: [] }; teams.push(cur); }
-      cur.players.push({ n: String(+first.s), ...row });
+      cur.players.push({ n: String(+first.s), name: t.slice(1, ti).map(k => k.w).join(' '), ...row });
       return;
     }
     if (!cur) return;
@@ -189,10 +203,11 @@ export function namesFromFile(name) {
 // Page 2 du résumé, « Données et ratios » : avantage maximum, série maximum, points du banc
 // (une ligne par donnée : libellé, locaux, visiteurs), puis le nombre d'égalités.
 export function parseRatios(pageLines) {
-  const rows = pageLines.filter(l => l.toks.length >= 2 && l.toks.slice(1).every(k => isNum(k.s)) && /\?/.test(l.toks[0].s));
+  const rows = pageLines.filter(l => l.toks.length >= 2 && l.toks.slice(1).every(k => isNum(k.s)) && /\D/.test(l.toks[0].s));
   const two = rows.filter(l => l.toks.length === 3).slice(0, 3).map(l => [+l.toks[1].s, +l.toks[2].s]);
   if (two.length < 3) return null;
-  const one = rows.find(l => l.toks.length === 2);
+  // Le n° de rencontre (« masculine seniors | 8818 ») a aussi deux mots : on cherche le libellé « Égalités »
+  const one = rows.find(l => l.toks.length === 2 && /galit/i.test(l.toks[0].s));
   return { adv: two[0], run: two[1], bench: two[2], ties: one ? +one.toks[1].s : null };
 }
 
@@ -245,6 +260,27 @@ export function periods(events, total, ot = 0) {
   return P.map(({ pts, pl, merged }) => ({ pts, pl, ...(merged ? { merged } : {}) }));
 }
 
+// Catégorie et sexe d'après l'en-tête du résumé (« Départementale masculine seniors - Division 2 »).
+export function levelOf(pageLines) {
+  const txt = (pageLines || []).slice(0, 12).flatMap(l => l.toks.map(k => k.w)).join(' ').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const u = /\bu ?(\d{1,2})\b/.exec(txt);
+  const cat = /senior/.test(txt) ? 'Sénior' : /veteran/.test(txt) ? 'Vétéran' : /loisir/.test(txt) ? 'Loisir'
+    : u ? 'U' + (+u[1]) : /\bbaby/.test(txt) ? 'Baby' : '';
+  const sex = /feminin/.test(txt) ? 'F' : /masculin/.test(txt) ? 'M' : /mixte/.test(txt) ? 'Mixte' : '';
+  return { cat, sex };
+}
+
+// Nom d'un joueur pour l'effectif : « SARRABAYROUSE, Antoine » → « Antoine Sarrabayrouse ».
+export function playerName(s) {
+  const [nom, ...pre] = String(s || '').split(',');
+  const p = pre.join(',').trim();
+  return [p, tidyName(nom.trim())].filter(Boolean).join(' ');
+}
+
+// Numéro d'équipe en fin de nom : « ENTENTE PESSAC BASKET CLUB-3 » → « 3 ».
+export const teamSuffix = s => (/-\s*(\d{1,2})\s*$/.exec(String(s || '')) || [])[1] || '';
+
 async function pdfLines(pdfjs, file, maxPages) {
   const data = new Uint8Array(await file.arrayBuffer());
   const doc = await pdfjs.getDocument({ data }).promise;
@@ -270,7 +306,7 @@ export async function readEmarque(files) {
     if (teams.length === 2) { res = { teams, pages }; resFile = f; } else if (k !== 'r') feuille = pages[0];
   }
   if (!res) throw new Error(NOT_RESUME);
-  const d = { ...namesFromFile(resFile.name), teams: res.teams, quarters: null, ratios: res.pages[1] ? parseRatios(res.pages[1]) : null, warn: [] };
+  const d = { ...namesFromFile(resFile.name), teams: res.teams, quarters: null, ratios: res.pages[1] ? parseRatios(res.pages[1]) : null, warn: [], level: levelOf(res.pages[0]) };
   if (feuille) {
     const ev = parseFeuille(feuille);
     const q = d.teams.map((t, i) => periods(ev[i], t.total.pts, t.ot));

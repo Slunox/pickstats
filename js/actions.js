@@ -13,7 +13,7 @@ import { shareImage } from './statimage.js';
 import { markDup } from './views/pick.js';
 import { logoFromFile } from './logo.js';
 import { render } from './render.js';
-import { readEmarque, guessSide, toEm, tidyName, checkRow } from './emarque.js';
+import { readEmarque, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix } from './emarque.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
 import { canEdit, memberName, copyCode, shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
@@ -77,6 +77,30 @@ function askRebound() {
     { label: S.opp, sub: 'Rebond défensif', cls: 'tc' + (isLight(oppColor()) ? ' lt' : ''), style: colorVars(oppColor()), fn: () => addEvent({ a: 'odr', q: S.q }) },
     { label: 'Personne', sub: 'Ballon dehors, faute…' },
   ]);
+}
+
+// Nouvelle équipe d'après le résumé e-Marque (side : 0 = locaux, 1 = visiteurs).
+function teamFromSheet(d, side) {
+  const name = (side ? d.b : d.a) || '', lv = d.level || {};
+  const t = {
+    id: uid(), cat: lv.cat || 'Sénior', sex: lv.sex || '', suf: teamSuffix(name),
+    players: d.teams[side].players.map(p => ({ id: uid(), name: playerName(p.name), num: p.n })),
+  };
+  t.name = teamLabel(t);
+  S.teams.push(t);
+  ui.tid = t.id; ui.tnew = t.id; ui.view = 'tedit';
+  sortPlayers();
+  save();
+  render();
+  if (t.players.some(p => p.name.includes('?'))) note('Équipe créée. Certaines lettres n’ont pas été reconnues : elles sont remplacées par « ? ». Corrige les noms concernés.');
+  else toast('Équipe créée : vérifie les noms et la catégorie');
+}
+
+// Après lecture du résumé : quelle équipe créer ? (la nôtre d'après le nom du club en premier)
+function askSheetTeam(d) {
+  const ours = guessSide(d, { ours: [cloud.club && cloud.club.name, S.clubName].filter(Boolean) });
+  const opt = s => ({ label: tidyName(s ? d.b : d.a) || (s ? 'Visiteurs' : 'Locaux'), sub: `${s ? 'Visiteurs' : 'Locaux'} · ${d.teams[s].players.length} joueurs`, fn: () => teamFromSheet(d, s) });
+  choose('Quelle équipe créer ?', [opt(ours), opt(1 - ours), { label: 'Annuler' }]);
 }
 
 const ACTIONS = {
@@ -263,6 +287,7 @@ const ACTIONS = {
     ui.tid = t.id; ui.tnew = t.id; ui.view = 'tedit';
     save();
   },
+  tempick: () => { const f = $('#tefile'); if (f) f.click(); return false; },
   tback: () => {
     sortPlayers();
     const t = tm() && ui.tnew === ui.tid ? tm() : null;
@@ -361,7 +386,7 @@ function focusAfter(x) {
 }
 
 // Actions interdites aux bénévoles.
-const EDIT_ONLY = ['tedit', 'addteam', 'delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
+const EDIT_ONLY = ['tedit', 'addteam', 'tempick','delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
 
 document.addEventListener('click', e => {
   // Toucher le fond sombre ferme la fenêtre comme « Annuler ».
@@ -483,6 +508,20 @@ document.addEventListener('change', e => {
     }).catch(e => {
       note(e && e.message && /e-Marque|PDF/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
     }).finally(() => { ui.emBusy = false; render(); });
+    return;
+  }
+  if (t.id === 'tefile') {
+    const files = Array.from(t.files || []);
+    t.value = '';
+    if (!files.length) return;
+    ui.teBusy = true;
+    render();
+    readEmarque(files).then(d => { ui.teBusy = false; render(); askSheetTeam(d); })
+      .catch(e => {
+        ui.teBusy = false;
+        render();
+        note(e && e.message && /e-Marque|PDF/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
+      });
     return;
   }
   if (t.id === 'impfile') {

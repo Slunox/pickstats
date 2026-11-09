@@ -64,6 +64,28 @@ export const lastAction = (n, q) => {
 
 export const evText = e => isOpp(e) ? LBL[e.a] : (e.p === '__team' ? 'Équipe' : '#' + e.p) + ' : ' + LBL[e.a];
 
+// Prénom seul pour l'écran de saisie : « Antoine Sarrabayrouse » ou « SARRABAYROUSE Antoine » → « Antoine ».
+// Si deux joueurs ont le même prénom, on ajoute l'initiale du nom (« Julian B. »).
+const isCaps = w => /\p{L}/u.test(w) && w === w.toUpperCase();
+function splitName(s) {
+  const w = String(s || '').replace(/,/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if (w.length < 2) return { first: w[0] || '', last: '' };
+  // « NOM Prénom » : les mots en majuscules en tête sont le nom
+  let k = 0;
+  while (k < w.length - 1 && isCaps(w[k])) k++;
+  if (k > 0 && !isCaps(w[k])) return { first: w.slice(k).join(' '), last: w.slice(0, k).join(' ') };
+  return { first: w[0], last: w.slice(1).join(' ') };
+}
+export function shortNames(list) {
+  const N = list.map(p => splitName(p.name));
+  const count = {};
+  N.forEach(n => { const f = n.first.toLowerCase(); count[f] = (count[f] || 0) + 1; });
+  return Object.fromEntries(list.map((p, i) => {
+    const n = N[i];
+    return [p.n, count[n.first.toLowerCase()] > 1 && n.last ? `${n.first} ${n.last[0].toUpperCase()}.` : n.first];
+  }));
+}
+
 // --- Équipes ---
 
 export function teamLabel(t) {
