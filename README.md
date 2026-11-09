@@ -23,7 +23,7 @@ js/cloud-config.js      Configuration Firebase du club (null = désactivé)
 js/logo.js              Logo du club : réduction de l’image choisie
 js/awake.js             Écran toujours allumé
 js/emarque.js           Lecture du résumé PDF de l’e-Marque (le texte y est dessiné en formes, reconnues par modèles :
-                        stats, noms des joueurs, catégorie) et de la feuille de marque (score par quart-temps
+                        stats, noms des équipes et des joueurs, catégorie) et de la feuille de marque (score par quart-temps
                         d’après la couleur des numéros) ; sert aussi à créer une équipe depuis un résumé
 js/emarque-glyphs.js    Modèles des chiffres, lettres et ponctuation de l’e-Marque (une lettre inconnue donne « ? »)
 js/views/report.js      Rapport du match en 7 pages (dans l’appli et en fichier HTML à partager)

@@ -306,7 +306,8 @@ export async function readEmarque(files) {
     if (teams.length === 2) { res = { teams, pages }; resFile = f; } else if (k !== 'r') feuille = pages[0];
   }
   if (!res) throw new Error(NOT_RESUME);
-  const d = { ...namesFromFile(resFile.name), teams: res.teams, quarters: null, ratios: res.pages[1] ? parseRatios(res.pages[1]) : null, warn: [], level: levelOf(res.pages[0]) };
+  const file = namesFromFile(resFile.name), head = namesFromPage(res.pages[0]);
+  const d = { num: head.num || file.num, a: head.a || file.a, b: head.b || file.b, teams: res.teams, quarters: null, ratios: res.pages[1] ? parseRatios(res.pages[1]) : null, warn: [], level: levelOf(res.pages[0]) };
   if (feuille) {
     const ev = parseFeuille(feuille);
     const q = d.teams.map((t, i) => periods(ev[i], t.total.pts, t.ot));
@@ -318,6 +319,25 @@ export async function readEmarque(files) {
     } else d.warn.push('Le score par quart-temps n’a pas pu être lu sur la feuille de marque.');
   }
   return d;
+}
+
+// Noms des équipes et numéro de rencontre lus dans l'en-tête du résumé :
+// « Équipe A | ENTENTE SPORTIVE BLANQUEFORT - 1 », « Équipe B | … », « Rencontre N° » (valeur sur la ligne du dessous).
+// Plus fiable que le nom du fichier, où l'on ne sait pas toujours où finit le nom de l'équipe A.
+export function namesFromPage(pageLines) {
+  const out = { num: '', a: '', b: '' };
+  (pageLines || []).forEach((l, i) => {
+    l.toks.forEach((t, j) => {
+      const m = /^[ÉE]quipe\s*([AB])$/i.exec(t.w.trim());
+      const next = l.toks[j + 1];
+      if (m && next && !/\?/.test(next.w)) out[m[1].toLowerCase()] = next.w.replace(/\s*-\s*(\d{1,2})\s*$/, '-$1').replace(/\s+/g, ' ').trim();
+      if (/^Rencontre\s*N/i.test(t.w) && pageLines[i + 1]) {
+        const v = pageLines[i + 1].toks.find(k => Math.abs(k.x - t.x) < 15 && /^\d+$/.test(k.s));
+        if (v) out.num = v.s;
+      }
+    });
+  });
+  return out;
 }
 
 // --- Rattachement au match archivé ---
