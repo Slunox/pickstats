@@ -11,7 +11,7 @@ import { cloudResync } from './cloud.js';
 // Sur la fiche d'un match archivé, les exports portent sur ce match.
 export const inCtx = f => (ui.view === 'game' ? withMatch(curG(), f) : f());
 
-function download(name, content, type) {
+export function download(name, content, type) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([content], { type }));
   a.download = name;

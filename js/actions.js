@@ -2,16 +2,18 @@
 // Chaque bouton porte data-x="nom" ; ACTIONS[nom](el) est appelée au clic.
 // Une action qui renvoie false n'entraîne pas de rafraîchissement de l'écran.
 
-import { S, ui, save } from './state.js';
+import { S, ui, save, withMatch } from './state.js';
 import { $, uid, cmpN } from './util.js';
-import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curTeamColor, oppColor, isLight, colorVars } from './model.js';
+import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, curTeamColor, oppColor, isLight, colorVars } from './model.js';
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP } from './constants.js';
-import { inCtx, pdf, backup, restoreFile } from './export.js';
+import { inCtx, pdf, backup, restoreFile, download } from './export.js';
+import { reportFile } from './views/report.js';
 import { shareImage } from './statimage.js';
 import { markDup } from './views/pick.js';
 import { logoFromFile } from './logo.js';
 import { render } from './render.js';
+import { readEmarque, guessSide, toEm, tidyName, checkRow } from './emarque.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
 import { canEdit, memberName, copyCode, shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
@@ -153,6 +155,35 @@ const ACTIONS = {
   gopen: el => { ui.gid = el.dataset.id; ui.view = 'game'; ui.sq = 'all'; },
   gf: el => { ui.gfilter = el.dataset.v; },
   gback: () => { ui.view = 'games'; },
+  // Feuille e-Marque d'un match archivé
+  empick: () => { const f = $('#emfile'); if (f) f.click(); return false; },
+  emdel: () => {
+    const m = curG();
+    if (!m) return false;
+    ask('Retirer la feuille e-Marque de ce match ? Les stats saisies restent.', 'Retirer', () => { delete m.em; save(); }, true);
+    return false;
+  },
+  rpopen: () => { ui.view = 'report'; ui.rp = 'resume'; window.scrollTo(0, 0); },
+  rp: el => { ui.rp = el.dataset.v; window.scrollTo(0, 0); },
+  rpfile: () => {
+    const m = curG();
+    if (!m || !m.em) return false;
+    const clean = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]+/g, '_');
+    download(`stats-${clean(m.me)}-${clean(m.opp)}-${String(m.date).slice(0, 10)}.html`, withMatch(m, () => reportFile(m)), 'text/html');
+    return false;
+  },
+  emside: el => { ui.em.side = +el.dataset.v; },
+  emcancel: () => { ui.em = null; ui.view = 'game'; },
+  emsave: () => {
+    const E = ui.em, m = E && S.arch.find(z => String(z.id) === String(E.gid));
+    if (!m) return false;
+    m.em = toEm(E.data, E.side);
+    // Nom de l'adversaire laissé par défaut : on prend celui de la feuille
+    if (!m.opp || m.opp === 'Adversaire') { const n = tidyName(E.side ? E.data.a : E.data.b); if (n) m.opp = n; }
+    ui.em = null; ui.view = 'game'; ui.sq = 'all';
+    save();
+    toast('Feuille e-Marque enregistrée');
+  },
   gdel: el => {
     const id = el.dataset.id;
     ask('Supprimer définitivement ce match archivé ?', 'Supprimer', () => {
@@ -330,7 +361,7 @@ function focusAfter(x) {
 }
 
 // Actions interdites aux bénévoles.
-const EDIT_ONLY = ['tedit', 'addteam', 'delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
+const EDIT_ONLY = ['tedit', 'addteam', 'delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
 
 document.addEventListener('click', e => {
   // Toucher le fond sombre ferme la fenêtre comme « Annuler ».
@@ -378,6 +409,13 @@ const INPUTS = {
   pn: (d, t) => { tm().players[+d.pn].name = t.value; save(); },
   pu: (d, t) => { tm().players[+d.pu].num = t.value; save(); },
   po: (d, t) => { ui.P.opp = t.value; },
+  // Correction d'une valeur lue sur la feuille e-Marque
+  emv: (d, t) => {
+    const [i, k] = d.emv.split('|'), p = ui.em.data.teams[ui.em.side].players[+i];
+    p[k] = k === 'min' ? t.value.trim() : (parseInt(t.value, 10) || 0);
+    const tr = t.closest('tr');
+    if (tr) tr.classList.toggle('bad', !checkRow(p));
+  },
   imp: (d, t) => { ui.impText = t.value; },
   cm: (d, t) => { ui.cmail = t.value; },
   ccode: (d, t) => { ui.ccode = t.value; },
@@ -430,6 +468,21 @@ document.addEventListener('change', e => {
     t.value = '';
     logoFromFile(f).then(url => { S.clubLogo = url; save(); render(); toast('Logo enregistré'); })
       .catch(() => note('Cette image ne peut pas être lue. Essaie une image JPEG ou PNG.'));
+    return;
+  }
+  if (t.id === 'emfile') {
+    const files = Array.from(t.files || []), m = curG();
+    t.value = '';
+    if (!files.length || !m) return;
+    ui.emBusy = true;
+    render();
+    readEmarque(files).then(d => {
+      const ours = [cloud.club && cloud.club.name, S.clubName, m.me].filter(Boolean);
+      ui.em = { gid: m.id, data: d, side: guessSide(d, { ours, opp: m.opp, nums: (m.roster || []).map(p => p.n) }) };
+      ui.view = 'emcheck';
+    }).catch(e => {
+      note(e && e.message && /e-Marque|PDF/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
+    }).finally(() => { ui.emBusy = false; render(); });
     return;
   }
   if (t.id === 'impfile') {

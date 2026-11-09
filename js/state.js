@@ -71,7 +71,7 @@ export function save() {
 export function withMatch(m, f) {
   if (!m) return f();
   const b = S;
-  S = { ...b, me: m.me, opp: m.opp, oppColor: m.oppColor || null, ev: m.ev, q: m.q, roster: m.roster, teamId: m.teamId };
+  S = { ...b, me: m.me, opp: m.opp, oppColor: m.oppColor || null, em: m.em || null, ev: m.ev, q: m.q, roster: m.roster, teamId: m.teamId };
   try { return f(); } finally { S = b; }
 }
 

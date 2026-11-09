@@ -4,6 +4,7 @@ import { S } from '../state.js';
 import { WON } from '../constants.js';
 import { esc, qLabel } from '../util.js';
 import { periods, tally, cnt, miss, curTeamColor, oppInk } from '../model.js';
+import { emStats } from './emstats.js';
 
 export const back = (label, x, v) =>
   `<button class="btn alt" data-x="${x}"${v ? ` data-v="${v}"` : ''}>‹ ${label}</button>`;
@@ -110,5 +111,5 @@ export function statsView(q) {
     ${WON.map((w, i) => `<div><b>${won[i]}</b><span>${w[1]}</span></div>`).join('')}
     <div class="wt"><b>${wonT}</b><span>Total</span></div></div></div>`;
 
-  return `<div class="statsv" style="--tc:${col};--b:${oppInk()}">${tiles}${table}<div class="sboxes">${reb}${wonBox}</div></div>`;
+  return `<div class="statsv" style="--tc:${col};--b:${oppInk()}">${q == null ? emStats() : ''}${tiles}${table}<div class="sboxes">${reb}${wonBox}</div></div>`;
 }

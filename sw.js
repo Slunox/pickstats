@@ -10,6 +10,7 @@ const FILES = [
   'js/awake.js', 'js/export.js', 'js/render.js', 'js/actions.js', 'js/share.js', 'js/cloud.js', 'js/cloud-config.js', 'js/logo.js', 'js/statimage.js',
   'js/views/common.js', 'js/views/home.js', 'js/views/club.js', 'js/views/pick.js',
   'js/views/play.js', 'js/views/history.js', 'js/views/stats.js', 'js/views/archives.js',
+  'js/emarque.js', 'js/emarque-glyphs.js', 'js/views/emarque.js', 'js/views/emstats.js', 'js/views/report.js',
   'js/views/composition.js', 'js/views/settings.js', 'js/views/import.js', 'js/views/account.js', 'js/views/icons.js',
 ];
 

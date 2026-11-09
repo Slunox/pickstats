@@ -22,6 +22,12 @@ js/cloud.js             Données partagées du club (Firebase), voir FIREBASE.md
 js/cloud-config.js      Configuration Firebase du club (null = désactivé)
 js/logo.js              Logo du club : réduction de l’image choisie
 js/awake.js             Écran toujours allumé
+js/emarque.js           Lecture du résumé PDF de l’e-Marque (les chiffres y sont des formes, reconnues par modèles)
+                        et de la feuille de marque (score par quart-temps d’après la couleur des numéros)
+js/emarque-glyphs.js    Modèles des chiffres de l’e-Marque
+js/views/report.js      Rapport du match en 7 pages (dans l’appli et en fichier HTML à partager)
+js/vendor/              pdf.js 3.11.174 (build « legacy »), chargé seulement à l’import d’une feuille ;
+                        mis en cache hors ligne à la première utilisation (volontairement absent de FILES : 1,5 Mo)
 js/views/*.js           Un fichier par écran
 js/views/account.js     Compte et club : bandeau de l’accueil, fenêtre de connexion, page « Club et membres »
 sw.js                   Service worker (mode hors ligne)
