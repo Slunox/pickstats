@@ -16,9 +16,27 @@ function line(e, r) {
   return { e, m2, a2, a3, a1, fg: m2 + e.p3, afg: a2 + a3 };
 }
 
-const cells = L => `<td>${esc(L.e.min) || '<span class="z">—</span>'}</td><td class="b">${L.e.pts}</td>`
+// full : avec temps de jeu et fautes (match entier) ; sans, pour un quart-temps (la feuille ne les donne pas)
+const cells = (L, full = true) => (full ? `<td>${esc(L.e.min) || '<span class="z">—</span>'}</td>` : '') + `<td class="b">${L.e.pts}</td>`
   + `<td>${shot(L.fg, L.afg)}</td><td>${shot(L.m2, L.a2)}</td><td>${shot(L.e.p3, L.a3)}</td><td>${shot(L.e.lf, L.a1)}</td>`
-  + `<td>${L.e.f}</td>`;
+  + (full ? `<td>${L.e.f}</td>` : '');
+
+// Paniers réussis d'un joueur sur un quart-temps (q = 1, 2…), d'après la feuille de marque.
+const qMade = (n, q) => {
+  const x = ((S.em.us.qp || {})[n] || [])[q - 1] || {};
+  return { ...ZERO, pts: x.pts || 0, p2i: x.p2 || 0, p3: x.p3 || 0, lf: x.lf || 0 };
+};
+// Le détail par quart-temps existe-t-il (feuille de marque importée) ?
+export const hasQuarters = () => !!(S.em && S.em.us && S.em.us.qp);
+
+// Paniers réussis de l'équipe (q = null : match ; sinon un quart-temps), d'après la feuille.
+export function emMade(q) {
+  const u = S.em && S.em.us;
+  if (!u) return null;
+  if (q == null) return u.total;
+  if (!u.qp) return null;
+  return Object.keys(u.qp).map(n => qMade(n, q)).reduce((a, x) => ({ ...a, pts: a.pts + x.pts, p2i: a.p2i + x.p2i, p3: a.p3 + x.p3, lf: a.lf + x.lf }), { ...ZERO });
+}
 
 const half = (h, i) => (h && h[i] != null ? h[i] : '?');
 
@@ -38,31 +56,32 @@ export function emScore() {
 }
 
 // Tableau par joueur : feuille e-Marque (réussis, points, fautes, temps) + saisie (ratés).
-export function emTable() {
+// q = null : match entier ; q = 1, 2… : un quart-temps (si la feuille de marque est importée).
+export function emTable(q = null) {
   const em = S.em;
-  if (!em || !em.us) return '';
-  const T = tally(null);
+  if (!em || !em.us || (q != null && !hasQuarters())) return '';
+  const full = q == null, T = tally(q);
   const nums = [...new Set([...Object.keys(em.us.players || {}), ...Object.keys(T)])]
     .sort((a, b) => (+a - +b) || a.localeCompare(b));
   const nm = shortNames(allP()); // prénom, + initiale du nom si deux joueurs ont le même
+  const made = n => (full ? { ...ZERO, ...(em.us.players[n] || {}) } : qMade(n, q));
   const rows = nums.map(n => {
-    const e = { ...ZERO, ...(em.us.players[n] || {}) }, r = T[n] || {};
     const name = nm[n] || roster1(n).name;
-    return `<tr><th scope="row"><span class="pn">${esc(n)}</span>${esc(name) || '<span class="z">—</span>'}</th>${cells(line(e, r))}</tr>`;
+    return `<tr><th scope="row"><span class="pn">${esc(n)}</span>${esc(name) || '<span class="z">—</span>'}</th>${cells(line(made(n), T[n] || {}), full)}</tr>`;
   }).join('');
 
   // Totaux : la feuille pour l'équipe, la saisie pour les ratés de tous les joueurs
   const sum = k => Object.values(T).reduce((a, r) => a + (r[k] || 0), 0);
-  const tot = line({ ...ZERO, ...em.us.total }, { m1: sum('m1'), m2: sum('m2'), m3: sum('m3') });
+  const tot = line({ ...ZERO, ...emMade(q) }, { m1: sum('m1'), m2: sum('m2'), m3: sum('m3') });
 
   return `<div class="emblock">
     <h3>Feuille e-Marque + saisie</h3>
     <div class="tscroll"><table class="st emst">
-      <thead><tr><th>Joueur</th><th>Temps</th><th>Pts</th><th>Tirs</th><th>2 pts</th><th>3 pts</th><th>LF</th><th>Fautes</th></tr></thead>
+      <thead><tr><th>Joueur</th>${full ? '<th>Temps</th>' : ''}<th>Pts</th><th>Tirs</th><th>2 pts</th><th>3 pts</th><th>LF</th>${full ? '<th>Fautes</th>' : ''}</tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><th scope="row">Équipe</th>${cells(tot)}</tr></tfoot>
+      <tfoot><tr><th scope="row">Équipe</th>${cells(tot, full)}</tr></tfoot>
     </table></div>
-    <p class="help tnote">Réussis/tentés : les réussis viennent de l’e-Marque, les ratés de la saisie.</p>
+    <p class="help tnote">Réussis/tentés : les réussis viennent de l’e-Marque, les ratés de la saisie.${full ? '' : ' Temps de jeu et fautes : seulement sur le match entier.'}</p>
   </div>`;
 }
 

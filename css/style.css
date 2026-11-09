@@ -304,6 +304,9 @@ small.warn{color:#B45309;font-weight:700}
 html[data-theme="dark"] .tile small.avg.up{color:#5CC28F}html[data-theme="dark"] .tile small.avg.down{color:#F08A7E}
 /* Tuiles d'équipe : 3 par ligne (2 sur téléphone), pour garder deux rangées égales */
 .statsv .tiles{grid-template-columns:repeat(3,1fr)}@media(max-width:520px){.statsv .tiles{grid-template-columns:repeat(2,1fr)}}
+/* Tuiles de la feuille e-Marque (adresse, fautes) : 4 par ligne, au-dessus des tuiles de la saisie */
+.statsv .tiles.emtiles{grid-template-columns:repeat(4,1fr)}@media(max-width:520px){.statsv .tiles.emtiles{grid-template-columns:repeat(2,1fr)}}
+.statsv .tiles.emtiles.three{grid-template-columns:repeat(3,1fr)}
 .tscroll{overflow-x:auto;margin:0 -14px;padding:0 14px;-webkit-overflow-scrolling:touch}
 table.st{border-collapse:separate;border-spacing:0;min-width:640px}
 table.st th,table.st td{padding:10px 8px;border-bottom:1px solid var(--line)}

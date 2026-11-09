@@ -4,7 +4,7 @@ import { S, withMatch } from '../state.js';
 import { WON } from '../constants.js';
 import { esc, qLabel } from '../util.js';
 import { periods, tally, cnt, miss, curTeamColor, oppInk, allP, shortNames, seasonGames } from '../model.js';
-import { emStats, emTable } from './emstats.js';
+import { emStats, emTable, emMade } from './emstats.js';
 
 export const back = (label, x, v) =>
   `<button class="btn alt" data-x="${x}"${v ? ` data-v="${v}"` : ''}>‹ ${label}</button>`;
@@ -99,13 +99,47 @@ function seasonAvg() {
   return Object.fromEntries(TILES.map(([k]) => [k, V.reduce((a, v) => a + v[k], 0) / V.length]));
 }
 
-// Écart à la moyenne sous une tuile : « ▲ +3 (moy. 9,5) »
+// Tuiles de la feuille e-Marque : adresse à 2 pts, 3 pts, LF (réussis de la feuille, ratés de la saisie)
+// et fautes (match entier seulement : la feuille ne les donne pas par quart-temps). [clé, libellé, plus = mieux, pourcentage]
+const EM_TILES = [['p2', 'Tirs à 2 pts', true, true], ['p3', 'Tirs à 3 pts', true, true], ['lf', 'Lancers francs', true, true], ['f', 'Fautes', false]];
+function emVals(q = null) {
+  const u = emMade(q);
+  if (!u) return null;
+  const T = Object.values(tally(q)), s = k => T.reduce((a, r) => a + (r[k] || 0), 0);
+  const sh = (m, a) => ({ m, a, v: a ? 100 * m / a : null });
+  const p2 = u.p2i + u.p2e;
+  return { p2: sh(p2, p2 + s('m2')), p3: sh(u.p3, u.p3 + s('m3')), lf: sh(u.lf, u.lf + s('m1')), f: { v: q == null ? u.f : null } };
+}
+// Moyenne de la saison sur les autres matchs qui ont une feuille (au moins 2 par chiffre).
+function emAvg() {
+  const G = seasonGames();
+  if (!G) return null;
+  const V = G.list.filter(m => m.em && m.em.us).map(m => withMatch(m, () => emVals(null)));
+  return Object.fromEntries(EM_TILES.map(([k]) => {
+    const L = V.map(v => v[k].v).filter(x => x != null);
+    return [k, L.length >= 2 ? L.reduce((a, x) => a + x, 0) / L.length : null];
+  }));
+}
+function emTiles(q = null) {
+  const V = emVals(q);
+  if (!V) return '';
+  const A = q == null ? emAvg() : null; // comparaison sur le match entier seulement
+  const list = EM_TILES.filter(([k]) => V[k].v != null || k !== 'f');
+  return `<div class="tiles emtiles${list.length < 4 ? ' three' : ''}">${list.map(([k, label, up, pct]) => {
+    const x = V[k], big = x.v == null ? '–' : pct ? Math.round(x.v) + ' %' : x.v;
+    return `<div class="tile ${pct ? 'n' : 'f'}"><b>${big}</b><span>${label}${pct && x.a ? ` · ${x.m}/${x.a}` : ''}</span>`
+      + `${A && A[k] != null && x.v != null ? vsAvg(x.v, A[k], up, pct) : ''}</div>`;
+  }).join('')}</div>`;
+}
+
+// Écart à la moyenne sous une tuile : « ▲ +3 (moy. 9,5) », en points pour un pourcentage : « ▼ −4 pts (moy. 52 %) »
 const fmt1 = x => (Math.round(x * 10) / 10).toString().replace('.', ',');
-function vsAvg(v, a, up) {
-  const d = v - a, near = Math.abs(d) < Math.max(0.5, a * 0.05);
-  if (near) return `<small class="avg eq">≈ moyenne (${fmt1(a)})</small>`;
-  const good = (d > 0) === up;
-  return `<small class="avg ${good ? 'up' : 'down'}">${d > 0 ? '▲ +' : '▼ −'}${fmt1(Math.abs(d))} <span>(moy. ${fmt1(a)})</span></small>`;
+function vsAvg(v, a, up, pct = false) {
+  const d = v - a, near = pct ? Math.abs(d) < 2 : Math.abs(d) < Math.max(0.5, a * 0.05);
+  const avg = pct ? Math.round(a) + ' %' : fmt1(a);
+  if (near) return `<small class="avg eq">≈ moyenne (${avg})</small>`;
+  const good = (d > 0) === up, gap = pct ? Math.round(Math.abs(d)) + ' pts' : fmt1(Math.abs(d));
+  return `<small class="avg ${good ? 'up' : 'down'}">${d > 0 ? '▲ +' : '▼ −'}${gap} <span>(moy. ${avg})</span></small>`;
 }
 
 // part : 'all' (tout, écran du match en cours), 'team' (tuiles, rebonds, ballons gagnés)
@@ -144,8 +178,8 @@ export function statsView(q, part = 'all') {
     <div class="wt"><b>${wonT}</b><span>Total</span></div></div></div>`;
 
   const boxes = `<div class="sboxes">${reb}${wonBox}</div>`;
-  const body = part === 'team' ? tiles + boxes
-    : part === 'players' ? (q == null ? emTable() : '') + `<h3 class="sth">Actions saisies</h3>${table}`
+  const body = part === 'team' ? emTiles(q) + tiles + boxes
+    : part === 'players' ? emTable(q) + `<h3 class="sth">Actions saisies</h3>${table}`
     : (q == null ? emStats() : '') + tiles + table + boxes;
   return `<div class="statsv" style="--tc:${col};--b:${oppInk()}">${body}</div>`;
 }
