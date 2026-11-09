@@ -5,7 +5,7 @@
 
 import { S, ui } from '../state.js';
 import { esc, fdate } from '../util.js';
-import { roster1, curTeamColor, oppColor, isLight } from '../model.js';
+import { roster1, curTeamColor, oppColor, isLight, seasonGames } from '../model.js';
 import { WON } from '../constants.js';
 
 // --- Mise en forme ---
@@ -303,6 +303,53 @@ function findings(D, names) {
 export const PAGES = [['resume', 'Résumé'], ['quarts', 'Quart-temps'], ['equipe', 'Adresse par équipe'],
   ['joueurs', 'Adresse par joueur'], ['ballons', 'Ballons et rebonds'], ['adv', 'Adversaire'], ['methode', 'Méthode']];
 
+// --- Comparaison avec la saison ---
+
+// Chiffres d'un match pour la comparaison : feuille e-Marque (points, adresse) et saisie (le reste).
+// Pourcentages : réussis de la feuille, ratés de la saisie (comme dans le reste du rapport).
+function seasonVals(m) {
+  const ev = m.ev || [], c = a => ev.filter(e => e.a === a).length;
+  const v = {
+    stl: c('stl'), lost: c('to') + c('trav'), miss: c('m1') + c('m2') + c('m3'),
+    reb: c('ro') + c('rd'), won: WON.reduce((a, w) => a + c(w[0]), 0),
+  };
+  const u = m.em && m.em.us && m.em.us.total;
+  if (u) {
+    const fg = u.p2i + u.p2e + u.p3, afg = fg + c('m2') + c('m3'), a1 = u.lf + c('m1');
+    Object.assign(v, { pts: u.pts, opp: m.em.them.total.pts, fgp: afg ? 100 * fg / afg : null, lfp: a1 ? 100 * u.lf / a1 : null });
+  }
+  return v;
+}
+
+// [clé, libellé, plus = mieux, pourcentage]
+const SEASON_ROWS = [
+  ['pts', 'Points marqués', true], ['opp', 'Points encaissés', false],
+  ['fgp', 'Adresse aux tirs', true, true], ['lfp', 'Lancers francs', true, true],
+  ['stl', 'Interceptions', true], ['lost', 'Balles perdues et marchers', false], ['miss', 'Tirs ratés (LF compris)', false],
+  ['reb', 'Rebonds', true], ['won', 'Ballons gagnés', true],
+];
+
+// Tableau « Par rapport à la saison » : ce match, moyenne des autres matchs de l'équipe cette saison, écart.
+// Une ligne n'apparaît que si au moins 2 autres matchs ont la donnée (feuille e-Marque pour points et adresse).
+function seasonTable(table) {
+  const G = seasonGames();
+  if (!G) return null;
+  const cur = seasonVals({ ev: S.ev, em: S.em }), V = G.list.map(seasonVals);
+  const n1 = x => (Math.round(x * 10) / 10).toString().replace('.', ',');
+  const show = (x, pct) => (pct ? Math.round(x) + ' %' : n1(x));
+  const rows = SEASON_ROWS.map(([k, label, up, pct]) => {
+    const L = V.map(v => v[k]).filter(x => x != null);
+    if (cur[k] == null || L.length < 2) return '';
+    const avg = L.reduce((a, x) => a + x, 0) / L.length, d = cur[k] - avg;
+    const near = pct ? Math.abs(d) < 2 : Math.abs(d) < Math.max(0.5, Math.abs(avg) * 0.05);
+    const gap = near ? '≈' : (d > 0 ? '+' : '−') + (pct ? Math.round(Math.abs(d)) + ' pts' : n1(Math.abs(d)));
+    return `<tr><td>${label}</td><td class="n b">${show(cur[k], pct)}</td><td class="n">${show(avg, pct)}</td>`
+      + `<td class="n ${near ? '' : (d > 0) === up ? 'good' : 'low'}">${gap}</td></tr>`;
+  }).join('');
+  if (!rows) return null;
+  return { n: G.list.length, season: G.season, html: table('<th>Indicateur</th><th class="n">Ce match</th><th class="n">Moyenne</th><th class="n">Écart</th>', rows) };
+}
+
 function pages(D) {
   const { em, us, th, s, b, players, quarters } = D;
   // Noms courts dans les phrases et les tableaux : le club plutôt que l'équipe
@@ -320,6 +367,7 @@ function pages(D) {
     ? `<div class="rp-qline">${quarters.map(q => `<span>${qName(q.i)} ${q.us}-${q.th}</span>${q.i === 1 ? `<span>Mi-temps ${q.cum[0]}-${q.cum[1]}</span>` : ''}`).join('')}</div>`
     : (us.halves && th.halves ? `<div class="rp-qline"><span>Mi-temps ${us.halves[0]}-${th.halves[0]}</span><span>2e mi-temps ${us.halves[1]}-${th.halves[1]}</span></div>` : '');
   const F = findings(D, names);
+  const SEA = seasonTable(table);
   P.resume = `<div class="rp-score"><div class="rp-team"><span>${esc(U)}</span><span class="big">${us.total.pts}</span></div><span class="sep">–</span>`
     + `<div class="rp-team"><span>${esc(T)}</span><span class="big">${th.total.pts}</span></div><span class="rp-pill ${d > 0 ? 'good' : d < 0 ? 'low' : ''}">${d > 0 ? 'Victoire' : d < 0 ? 'Défaite' : 'Nul'}</span></div>`
     + qline
@@ -327,7 +375,8 @@ function pages(D) {
     + `<div class="rp-kpis">${kpi('Adresse aux tirs', pc(s.fg, s.afg), `${ma(s.fg, s.afg)} tirs réussis`)}${kpi('Tirs à 3 points', ma(s.p3, s.a3), `${esc(first(T))} : ${th.total.p3} paniers primés`)}`
     + `${kpi('Lancers francs', pc(s.lf, s.a1), `${ma(s.lf, s.a1)} réussis`)}${kpi('Rebonds offensifs', b.ro, `${esc(first(T))} : ${b.orb}`)}`
     + `${kpi('Balles perdues', b.to, b.trav ? `+ ${b.trav} marcher${b.trav > 1 ? 's' : ''}` : '&nbsp;')}${kpi('Interceptions', b.stl, b.won ? `+ ${b.won} ballon${b.won > 1 ? 's' : ''} gagné${b.won > 1 ? 's' : ''}` : '&nbsp;')}</div>`
-    + (F.length ? `<h3 class="rp-h3">Ce qu’il faut retenir</h3><ul class="rp-finds">${F.map(f => `<li class="${f.tone > 0 ? 'up' : f.tone < 0 ? 'down' : 'eq'}"><strong>${f.t}</strong> ${f.x}</li>`).join('')}</ul>` : '');
+    + (F.length ? `<h3 class="rp-h3">Ce qu’il faut retenir</h3><ul class="rp-finds">${F.map(f => `<li class="${f.tone > 0 ? 'up' : f.tone < 0 ? 'down' : 'eq'}"><strong>${f.t}</strong> ${f.x}</li>`).join('')}</ul>` : '')
+    + (SEA ? `<h3 class="rp-h3">Par rapport à la saison</h3><p class="rp-muted">Comparé aux ${SEA.n} autres matchs de ${esc(S.me)} en ${SEA.season}. En vert : mieux que d’habitude ; en rouge : moins bien.</p>${SEA.html}` : '');
 
   // 2. Quart-temps
   if (quarters.length) {

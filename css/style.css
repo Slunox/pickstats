@@ -96,9 +96,16 @@ html[data-theme="dark"] select{background-image:url("data:image/svg+xml,%3Csvg x
 .prow2.head,.prow3.head{font-weight:700;font-size:.85rem;color:var(--mut);margin-bottom:4px}
 .prow2 input{min-height:52px;font-size:1.1rem;min-width:0}.prow2 input[data-pu]{text-align:center;font-weight:800}
 .gpn{display:grid;grid-template-columns:3.2em 1fr;gap:8px;align-items:center;margin-bottom:8px}.gpn input{min-height:46px;min-width:0}
-.gnames summary{cursor:pointer;list-style:none}.gnames summary::-webkit-details-marker{display:none}
-.gnames summary h3{display:inline;margin:0}.gnames summary::after{content:" ›";color:var(--mut)}.gnames[open] summary::after{content:" ⌄"}
-.gnames[open] summary{margin-bottom:8px}
+/* Fiche d'un match archivé : sections repliables « Gérer le match » et « Corriger les noms » */
+.gman summary,.gnames summary{cursor:pointer;list-style:none}.gman summary::-webkit-details-marker,.gnames summary::-webkit-details-marker{display:none}
+.gman summary h3,.gnames summary h4{display:inline;margin:0}.gman>summary::after,.gnames summary::after{content:" ›";color:var(--mut)}.gman[open]>summary::after,.gnames[open] summary::after{content:" ⌄"}
+.gman[open]>summary{margin-bottom:6px}.gnames[open] summary{margin-bottom:8px}
+.gsec{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.gsec h4{margin:0 0 8px}.gsec .gby{margin:0}
+.grep{margin-top:10px}.sth{margin:18px 0 8px}
+/* Onglets Équipe / Joueurs : sélecteur à deux segments (différent des filtres de quart-temps) */
+.chips.gtabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:14px 0 14px;padding:4px;border-radius:14px;background:var(--bg)}
+.gtabs .chip{margin:0;border:0;background:none;color:var(--mut);justify-content:center;text-align:center}
+.gtabs .chip.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .prow3{display:grid;grid-template-columns:34px 1fr 90px;gap:8px;margin-bottom:8px;align-items:center}
 .prow3 input[type=checkbox]{width:30px;height:30px;min-height:0;accent-color:var(--a)}
 .prow3 .pname{font-weight:700;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis}
@@ -290,6 +297,13 @@ small.warn{color:#B45309;font-weight:700}
 .tile{padding:12px 14px;border-radius:14px;background:var(--bg);border-left:5px solid var(--gn);display:flex;flex-direction:column;gap:2px}
 .tile.f{border-left-color:var(--gf)}.tile.r{border-left-color:var(--gr)}
 .tile b{font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}.tile span{color:var(--mut);font-size:.85rem;font-weight:600}
+/* Écart à la moyenne de la saison sous une tuile */
+.tile small.avg{margin-top:4px;font-size:.85rem;font-weight:700;line-height:1.25;color:var(--mut)}
+.tile small.avg span{font-weight:600;color:var(--mut)}
+.tile small.avg.up{color:#15803D}.tile small.avg.down{color:#B91C1C}
+html[data-theme="dark"] .tile small.avg.up{color:#5CC28F}html[data-theme="dark"] .tile small.avg.down{color:#F08A7E}
+/* Tuiles d'équipe : 3 par ligne (2 sur téléphone), pour garder deux rangées égales */
+.statsv .tiles{grid-template-columns:repeat(3,1fr)}@media(max-width:520px){.statsv .tiles{grid-template-columns:repeat(2,1fr)}}
 .tscroll{overflow-x:auto;margin:0 -14px;padding:0 14px;-webkit-overflow-scrolling:touch}
 table.st{border-collapse:separate;border-spacing:0;min-width:640px}
 table.st th,table.st td{padding:10px 8px;border-bottom:1px solid var(--line)}
@@ -298,8 +312,10 @@ table.st .grp th{border-bottom:0;padding:0 4px 2px}
 table.st .grp .g{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#16242C;border-radius:8px 8px 0 0;padding:4px}
 table.st .grp .g.n{background:var(--gn)}table.st .grp .g.f{background:var(--gf)}table.st .grp .g.r{background:var(--gr)}
 table.st thead tr:last-child th.n{box-shadow:inset 0 3px 0 var(--gn)}table.st thead tr:last-child th.f{box-shadow:inset 0 3px 0 var(--gf)}table.st thead tr:last-child th.r{box-shadow:inset 0 3px 0 var(--gr)}
-table.st tbody th,table.st tfoot th{text-align:left;font-weight:700;position:sticky;left:0;background:var(--card);z-index:1;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
-table.st thead th:first-child{position:sticky;left:0;background:var(--card);z-index:1;text-align:left}
+table.st tbody th,table.st tfoot th{text-align:left;font-weight:700;position:sticky;left:-14px;background:var(--card);z-index:1;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+table.st thead th:first-child{position:sticky;left:-14px;background:var(--card);z-index:1;text-align:left}
+/* Colonne des joueurs figée : collée au bord quand on fait glisser le tableau, avec une ombre pour la séparer des chiffres */
+table.st tbody th,table.st tfoot th,table.st thead th:first-child{box-shadow:6px 0 6px -6px rgba(0,0,0,.25)}
 table.st tbody tr:nth-child(even) td,table.st tbody tr:nth-child(even) th{background:color-mix(in srgb,var(--bg) 45%,var(--card))}
 table.st td{font-size:1.05rem;font-weight:600}
 table.st td.z{color:var(--line);font-weight:400}
@@ -337,7 +353,7 @@ table.emt tr.bad th,table.emt tr.bad td{background:#FDE2DE}table.emt tr.bad th{c
 .emhead b{font-size:2rem;font-variant-numeric:tabular-nums;white-space:nowrap}
 .emres{margin:8px 0 0;text-align:center;font-weight:800}.emres.w{color:#15803D}.emres.l{color:#B91C1C}.emres.d{color:var(--mut)}
 .emhalf{margin:2px 0 0;text-align:center;font-size:.85rem;color:var(--mut)}
-table.emst{min-width:720px}table.emst td{text-align:center;line-height:1.1}table.emst td small{display:block;margin-top:6px;font-size:.72rem;line-height:1.2;color:var(--mut);font-weight:600}
+table.emst{min-width:640px}table.emst td{text-align:center;line-height:1.1}table.emst td small{display:block;margin-top:6px;font-size:.72rem;line-height:1.2;color:var(--mut);font-weight:600}
 table.emst td.b{font-weight:800}table.emst .pn{background:var(--tc)}
 .mscore{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:.8rem;font-weight:800;color:#fff;background:var(--mut)}
 .mscore.w{background:#15803D}.mscore.l{background:#B91C1C}

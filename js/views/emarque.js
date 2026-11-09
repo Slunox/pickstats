@@ -10,23 +10,25 @@ import { back } from './common.js';
 // Colonnes vérifiées : [clé, en-tête]
 const COLS = [['min', 'Temps'], ['pts', 'Pts'], ['p3', '3 pts'], ['p2i', '2 pts int.'], ['p2e', '2 pts ext.'], ['lf', 'LF'], ['f', 'Fautes']];
 
-// Carte « Feuille e-Marque » dans la fiche d'un match archivé.
+const EM_INPUT = '<input type="file" id="emfile" accept=".pdf,application/pdf" multiple hidden>';
+
+// Carte « Feuille e-Marque » dans la fiche d'un match archivé : seulement tant qu'aucune feuille
+// n'est importée (ensuite, Remplacer / Retirer sont dans « Gérer le match »).
 export function emCard(m) {
-  const edit = canEdit();
-  if (!m.em && !edit) return '';
-  const input = '<input type="file" id="emfile" accept=".pdf,application/pdf" multiple hidden>';
+  if (m.em || !canEdit()) return '';
   if (ui.emBusy) return '<div class="card"><h3>Feuille e-Marque</h3><p class="help">Lecture du PDF…</p></div>';
-  if (m.em) {
-    return `<div class="card"><h3>Feuille e-Marque</h3>
-      <p class="help">Importée${m.em.num ? ' (rencontre n° ' + esc(m.em.num) + ')' : ''}${m.em.us && m.em.us.q ? ', avec le score par quart-temps' : ' (sans la feuille de marque : pas de détail par quart-temps)'}.</p>
-      <div class="crow"><button class="btn" data-x="rpopen">Rapport du match</button><button class="btn alt" data-x="rpfile">Télécharger le dossier (HTML)</button></div>
-      ${edit ? `<div class="crow"><button class="btn alt" data-x="empick">Remplacer</button><button class="btn alt" data-x="emdel">Retirer</button></div>${input}` : ''}
-    </div>`;
-  }
   return `<div class="card"><h3>Feuille e-Marque</h3>
-    <p class="help">Choisis le <b>résumé</b> (« resume_… .pdf ») et, si tu l’as, la <b>feuille de marque</b> (« feuillematch_… .pdf ») : tu peux sélectionner les deux fichiers en même temps. Tu obtiens les points, les fautes, le temps de jeu, les % de réussite et un rapport complet du match, quart-temps par quart-temps.</p>
-    <button class="btn" data-x="empick">Importer la feuille e-Marque</button>${input}
+    <p class="help" style="margin-bottom:14px">Choisis le <b>résumé</b> (« resume_… .pdf ») et, si tu l’as, la <b>feuille de marque</b> (« feuillematch_… .pdf ») : tu peux sélectionner les deux fichiers en même temps. Tu obtiens les points, les fautes, le temps de jeu, les % de réussite et un rapport complet du match, quart-temps par quart-temps.</p>
+    <button class="btn" data-x="empick">Importer la feuille e-Marque</button>${EM_INPUT}
   </div>`;
+}
+
+// Feuille déjà importée : infos, Remplacer / Retirer (dans « Gérer le match »).
+export function emManage(m) {
+  if (!m.em || !canEdit()) return '';
+  if (ui.emBusy) return '<p class="help">Lecture du PDF…</p>';
+  return `<p class="help" style="margin-top:0">Importée${m.em.num ? ' (rencontre n° ' + esc(m.em.num) + ')' : ''}${m.em.us && m.em.us.q ? ', avec le score par quart-temps' : ' (sans la feuille de marque : pas de détail par quart-temps)'}.</p>
+    <button class="btn alt" data-x="empick">Remplacer</button><button class="btn alt" data-x="emdel">Retirer</button>${EM_INPUT}`;
 }
 
 // Nom de l'adversaire à enregistrer : celui de la feuille (l'autre équipe), sauf s'il a été corrigé.

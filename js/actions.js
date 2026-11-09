@@ -177,7 +177,9 @@ const ACTIONS = {
   },
 
   // Matchs archivés
-  gopen: el => { ui.gid = el.dataset.id; ui.view = 'game'; ui.sq = 'all'; },
+  gopen: el => { ui.gid = el.dataset.id; ui.view = 'game'; ui.sq = 'all'; ui.gmOpen = false; },
+  // Onglets de la fiche d'un match archivé : Équipe / Joueurs
+  gtab: el => { ui.gtab = el.dataset.v; },
   gf: el => { ui.gfilter = el.dataset.v; },
   gback: () => { ui.view = 'games'; },
   // Feuille e-Marque d'un match archivé
@@ -577,4 +579,5 @@ swipeNav(document);
 
 document.addEventListener('toggle', e => {
   if (e.target.classList && e.target.classList.contains('gnames')) ui.gnOpen = e.target.open;
+  if (e.target.classList && e.target.classList.contains('gman')) ui.gmOpen = e.target.open;
 }, true);

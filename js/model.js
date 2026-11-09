@@ -86,6 +86,19 @@ export function shortNames(list) {
   }));
 }
 
+// Autres matchs archivés de la même équipe sur la même saison (août à juillet) que le match affiché
+// (à appeler dans withMatch). null si le match affiché n'est pas archivé (match en cours : chiffres
+// encore incomplets) ou s'il y a moins de `min` autres matchs.
+export function seasonGames(min = 2) {
+  const all = S.arch || [], cur = all.find(m => m.ev === S.ev);
+  if (!cur) return null;
+  const d = new Date(cur.date), y = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1;
+  const from = new Date(y, 7, 1), to = new Date(y + 1, 7, 1);
+  const same = m => (S.teamId && m.teamId ? m.teamId === S.teamId : m.me === S.me);
+  const list = all.filter(m => m !== cur && same(m) && new Date(m.date) >= from && new Date(m.date) < to && (m.ev || []).length);
+  return list.length < min ? null : { list, season: `${y}-${String(y + 1).slice(2)}` };
+}
+
 // --- Équipes ---
 
 export function teamLabel(t) {

@@ -1,10 +1,10 @@
 // Morceaux d'interface partagés entre plusieurs écrans.
 
-import { S } from '../state.js';
+import { S, withMatch } from '../state.js';
 import { WON } from '../constants.js';
 import { esc, qLabel } from '../util.js';
-import { periods, tally, cnt, miss, curTeamColor, oppInk } from '../model.js';
-import { emStats } from './emstats.js';
+import { periods, tally, cnt, miss, curTeamColor, oppInk, allP, shortNames, seasonGames } from '../model.js';
+import { emStats, emTable } from './emstats.js';
 
 export const back = (label, x, v) =>
   `<button class="btn alt" data-x="${x}"${v ? ` data-v="${v}"` : ''}>‹ ${label}</button>`;
@@ -76,23 +76,56 @@ function duel(label, us, them) {
     <div class="dbar"><i style="width:${p}%"></i></div></div>`;
 }
 
-export function statsView(q) {
+// Chiffres d'équipe des tuiles (saisie Pick&Stats), pour une période (null = tout le match).
+// up : true si « plus » est mieux, false si « moins » est mieux.
+const TILES = [
+  ['stl', 'Interceptions', 'n', true], ['fd', 'Fautes provoquées', 'n', true],
+  ['lost', 'Pertes de balle', 'f', false], ['miss', 'Tirs ratés', 'r', false],
+  ['reb', 'Rebonds', 'n', true], ['won', 'Ballons gagnés', 'n', true],
+];
+function teamVals(q) {
+  const T = Object.values(tally(q)), s = k => T.reduce((a, r) => a + (r[k] || 0), 0);
+  return {
+    stl: s('stl'), fd: s('fd'), lost: s('to') + s('trav'), miss: T.reduce((a, r) => a + miss(r), 0),
+    reb: cnt('ro', q) + cnt('rd', q), won: WON.reduce((a, w) => a + cnt(w[0], q), 0),
+  };
+}
+
+// Moyenne de la saison pour l'équipe du match affiché (voir seasonGames).
+function seasonAvg() {
+  const G = seasonGames();
+  if (!G) return null;
+  const V = G.list.map(m => withMatch(m, () => teamVals(null)));
+  return Object.fromEntries(TILES.map(([k]) => [k, V.reduce((a, v) => a + v[k], 0) / V.length]));
+}
+
+// Écart à la moyenne sous une tuile : « ▲ +3 (moy. 9,5) »
+const fmt1 = x => (Math.round(x * 10) / 10).toString().replace('.', ',');
+function vsAvg(v, a, up) {
+  const d = v - a, near = Math.abs(d) < Math.max(0.5, a * 0.05);
+  if (near) return `<small class="avg eq">≈ moyenne (${fmt1(a)})</small>`;
+  const good = (d > 0) === up;
+  return `<small class="avg ${good ? 'up' : 'down'}">${d > 0 ? '▲ +' : '▼ −'}${fmt1(Math.abs(d))} <span>(moy. ${fmt1(a)})</span></small>`;
+}
+
+// part : 'all' (tout, écran du match en cours), 'team' (tuiles, rebonds, ballons gagnés)
+// ou 'players' (tableaux par joueur).
+export function statsView(q, part = 'all') {
   const T = Object.values(tally(q)).map(r => ({ ...r, miss: miss(r) }));
+  const nm = shortNames(allP()); // prénom, + initiale du nom si deux joueurs ont le même
   const s = k => T.reduce((a, r) => a + r[k], 0);
   const max = k => Math.max(0, ...T.map(r => r[k]));
   const won = WON.map(w => cnt(w[0], q)), wonT = won.reduce((a, b) => a + b, 0);
   const ro = cnt('ro', q), rd = cnt('rd', q), orb = cnt('orb', q), odr = cnt('odr', q);
   const col = curTeamColor();
 
-  const tile = (v, label, cls) => `<div class="tile ${cls}"><b>${v}</b><span>${label}</span></div>`;
-  const tiles = `<div class="tiles">
-    ${tile(s('stl'), 'Interceptions', 'n')}${tile(s('fd'), 'Fautes provoquées', 'n')}
-    ${tile(s('to') + s('trav'), 'Pertes de balle', 'f')}${tile(s('miss'), 'Tirs ratés', 'r')}
-    ${tile(ro + rd, 'Rebonds', 'n')}${tile(wonT, 'Ballons gagnés', 'n')}
-  </div>`;
+  // Tuiles d'équipe, comparées à la moyenne de la saison sur le match entier
+  const V = teamVals(q), A = q == null ? seasonAvg() : null;
+  const tiles = `<div class="tiles">${TILES.map(([k, label, cls, up]) =>
+    `<div class="tile ${cls}"><b>${V[k]}</b><span>${label}</span>${A ? vsAvg(V[k], A[k], up) : ''}</div>`).join('')}</div>`;
 
   const M = Object.fromEntries(COLS.map(([k]) => [k, max(k)]));
-  const rows = T.map(r => `<tr><th scope="row"><span class="pn" style="background:${col}">${esc(r.n)}</span>${esc(r.name) || '<span class="z">—</span>'}</th>`
+  const rows = T.map(r => `<tr><th scope="row"><span class="pn" style="background:${col}">${esc(r.n)}</span>${esc(nm[r.n] || r.name) || '<span class="z">—</span>'}</th>`
     + COLS.map(([k, , g]) => cell(r[k], r[k] === M[k], g)).join('') + '</tr>').join('');
   const table = `<div class="tscroll"><table class="st">
     <thead>
@@ -101,8 +134,7 @@ export function statsView(q) {
     </thead>
     <tbody>${rows || `<tr><td colspan="9" class="z">Aucun joueur</td></tr>`}</tbody>
     <tfoot><tr><th scope="row">Équipe</th>${COLS.map(([k]) => `<td>${s(k)}</td>`).join('')}</tr></tfoot>
-  </table></div>
-  <p class="help tnote">Le plus haut total de chaque colonne est surligné.</p>`;
+  </table></div>`;
 
   const reb = `<div class="sbox"><h3>Rebonds</h3>
     <div class="dhead"><span style="color:${col}">${esc(S.me)}</span><span class="them" style="color:${oppInk()}">${esc(S.opp)}</span></div>
@@ -111,5 +143,9 @@ export function statsView(q) {
     ${WON.map((w, i) => `<div><b>${won[i]}</b><span>${w[1]}</span></div>`).join('')}
     <div class="wt"><b>${wonT}</b><span>Total</span></div></div></div>`;
 
-  return `<div class="statsv" style="--tc:${col};--b:${oppInk()}">${q == null ? emStats() : ''}${tiles}${table}<div class="sboxes">${reb}${wonBox}</div></div>`;
+  const boxes = `<div class="sboxes">${reb}${wonBox}</div>`;
+  const body = part === 'team' ? tiles + boxes
+    : part === 'players' ? (q == null ? emTable() : '') + `<h3 class="sth">Actions saisies</h3>${table}`
+    : (q == null ? emStats() : '') + tiles + table + boxes;
+  return `<div class="statsv" style="--tc:${col};--b:${oppInk()}">${body}</div>`;
 }
