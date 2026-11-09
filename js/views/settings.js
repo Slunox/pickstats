@@ -44,7 +44,7 @@ export function settings() {
       '<button class="btn" data-x="backup">Sauvegarder (fichier)</button><button class="btn" data-x="restore">Restaurer une sauvegarde</button><input type="file" id="restore" accept=".json,application/json" hidden>',
       'Le fichier contient le match en cours, les archives, les équipes et les réglages. Garde-le en lieu sûr : si les données du navigateur sont effacées, tu pourras tout récupérer.')
     + (DEMO ? '' : card('Découvrir l’appli',
-      '<a class="btn" href="demo.html" target="_blank" rel="noopener">Voir la démo animée</a>',
+      '<a class="btn" href="demo.html">Voir la démo animée</a>',
       'Trois minutes pour tout comprendre, à partager avec les bénévoles et les coachs. La démo utilise des données inventées : elle ne touche pas aux tiennes.'))
     + '<p class="help">Tout est enregistré automatiquement sur cet appareil. Exporte le CSV après chaque match.</p>'
     + `<p class="help">Version ${APP_VERSION}</p>`;

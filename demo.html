@@ -25,6 +25,8 @@ header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 header img{width:36px;height:36px;border-radius:9px}
 header h1{font-size:20px;margin:0}
 header p{margin:0;color:var(--muted);font-size:14px}
+header .back{margin-left:auto;flex:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;text-decoration:none}
+header .back:hover{border-color:var(--accent)}
 .chaps{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .chap{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
 .chap.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
@@ -75,6 +77,7 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
   <header>
     <img src="icon-192.png" alt="">
     <div><h1>Pick&amp;Stats en 3 minutes</h1><p>Démo animée de l’appli · données fictives</p></div>
+    <a class="back" href="./">← Retour à l’appli</a>
   </header>
   <div class="chaps" id="chaps"></div>
   <div class="dev"><div class="scr" id="scr">
