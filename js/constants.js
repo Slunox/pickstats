@@ -1,7 +1,10 @@
 // Données fixes de l'appli : libellés, listes d'actions, catégories.
 
 export const APP_VERSION = '3.2';
-export const STORAGE_KEY = 'bb-stats-2';
+// Mode démo (index.html?demo, utilisé par demo.html) : données à part, sans club en ligne,
+// pour ne jamais toucher aux vraies données de l'appareil.
+export const DEMO = typeof location !== 'undefined' && /[?&]demo(=|&|$)/.test(location.search);
+export const STORAGE_KEY = DEMO ? 'bb-demo' : 'bb-stats-2';
 
 // Actions d'un joueur : [code, libellé du bouton, couleur]
 // Couleurs : n = positif (vert), f = faute (jaune), r = raté (rouge)

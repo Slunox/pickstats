@@ -59,6 +59,7 @@ th{font-size:.85rem;color:var(--mut);font-weight:700}
 td:first-child,th:first-child{text-align:left}
 tr.tot td{font-weight:800;border-bottom:0}
 .btn{padding:14px 20px;border-radius:10px;background:var(--dk);color:#fff;font-weight:700;margin:0 8px 8px 0}
+a.btn{display:inline-block;text-decoration:none}
 .btn.bad{background:#B91C1C}
 label{display:block;font-weight:700;margin:8px 0 4px}
 input,textarea{width:100%;font:inherit;padding:10px;border-radius:8px;border:2px solid var(--line);background:var(--card);color:var(--ink);-webkit-user-select:text;user-select:text}
@@ -94,6 +95,10 @@ html[data-theme="dark"] select{background-image:url("data:image/svg+xml,%3Csvg x
 .prow2{display:grid;grid-template-columns:1fr 90px 52px;gap:8px;margin-bottom:8px;align-items:center}
 .prow2.head,.prow3.head{font-weight:700;font-size:.85rem;color:var(--mut);margin-bottom:4px}
 .prow2 input{min-height:52px;font-size:1.1rem;min-width:0}.prow2 input[data-pu]{text-align:center;font-weight:800}
+.gpn{display:grid;grid-template-columns:3.2em 1fr;gap:8px;align-items:center;margin-bottom:8px}.gpn input{min-height:46px;min-width:0}
+.gnames summary{cursor:pointer;list-style:none}.gnames summary::-webkit-details-marker{display:none}
+.gnames summary h3{display:inline;margin:0}.gnames summary::after{content:" ›";color:var(--mut)}.gnames[open] summary::after{content:" ⌄"}
+.gnames[open] summary{margin-bottom:8px}
 .prow3{display:grid;grid-template-columns:34px 1fr 90px;gap:8px;margin-bottom:8px;align-items:center}
 .prow3 input[type=checkbox]{width:30px;height:30px;min-height:0;accent-color:var(--a)}
 .prow3 .pname{font-weight:700;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis}

@@ -287,6 +287,20 @@ const ACTIONS = {
     ui.tid = t.id; ui.tnew = t.id; ui.view = 'tedit';
     save();
   },
+  // Match archivé : reprend les noms de l'équipe (même numéro habituel)
+  gnames: () => {
+    const m = curG(), t = m && S.teams.find(z => (m.teamId ? m.teamId === z.id : m.me === z.name));
+    if (!t) return false;
+    let n = 0;
+    m.roster.forEach(p => {
+      const tp = t.players.find(z => String(z.num || '').trim() === String(p.n) && String(z.name).trim());
+      if (tp && tp.name !== p.name) { p.name = tp.name; n++; }
+    });
+    ui.gnOpen = true;
+    save();
+    if (n) toast(`${n} nom${n > 1 ? 's' : ''} mis à jour`);
+    else note('Aucun nom à changer. Les noms sont repris d’après le numéro habituel de chaque joueur dans l’équipe : vérifie ces numéros dans « Effectifs et matchs », ou corrige les noms à la main ci-dessous.');
+  },
   tempick: () => { const f = $('#tefile'); if (f) f.click(); return false; },
   tback: () => {
     sortPlayers();
@@ -386,7 +400,7 @@ function focusAfter(x) {
 }
 
 // Actions interdites aux bénévoles.
-const EDIT_ONLY = ['tedit', 'addteam', 'tempick','delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
+const EDIT_ONLY = ['tedit', 'addteam', 'tempick', 'gnames', 'delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
 
 document.addEventListener('click', e => {
   // Toucher le fond sombre ferme la fenêtre comme « Annuler ».
@@ -432,6 +446,8 @@ const INPUTS = {
     if (pv) pv.textContent = team.name;
   },
   pn: (d, t) => { tm().players[+d.pn].name = t.value; save(); },
+  // Nom d'un joueur dans un match archivé
+  gpn: (d, t) => { const m = curG(); if (m && canEdit()) { m.roster[+d.gpn].name = t.value; save(); } },
   pu: (d, t) => { tm().players[+d.pu].num = t.value; save(); },
   po: (d, t) => { ui.P.opp = t.value; },
   // Correction d'une valeur lue sur la feuille e-Marque
@@ -551,3 +567,8 @@ document.addEventListener('change', e => {
     render();
   }
 });
+
+// Garde ouvert le volet « Corriger les noms des joueurs » d'un match archivé entre deux affichages.
+document.addEventListener('toggle', e => {
+  if (e.target.classList && e.target.classList.contains('gnames')) ui.gnOpen = e.target.open;
+}, true);

@@ -22,8 +22,11 @@
 // Les suppressions sont notées (tombes) jusqu'à ce que Firestore les ait reçues.
 
 import { S, save, saveHooks } from './state.js';
-import { FIREBASE } from './cloud-config.js';
+import { FIREBASE as CONFIG } from './cloud-config.js';
+import { DEMO } from './constants.js';
 import { toast } from './dom.js';
+
+const FIREBASE = DEMO ? null : CONFIG;
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
 const SEEN_KEY = 'bb-cloud-seen';

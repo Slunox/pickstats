@@ -98,6 +98,19 @@ const byLine = m => canEdit()
   ? `<label class="gby">Stats saisies par <input data-mby="${m.id}" value="${esc(m.by || '')}" maxlength="20" placeholder="Pseudo" autocomplete="off"></label>`
   : (m.by ? `<p class="help" style="margin:-4px 0 10px">Stats saisies par ${esc(m.by)}</p>` : '');
 
+// Noms des joueurs d'un match archivé : ils sont copiés au moment de l'archivage,
+// on peut donc les corriger ici (à la main ou d'après l'équipe, par numéro de maillot).
+function namesCard(m) {
+  if (!canEdit() || !m.roster.length) return '';
+  const t = S.teams.find(z => inTeam(m, z));
+  return `<details class="card gnames"${ui.gnOpen ? ' open' : ''}><summary><h3>Corriger les noms des joueurs</h3></summary>
+    <p class="help">Les noms sont enregistrés avec le match au moment de l’archivage : modifier l’équipe ensuite ne les change pas. Corrige-les ici.</p>
+    ${t ? `<button class="btn alt" data-x="gnames">Reprendre les noms de l’équipe ${esc(t.name)}</button>
+    <p class="help" style="margin-top:0">Chaque joueur du match reçoit le nom du joueur de l’équipe qui a le même numéro habituel.</p>` : ''}
+    ${m.roster.map((p, i) => `<div class="gpn"><b>#${esc(p.n)}</b><input data-gpn="${i}" value="${esc(p.name)}" placeholder="Nom du joueur" aria-label="Nom du n° ${esc(p.n)}"></div>`).join('')}
+  </details>`;
+}
+
 export function game() {
   const m = curG();
   if (!m) return '<div class="card"><p class="help">Match introuvable.</p></div>';
@@ -106,6 +119,7 @@ export function game() {
     return periodChips(ui.sq, 'sq', 'Total match')
       + `<div class="card"><h2>${esc(S.me)} contre ${esc(S.opp)} — ${fdate(m)}</h2>${byLine(m)}${statsView(q)}</div>`
       + emCard(m)
+      + namesCard(m)
       + exportButtons()
       + sendCard()
       + (canEdit() ? `<button class="btn bad" data-x="gdel" data-id="${m.id}">Supprimer ce match</button>` : '');

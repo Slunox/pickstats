@@ -6,13 +6,14 @@ import { keepAwake } from './awake.js';
 import './actions.js'; // branche les écouteurs de clics et de saisie
 import { takeHash } from './share.js';
 import { initCloud } from './cloud.js';
+import { DEMO } from './constants.js';
 
 try {
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.theme === 'auto') applyTheme(); });
 } catch (e) {}
 
 // Ouverture par un lien de match envoyé depuis un autre appareil
-takeHash();
+if (!DEMO) takeHash();
 window.addEventListener('hashchange', () => { if (takeHash()) render(); });
 
 render();
@@ -23,6 +24,6 @@ document.addEventListener('click', keepAwake);
 document.addEventListener('gesturestart', e => e.preventDefault());
 keepAwake();
 
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+if (!DEMO && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
