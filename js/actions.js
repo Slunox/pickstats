@@ -581,3 +581,9 @@ document.addEventListener('toggle', e => {
   if (e.target.classList && e.target.classList.contains('gnames')) ui.gnOpen = e.target.open;
   if (e.target.classList && e.target.classList.contains('gman')) ui.gmOpen = e.target.open;
 }, true);
+
+// Tableaux qui défilent de côté : ombre sous la colonne des joueurs seulement une fois glissés.
+document.addEventListener('scroll', e => {
+  const t = e.target;
+  if (t.classList && t.classList.contains('tscroll')) t.classList.toggle('slid', t.scrollLeft > 2);
+}, true);

@@ -314,8 +314,9 @@ table.st .grp .g.n{background:var(--gn)}table.st .grp .g.f{background:var(--gf)}
 table.st thead tr:last-child th.n{box-shadow:inset 0 3px 0 var(--gn)}table.st thead tr:last-child th.f{box-shadow:inset 0 3px 0 var(--gf)}table.st thead tr:last-child th.r{box-shadow:inset 0 3px 0 var(--gr)}
 table.st tbody th,table.st tfoot th{text-align:left;font-weight:700;position:sticky;left:-14px;background:var(--card);z-index:1;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
 table.st thead th:first-child{position:sticky;left:-14px;background:var(--card);z-index:1;text-align:left}
-/* Colonne des joueurs figée : collée au bord quand on fait glisser le tableau, avec une ombre pour la séparer des chiffres */
-table.st tbody th,table.st tfoot th,table.st thead th:first-child{box-shadow:6px 0 6px -6px rgba(0,0,0,.25)}
+/* Colonne des joueurs figée : collée au bord quand on fait glisser le tableau ; l'ombre qui la sépare des chiffres n'apparaît qu'une fois le tableau glissé (classe « slid », voir actions.js) */
+.tscroll table.st tbody th,.tscroll table.st tfoot th,.tscroll table.st thead th:first-child{transition:box-shadow .2s}
+.tscroll.slid table.st tbody th,.tscroll.slid table.st tfoot th,.tscroll.slid table.st thead th:first-child{box-shadow:6px 0 6px -6px rgba(0,0,0,.25)}
 table.st tbody tr:nth-child(even) td,table.st tbody tr:nth-child(even) th{background:color-mix(in srgb,var(--bg) 45%,var(--card))}
 table.st td{font-size:1.05rem;font-weight:600}
 table.st td.z{color:var(--line);font-weight:400}
