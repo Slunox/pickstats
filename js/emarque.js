@@ -340,6 +340,18 @@ export function guessSide(d, { ours = [], opp = '', nums = [] }) {
 // Nom lisible : « ENTENTE PESSAC BASKET CLUB-3 » → « Entente Pessac Basket Club-3 »
 export const tidyName = s => String(s || '').toLowerCase().replace(/(^|[\s-])\S/g, c => c.toUpperCase());
 
+// Nom d'équipe adverse lisible : « BC DES PINS-3 » → « BC des Pins-3 ».
+// Les sigles (mots sans voyelle, ou de deux lettres) restent en majuscules, les petits mots en minuscules.
+const SMALL = new Set(['de', 'des', 'du', 'la', 'le', 'les', 'et', 'en', 'sur', 'au', 'aux', 'à', 'd', 'l']);
+export const oppName = s => tidyName(String(s || '').trim().replace(/\s+/g, ' '))
+  .replace(/[\p{L}]+/gu, (w, i) => {
+    const lo = w.toLowerCase();
+    if (SMALL.has(lo) && i > 0) return lo;
+    if (!/[aeiouyàâäéèêëîïôöùûü]/i.test(w) || (w.length === 2 && !SMALL.has(lo))) return w.toUpperCase();
+    return w;
+  })
+  .replace(/(['’])(\p{Ll})/gu, (m, a, c) => a + c.toUpperCase());
+
 const ROW_KEYS = ['min', 'pts', 'fg', 'p3', 'p2i', 'p2e', 'lf', 'f'];
 const pickRow = r => Object.fromEntries(ROW_KEYS.map(k => [k, r[k]]));
 

@@ -8,7 +8,8 @@ import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, c
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP } from './constants.js';
 import { inCtx, pdf, backup, restoreFile, download } from './export.js';
-import { reportFile } from './views/report.js';
+import { reportFile, swipeNav } from './views/report.js';
+import { oppOf } from './views/emarque.js';
 import { shareImage } from './statimage.js';
 import { markDup } from './views/pick.js';
 import { logoFromFile } from './logo.js';
@@ -171,7 +172,7 @@ const ACTIONS = {
     return false;
   },
   new: () => {
-    ask('Effacer toutes les statistiques de ce match sans l’archiver ?', 'Effacer', () => { endMatch(); ui.view = 'home'; save(); }, true);
+    ask(S.ev.length ? 'Abandonner le match ' + S.me + ' contre ' + S.opp + ' sans l’archiver ? ' + (S.ev.length > 1 ? 'Ses ' + S.ev.length + ' actions seront effacées' : 'Son action sera effacée') + ' définitivement.' : 'Abandonner ce match ? Il n’a aucune action enregistrée.', 'Abandonner', () => { endMatch(); ui.view = 'home'; save(); }, true);
     return false;
   },
 
@@ -196,17 +197,18 @@ const ACTIONS = {
     download(`stats-${clean(m.me)}-${clean(m.opp)}-${String(m.date).slice(0, 10)}.html`, withMatch(m, () => reportFile(m)), 'text/html');
     return false;
   },
-  emside: el => { ui.em.side = +el.dataset.v; },
+  emside: el => { ui.em.side = +el.dataset.v; ui.em.opp = null; },
   emcancel: () => { ui.em = null; ui.view = 'game'; },
   emsave: () => {
     const E = ui.em, m = E && S.arch.find(z => String(z.id) === String(E.gid));
     if (!m) return false;
     m.em = toEm(E.data, E.side);
-    // Nom de l'adversaire laissé par défaut : on prend celui de la feuille
-    if (!m.opp || m.opp === 'Adversaire') { const n = tidyName(E.side ? E.data.a : E.data.b); if (n) m.opp = n; }
+    // Nom de l'adversaire : celui de la feuille (ou corrigé dans l'écran de vérification), s'il diffère
+    const n = oppOf(E).trim(), renamed = !!n && n !== m.opp;
+    if (renamed) m.opp = n;
     ui.em = null; ui.view = 'game'; ui.sq = 'all';
     save();
-    toast('Feuille e-Marque enregistrée');
+    toast(renamed ? 'Feuille enregistrée · adversaire renommé « ' + n + ' »' : 'Feuille e-Marque enregistrée');
   },
   gdel: el => {
     const id = el.dataset.id;
@@ -451,6 +453,8 @@ const INPUTS = {
   pu: (d, t) => { tm().players[+d.pu].num = t.value; save(); },
   po: (d, t) => { ui.P.opp = t.value; },
   // Correction d'une valeur lue sur la feuille e-Marque
+  // Nom de l'adversaire corrigé avant d'enregistrer la feuille e-Marque
+  emo: (d, t) => { if (ui.em) ui.em.opp = t.value; },
   emv: (d, t) => {
     const [i, k] = d.emv.split('|'), p = ui.em.data.teams[ui.em.side].players[+i];
     p[k] = k === 'min' ? t.value.trim() : (parseInt(t.value, 10) || 0);
@@ -569,6 +573,8 @@ document.addEventListener('change', e => {
 });
 
 // Garde ouvert le volet « Corriger les noms des joueurs » d'un match archivé entre deux affichages.
+swipeNav(document);
+
 document.addEventListener('toggle', e => {
   if (e.target.classList && e.target.classList.contains('gnames')) ui.gnOpen = e.target.open;
 }, true);

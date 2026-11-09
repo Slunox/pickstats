@@ -22,12 +22,13 @@ export function home() {
     setTimeout(() => toast('Connecté au club ' + name), 0);
   }
 
-  // Bouton principal : reprendre le match en cours (avec « Archiver » à côté), sinon en commencer un.
+  // Bouton principal : reprendre le match en cours (avec « Archiver » à côté et « Abandonner » dessous), sinon en commencer un.
   const main = S.active ? `
     <div class="resrow">
       ${big('data-x="resume"', ' go', ICON.ball, 'Reprendre le match', `${esc(S.me)} contre ${esc(S.opp)}`)}
       ${big('data-x="harchive" aria-label="Archiver le match"', ' arch', ICON.archive, 'Archiver', 'Terminer le match')}
-    </div>`
+    </div>
+    <button class="link habandon" data-x="new">Abandonner le match sans l’archiver</button>`
     : big('data-x="startpick"', ' go', ICON.play, 'Commencer un match', 'Choisir l’équipe et les joueurs');
 
   const inClub = cloud.club && !cloud.ask;

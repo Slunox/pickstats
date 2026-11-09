@@ -449,8 +449,8 @@ export function reportView(m) {
   return `<style>${RP_CSS}</style><div class="rp" style="--rp-accent:${curTeamColor()}">${head(m)}`
     + `<div class="chips scroll rp-tabs">${PAGES.map(([id, l]) => `<button class="chip${id === cur ? ' on' : ''}" data-x="rp" data-v="${id}">${l}</button>`).join('')}</div>`
     + `<section class="rp-page"><div class="rp-ptitle"><span>Page ${i + 1} sur ${PAGES.length}</span><h2>${PAGES[i][1]}</h2></div>${P[cur]}</section>`
-    + `<div class="rp-pager">${i > 0 ? `<button class="btn alt" data-x="rp" data-v="${PAGES[i - 1][0]}">‹ ${PAGES[i - 1][1]}</button>` : '<span></span>'}`
-    + `${i < PAGES.length - 1 ? `<button class="btn alt" data-x="rp" data-v="${PAGES[i + 1][0]}">${PAGES[i + 1][1]} ›</button>` : ''}</div></div>`;
+    + `<div class="rp-pager">${i > 0 ? `<button class="btn alt" data-x="rp" data-go="-1" data-v="${PAGES[i - 1][0]}">‹ ${PAGES[i - 1][1]}</button>` : '<span></span>'}`
+    + `${i < PAGES.length - 1 ? `<button class="btn alt" data-x="rp" data-go="1" data-v="${PAGES[i + 1][0]}">${PAGES[i + 1][1]} ›</button>` : ''}</div></div>`;
 }
 
 // Fichier HTML autonome (toutes les pages à la suite), à partager avec le staff.
@@ -483,7 +483,7 @@ export function reportFile(m) {
     + PAGES.map(([id, l], i) => `<section class="rp-page" id="${id}" role="tabpanel" aria-labelledby="tab-${id}"${i ? ' hidden' : ''}><div class="rp-ptitle"><span>Page ${i + 1} sur ${PAGES.length}</span><h2>${l}</h2></div>${P[id]}`
       + `<div class="rp-pg">${i ? `<button type="button" data-go="-1">← ${PAGES[i - 1][1]}</button>` : '<span></span>'}${i < PAGES.length - 1 ? `<button type="button" data-go="1">${PAGES[i + 1][1]} →</button>` : '<span></span>'}</div></section>`).join('')
     + `<footer class="rp-foot">Document interne${S.clubName ? ' ' + esc(S.clubName) : ''} – ${esc(S.me)}. Statistiques individuelles à usage du staff et de l’équipe, à ne pas diffuser publiquement. Généré par Pick&amp;Stats.</footer></div>`
-    + `<script>${TABS_JS}${THEME_JS}</script></body></html>`;
+    + `<script>${TABS_JS}${THEME_JS}(${swipeNav})(document);</script></body></html>`;
 }
 
 // Couleurs du thème sombre du fichier exporté
@@ -503,6 +503,34 @@ const THEME_JS = `(function(){
   if(mq&&mq.addEventListener)mq.addEventListener('change',sync);
   sync();
 })();`;
+
+// Glisser le doigt vers la gauche ou la droite sur le rapport : page suivante ou précédente
+// (dans l'appli et dans le fichier exporté, où cette fonction est recopiée telle quelle : ES5 uniquement).
+// Rien ne se passe si le geste part d'un tableau ou d'une barre qu'on peut déjà faire défiler de côté.
+export function swipeNav(root) {
+  var x0 = null, y0 = 0, t0 = 0;
+  function sideScroll(el) {
+    for (; el && el.nodeType === 1; el = el.parentNode) {
+      var o = getComputedStyle(el).overflowX;
+      if ((o === 'auto' || o === 'scroll') && el.scrollWidth > el.clientWidth + 1) return true;
+    }
+    return false;
+  }
+  root.addEventListener('touchstart', function (e) {
+    x0 = null;
+    if (e.touches.length !== 1 || !e.target.closest || !e.target.closest('.rp') || sideScroll(e.target)) return;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  root.addEventListener('touchend', function (e) {
+    if (x0 === null) return;
+    var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+    x0 = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < 2 * Math.abs(dy) || Date.now() - t0 > 800) return;
+    var go = dx < 0 ? '1' : '-1';
+    var b = root.querySelector('.rp-page:not([hidden]) .rp-pg [data-go="' + go + '"], .rp-pager [data-go="' + go + '"]');
+    if (b) b.click();
+  }, { passive: true });
+}
 
 // Navigation par onglets du fichier exporté : clic, flèches du clavier, boutons précédent/suivant, #page dans l'adresse.
 const TABS_JS = `(function(){

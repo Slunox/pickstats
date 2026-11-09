@@ -3,7 +3,7 @@
 import { S, ui, withMatch } from '../state.js';
 import { esc } from '../util.js';
 import { roster1 } from '../model.js';
-import { checkRow } from '../emarque.js';
+import { checkRow, oppName } from '../emarque.js';
 import { canEdit } from '../cloud.js';
 import { back } from './common.js';
 
@@ -28,6 +28,9 @@ export function emCard(m) {
     <button class="btn" data-x="empick">Importer la feuille e-Marque</button>${input}
   </div>`;
 }
+
+// Nom de l'adversaire à enregistrer : celui de la feuille (l'autre équipe), sauf s'il a été corrigé.
+export const oppOf = E => E.opp != null ? E.opp : oppName(E.side ? E.data.a : E.data.b);
 
 // Écran de vérification avant d'enregistrer.
 export function emCheck() {
@@ -60,6 +63,10 @@ export function emCheck() {
     <p class="help" style="margin-top:0">${esc(m.me)} contre ${esc(m.opp)}${d.num ? ' · rencontre n° ' + esc(d.num) : ''}</p>
     <label>Mon équipe sur la feuille</label>
     <div class="chips">${[0, 1].map(s => `<button class="chip${side === s ? ' on' : ''}" data-x="emside" data-v="${s}">${s ? 'Visiteurs' : 'Locaux'} : ${esc(names[s])}</button>`).join('')}</div>
+    <label for="emopp">Nom de l’adversaire</label>
+    <input id="emopp" data-emo value="${esc(oppOf(E) || m.opp)}" maxlength="60" autocomplete="off">
+    <p class="help" style="margin-top:4px">${!oppOf(E).trim() ? 'Nom absent de la feuille (il est lu dans le nom du fichier) : le nom actuel est gardé, tu peux le corriger.'
+      : oppOf(E).trim() !== m.opp ? `Repris de la feuille : il remplacera « ${esc(m.opp)} » dans le match. Tu peux le corriger.` : 'Repris de la feuille.'}</p>
     <p class="emscore"><b>${us.total.pts}</b> – <b>${them.total.pts}</b> <span>${us.total.pts > them.total.pts ? 'Victoire' : us.total.pts < them.total.pts ? 'Défaite' : 'Égalité'}</span></p>
     ${d.quarters ? `<p class="help" style="margin:0">Par quart-temps : ${d.quarters[side].map((q, i) => `${i < 4 ? 'Q' + (i + 1) : 'Prol.'} ${q.pts}-${d.quarters[1 - side][i] ? d.quarters[1 - side][i].pts : '?'}`).join(' · ')}</p>` : '<p class="help" style="margin:0">Sans la feuille de marque : pas de score par quart-temps.</p>'}
     ${(d.warn || []).map(w => `<p class="emwarn">${esc(w)}</p>`).join('')}
