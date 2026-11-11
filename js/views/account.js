@@ -125,8 +125,11 @@ export function sheet() {
   if (ui.sheet !== 'account' || cloud.status === 'none') return '';
   const c = cloud;
   const body = c.status !== 'on' ? signInStep(c) : !c.club ? clubStep(c) : c.ask ? askStep(c) : summaryStep(c);
-  return `<div class="sheetwrap"><div class="sheetbg" data-x="sclose"></div>
-    <div class="sheet" role="dialog" aria-modal="true"><button class="sx" data-x="sclose" aria-label="Fermer">✕</button>${body}</div></div>`;
+  // L'écran est redessiné à chaque changement (connexion en cours, club chargé…) : l'animation
+  // d'ouverture ne joue que si la fenêtre n'était pas déjà affichée, sinon elle sautille.
+  const anim = document.querySelector('#app .sheet') ? '' : ' anim';
+  return `<div class="sheetwrap"><div class="sheetbg${anim}" data-x="sclose"></div>
+    <div class="sheet${anim}" role="dialog" aria-modal="true"><button class="sx" data-x="sclose" aria-label="Fermer">✕</button>${body}</div></div>`;
 }
 
 // --- Page « Club et membres » ---

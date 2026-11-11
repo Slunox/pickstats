@@ -42,7 +42,10 @@ function nav() {
 export function render() {
   applyTheme();
   const inMatch = S.active && MATCH_VIEWS.includes(ui.view);
+  // La fenêtre du compte est recréée elle aussi : on garde l'endroit où elle était défilée.
+  const sh = $('#app .sheet'), shTop = sh ? sh.scrollTop : 0;
   $('#app').innerHTML = (inMatch ? nav() : '') + (VIEWS[ui.view] || home)();
+  if (shTop) { const n = $('#app .sheet'); if (n) n.scrollTop = shTop; }
   // Les filtres défilants sont recréés à chaque rendu : on garde le filtre choisi visible.
   document.querySelectorAll('.chips.scroll').forEach(c => {
     const on = c.querySelector('.chip.on');
