@@ -79,7 +79,21 @@ function clubStep(c) {
     <input data-cclub="1" value="${esc(ui.cclub || S.clubName || '')}" placeholder="Nom du club" maxlength="40" aria-label="Nom du club">
     <button class="btn alt wide" data-x="ccreate">Créer le club</button>
     <p class="help">Tu en deviens le responsable et tu obtiens un code à donner aux autres coachs.</p>
-    <button class="link" data-x="clogout">Se déconnecter</button>`;
+    <button class="link" data-x="clogout">Se déconnecter</button>
+    ${delAccount(c)}`;
+}
+
+// Supprimer son compte : replié, avec le mot de passe (Firebase le redemande avant une suppression).
+function delAccount(c) {
+  const k = c.club, alone = !k || c.members.length <= 1;
+  const what = !k ? 'Ton compte est effacé.'
+    : k.role === 'admin' && alone ? `Ton compte est effacé, et le club ${esc(k.name)} avec lui : tu en es le seul membre.`
+    : `Ton compte est effacé et tu quittes le club ${esc(k.name)}. Les matchs que tu as publiés restent au club.`;
+  return `<details class="cdanger"><summary>Supprimer mon compte</summary>
+    <p class="help">${what} C’est définitif. Les matchs pas encore publiés restent sur cet appareil.</p>
+    <label for="cdelpw">Ton mot de passe, pour confirmer</label>
+    <input id="cdelpw" type="password" data-cdelpw="1" autocomplete="current-password" value="${esc(ui.cdelpw || '')}">
+    <button class="btn bad wide" data-x="cdelacct">Supprimer mon compte</button></details>`;
 }
 
 function askStep(c) {
@@ -119,7 +133,8 @@ function summaryStep(c) {
     <button class="btn wide" data-x="view" data-v="members">Club et membres</button>
     <button class="btn alt wide" data-x="clogout">Se déconnecter</button>
     <p class="help">Les équipes, leur composition et les matchs archivés sont partagés avec les membres du club. Un match sauvegardé reste sur cet appareil jusqu’à ce qu’il soit publié.</p>
-    <p class="help">En te déconnectant, les équipes et les matchs du club sont retirés de cet appareil : ils reviennent à la prochaine connexion. Les matchs pas encore publiés restent ici.</p>`;
+    <p class="help">En te déconnectant, les équipes et les matchs du club sont retirés de cet appareil : ils reviennent à la prochaine connexion. Les matchs pas encore publiés restent ici.</p>
+    ${delAccount(c)}`;
 }
 
 export function sheet() {
@@ -171,7 +186,12 @@ export function members() {
       <p class="help">${admin ? 'Les nouveaux membres arrivent bénévoles. ' : ''}Responsable : gère le club et ses membres. Coach : modifie les équipes et les matchs. Bénévole : saisit les stats et publie ses matchs, validés ensuite par un coach ou un responsable.</p></div>
     <div class="card"><h2>Quitter le club</h2>
       <p class="help" style="margin-bottom:10px">Tu n’auras plus accès aux données en ligne du club. Il te faudra un nouveau code pour revenir.</p>
-      <button class="btn bad" data-x="cleave">Quitter le club</button></div>`;
+      <button class="btn bad" data-x="cleave">Quitter le club</button></div>
+    ${admin ? `<div class="card cdanger"><h2>Supprimer le club</h2>
+      <p class="help">Efface définitivement, pour tous les membres : les équipes, les matchs publiés, les membres et le code d’invitation. Les membres sont détachés du club ; ce qui est déjà sur leurs appareils n’est pas effacé.</p>
+      <label for="cdelname">Tape le nom du club pour confirmer : <b>${esc(k.name)}</b></label>
+      <input id="cdelname" data-cdelname="1" autocomplete="off" value="${esc(ui.cdelname || '')}">
+      <button class="btn bad" data-x="cdelclub">Supprimer le club</button></div>` : ''}`;
 }
 
 // Logo du club (responsable, ou sans club en ligne).

@@ -44,7 +44,8 @@ service cloud.firestore {
       // Le créateur (owner) ne change jamais. Les coachs peuvent seulement renommer le club ; les bénévoles rien.
       allow update: if request.resource.data.owner == resource.data.owner && (
         isAdmin(c) || (isEditor(c) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])));
-      allow delete: if false;
+      // Le responsable peut supprimer le club (après ses équipes, matchs et membres).
+      allow delete: if isAdmin(c);
 
       match /members/{uid} {
         allow read: if isMember(c) || (signedIn() && me() == uid);
@@ -71,7 +72,10 @@ service cloud.firestore {
         allow read: if isMember(c);
         allow create: if isEditor(c)
           || (isMember(c) && request.resource.data.st == 'pending' && request.resource.data.author == me());
-        allow update: if isEditor(c);
+        // L'auteur d'un match en attente peut encore le corriger (il reste en attente, à son nom).
+        allow update: if isEditor(c)
+          || (isMember(c) && resource.data.st == 'pending' && resource.data.author == me()
+            && request.resource.data.st == 'pending' && request.resource.data.author == me());
         allow delete: if isEditor(c)
           || (isMember(c) && resource.data.st == 'pending' && resource.data.author == me());
       }

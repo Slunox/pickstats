@@ -17,14 +17,14 @@ export function toast(msg) {
 // Fenêtre intégrée (les confirm()/alert() natifs peuvent être bloqués).
 let onYes = null, onNo = null;
 
-// ask(message, libellé du bouton, action si oui, bouton rouge ?, action si annulé)
+// ask(message, libellé du bouton, action si oui, bouton rouge ?, action si annulé, libellé du bouton Annuler)
 // Sans libellé : simple message avec un bouton OK.
-export function ask(msg, ok, yes, bad, no) {
+export function ask(msg, ok, yes, bad, no, noLabel) {
   onYes = yes || null;
   onNo = no || null;
   const m = $('#modal');
   m.innerHTML = `<div class="mbox"><p>${esc(msg)}</p><div class="mbtn">`
-    + (ok ? '<button class="btn alt" data-x="mno">Annuler</button>' : '')
+    + (ok ? `<button class="btn alt" data-x="mno">${esc(noLabel || 'Annuler')}</button>` : '')
     + `<button class="btn${bad ? ' bad' : ''}" data-x="myes">${esc(ok || 'OK')}</button></div></div>`;
   m.classList.add('on');
 }

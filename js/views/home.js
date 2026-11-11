@@ -2,7 +2,7 @@
 
 import { S, ui } from '../state.js';
 import { esc, plural } from '../util.js';
-import { cloud } from '../cloud.js';
+import { cloud, canEdit } from '../cloud.js';
 import { toast } from '../dom.js';
 import { accountBar, sheet } from './account.js';
 import { ICON } from './icons.js';
@@ -45,9 +45,21 @@ export function home() {
     ${big('data-x="view" data-v="club"', '', ICON.team, 'Effectifs et matchs',
       `${plural(nTeams, 'équipe')} · ${plural(nGames, 'match archivé').replace('matchs archivé', 'matchs archivés')}`)}
     ${clubBtn}
+    ${waiting(inClub)}
     ${lastGame()}
     </div>
   </div>${sheet()}`;
+}
+
+// Matchs qui attendent quelque chose : à publier (sur cet appareil), à valider (coachs et responsables).
+function waiting(inClub) {
+  if (!inClub) return '';
+  const all = S.arch || [];
+  const loc = all.filter(m => m.st === 'local').length;
+  const val = canEdit() ? all.filter(m => m.st === 'pending').length : 0;
+  const s = n => (n > 1 ? 's' : '');
+  const parts = [loc && `<b>${loc}</b> match${s(loc)} à publier`, val && `<b>${val}</b> à valider`].filter(Boolean);
+  return parts.length ? `<button class="hwait" data-x="view" data-v="games"><span class="hwdot"></span><span>${parts.join(' · ')}</span><span class="hwgo">›</span></button>` : '';
 }
 
 // Dernier match archivé : sa carte, qui ouvre sa fiche.

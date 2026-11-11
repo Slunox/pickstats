@@ -12,6 +12,8 @@ const FILES = [
   'js/views/play.js', 'js/views/history.js', 'js/views/stats.js', 'js/views/archives.js',
   'js/emarque.js', 'js/emarque-glyphs.js', 'js/views/emarque.js', 'js/views/emstats.js', 'js/views/report.js',
   'js/views/composition.js', 'js/views/settings.js', 'js/views/import.js', 'js/views/account.js', 'js/views/icons.js',
+  // Lecture des PDF de l'e-Marque : pour pouvoir importer une feuille même sans réseau
+  'js/vendor/pdf.min.js', 'js/vendor/pdf.worker.min.js',
 ];
 
 self.addEventListener('install', e => {

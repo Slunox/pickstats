@@ -338,9 +338,9 @@ const CHAPTERS = [
     ['Une erreur ? « Annuler la dernière » efface l’action précédente. L’historique permet aussi de corriger plus tard.', 0, async () => { await tap('[data-x="undo"]'); }],
     ['Fin du quart-temps : on passe au suivant avec la flèche.', -400, async () => { await tap('[data-x="q+"]'); }],
     ['L’onglet Statistiques donne le tableau en direct, par quart-temps ou pour tout le match. Pratique pour le coach pendant les temps morts.', 400, async () => { await tap('nav [data-v="stats"]'); hide(); }],
-    ['Au coup de sifflet final : « Sauvegarder ». Le match est gardé sur la tablette.', 0, async () => { await tap('nav .homebtn'); await tap('[data-x="harchive"]', 600); await tap('[data-x="myes"]'); hide(); }],
-    ['On l’ouvre depuis l’accueil : il est marqué « Non publié »…', -300, async () => { await tap('.lastg [data-x="gopen"]'); hide(); }],
-    ['…et on le publie : il part au club, en attente de validation par un coach ou un responsable.', 300, async () => { await tap('[data-x="gpub"]'); hide(); }],
+    ['Au coup de sifflet final : « Sauvegarder ». Le match est gardé sur la tablette…', -300, async () => { await tap('nav .homebtn'); await tap('[data-x="harchive"]', 600); await tap('#modal [data-x="myes"]', 400); }],
+    ['…et l’appli propose de le publier tout de suite : il part au club, en attente de validation par un coach ou un responsable.', 300, async () => { await tap('#modal [data-x="myes"]'); hide(); }],
+    ['Un match gardé « pour plus tard » ? L’accueil le rappelle, et la liste des matchs permet de tout publier d’un coup.', 0, async () => { hide(); }],
   ] },
   { title: 'Gérer le club', sub: 'Pour les responsables : membres, rôles, validation', cloud: ME('admin'),
     // Un match publié par Julie (bénévole), à valider

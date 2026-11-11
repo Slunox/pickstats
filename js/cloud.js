@@ -139,6 +139,10 @@ export const canEdit = () => !readOnly();
 export const inClub = () => !!clubId();
 // Suppression d'un match : sauvegardé sur l'appareil (tout le monde), publié non validé (son auteur),
 // validé ou ancien (responsables et coachs seulement).
+// Modification d'un match (feuille e-Marque, noms, auteur des stats) : coachs et responsables ; et pour tous,
+// un match de l'appareil pas encore publié, ou son propre match publié tant qu'il n'est pas validé.
+const ownPending = m => !!m && m.st === 'pending' && !!m.author && m.author === cloud.uid;
+export const canEditMatch = m => !!m && (canEdit() || m.st === 'local' || ownPending(m));
 export const canDelMatch = m => m.st === 'local' || canEdit() || (m.st === 'pending' && !!m.author && m.author === cloud.uid);
 const col = (kind) => F.collection(db, 'clubs', clubId(), kind);
 const ref = (kind, id) => F.doc(db, 'clubs', clubId(), kind, id);
@@ -160,7 +164,8 @@ function onSnap(kind, snap) {
     }
     const remote = ch.doc.data(), rh = canon(remote), s = seen[key];
     if (lh === rh) { seen[key] = rh; return; }
-    if (!readOnly() && s !== undefined && lh !== null && lh !== s && rh === s) return; // modifié ici seulement : flush l'enverra
+    // Modifié ici seulement : flush l'enverra (pour un bénévole, seulement son match en attente de validation)
+    if ((!readOnly() || (kind === 'matches' && ownPending(local))) && s !== undefined && lh !== null && lh !== s && rh === s) return;
     K.put(id, remote);
     seen[key] = rh;
     changed = true;
@@ -218,10 +223,10 @@ function flush() {
     keepTombs();
     if (ready.matches) {
       KINDS.matches.ids().forEach(id => {
-        const key = c + '/matches/' + id;
-        if (seen[key] !== undefined) return;
-        const d = KINDS.matches.get(id);
-        seen[key] = canon(d);
+        const key = c + '/matches/' + id, d = KINDS.matches.get(id), h = canon(d);
+        // Match publié pour la première fois, ou son propre match en attente, modifié ici
+        if (seen[key] === h || (seen[key] !== undefined && !ownPending(d))) return;
+        seen[key] = h;
         F.setDoc(ref('matches', id), plain(d)).catch(fail);
       });
     }
@@ -331,6 +336,8 @@ function watchMember(c) {
       if (!snap.metadata.fromCache || attached) {
         if (attached) cloud.info = 'Tu ne fais plus partie du club ' + (cloud.club ? cloud.club.name : '') + '.';
         detach();
+        // Club supprimé, ou retiré par un responsable : la fiche qui pointe vers ce club ne sert plus
+        if (!snap.metadata.fromCache) F.deleteDoc(F.doc(db, 'users', cloud.uid)).catch(() => {});
       }
       refresh();
       return;
@@ -636,6 +643,74 @@ export const leaveClub = () => DEMO ? demo.leaveClub() : run(async () => {
   cloud.info = 'Tu as quitté le club ' + c.name + '. Ses équipes et matchs restent sur cet appareil.';
 });
 
+// --- Suppression du club, du compte ---
+
+// Efface tout le club dans Firestore (responsable) : matchs, équipes, autres membres, code d'invitation,
+// le club, puis sa propre fiche de membre et sa fiche users. Dans cet ordre : les règles demandent
+// d'être encore responsable pour supprimer le reste.
+async function wipeClub(c, code) {
+  if (unsubMember) { unsubMember(); unsubMember = null; }
+  stopListening();
+  const refs = async kind => (await F.getDocs(F.collection(db, 'clubs', c, kind))).docs.map(d => d.ref);
+  const del = async list => {
+    for (let i = 0; i < list.length; i += 400) { // 500 écritures au plus par lot
+      const b = F.writeBatch(db);
+      list.slice(i, i + 400).forEach(r => b.delete(r));
+      await b.commit();
+    }
+  };
+  await del([...await refs('matches'), ...await refs('teams')]);
+  const others = (await refs('members')).filter(r => r.id !== cloud.uid);
+  await del([...others, ...(code ? [F.doc(db, 'invites', code)] : [])]);
+  await F.deleteDoc(F.doc(db, 'clubs', c));
+  const b = F.writeBatch(db);
+  b.delete(F.doc(db, 'clubs', c, 'members', cloud.uid));
+  b.delete(F.doc(db, 'users', cloud.uid));
+  await b.commit();
+}
+
+// Responsable : supprime le club pour tout le monde (confirmé en retapant son nom).
+export const deleteClub = name => DEMO ? demo.deleteClub(name) : run(async () => {
+  const c = cloud.club;
+  if (!c || c.role !== 'admin') return;
+  if (!sameName(name, c.name)) { cloud.err = 'Tape le nom exact du club pour confirmer.'; return; }
+  await wipeClub(c.id, c.code);
+  detach();
+  clearClubData();
+  S.cloudClub = null;
+  save();
+  cloud.info = 'Le club ' + c.name + ' a été supprimé.';
+});
+const sameName = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+
+// Supprime son compte (mot de passe redemandé par Firebase). Seul membre de son club : le club est supprimé avec.
+export const deleteAccount = pw => DEMO ? demo.deleteAccount(pw) : run(async () => {
+  const user = auth && auth.currentUser;
+  if (!user) return;
+  const c = cloud.club;
+  const alone = !c || cloud.members.length <= 1;
+  if (c && c.role === 'admin' && !alone && admins().length < 2) {
+    cloud.err = 'Tu es le seul responsable du club : nomme d’abord un autre responsable, ou supprime le club.';
+    return;
+  }
+  if (!String(pw || '')) { cloud.err = 'Saisis ton mot de passe pour confirmer.'; return; }
+  await F.reauthenticateWithCredential(user, F.EmailAuthProvider.credential(user.email, pw));
+  if (c && c.role === 'admin' && alone) await wipeClub(c.id, c.code);
+  else {
+    const b = F.writeBatch(db);
+    if (c) b.delete(F.doc(db, 'clubs', c.id, 'members', cloud.uid));
+    b.delete(F.doc(db, 'users', cloud.uid));
+    await b.commit();
+  }
+  detach();
+  store(ON_KEY, 0);
+  await F.deleteUser(user);
+  clearClubData();
+  S.cloudClub = null;
+  save();
+  Object.assign(cloud, { status: 'off', email: '', name: '', uid: '', err: '', info: 'Ton compte a été supprimé.' });
+});
+
 // Suppression d'une équipe ou d'un match archivé (kind : 'teams' ou 'matches').
 export function cloudDel(kind, id) {
   if (!cfg() || !S.cloudClub) return;
@@ -786,6 +861,17 @@ const demo = {
     cloud.club = null; cloud.members = [];
     cloud.info = 'Tu as quitté le club ' + name + '. Ses équipes et matchs restent sur cet appareil.';
     demo.keep();
+  },
+  deleteClub(name) {
+    if (!sameName(name, cloud.club && cloud.club.name)) { cloud.err = 'Tape le nom exact du club pour confirmer.'; refresh(); return; }
+    const n = cloud.club.name;
+    Object.assign(cloud, { club: null, members: [], err: '', info: 'Le club ' + n + ' a été supprimé.' });
+    clearClubData(); S.cloudClub = null; save(); demo.keep();
+  },
+  deleteAccount(pw) {
+    if (!String(pw || '')) { cloud.err = 'Saisis ton mot de passe pour confirmer.'; refresh(); return; }
+    Object.assign(cloud, { status: 'off', email: '', name: '', uid: '', club: null, members: [], err: '', info: 'Ton compte a été supprimé.' });
+    clearClubData(); S.cloudClub = null; save(); demo.keep();
   },
   logout() { Object.assign(cloud, { status: 'off', email: '', name: '', uid: '', club: null, members: [], err: '', info: '' }); clearClubData(); demo.keep(); return true; },
 };

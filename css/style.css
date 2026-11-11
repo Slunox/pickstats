@@ -377,5 +377,24 @@ html[data-theme="dark"] .mst.pending{background:#4A3A14;color:#FFE1A3}
 .gst div{display:flex;flex-direction:column;gap:2px;min-width:0}.gst span{color:var(--mut);font-size:.88rem}
 .gst .btn{flex:none;margin:0}
 .gst.pending{border-left-color:#E0A526}
+/* Bouton Publier / Valider en bas d'une carte de match */
+.mact{display:block;width:100%;padding:10px 16px 10px 20px;border-top:1px solid var(--line);font-weight:800;color:var(--a);text-align:left}
+.mact::after{content:" ›"}
+.mact.val{color:#7A4B00;background:#FDECC8}
+html[data-theme="dark"] .mact.val{color:#FFE1A3;background:#4A3A14}
+.mact:active{filter:brightness(.95)}
+.gtopub{display:flex;align-items:center;gap:12px;justify-content:space-between;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-weight:700}
+.gtopub .btn{flex:none;margin:0}
+/* Accueil : matchs à publier ou à valider */
+.hwait{display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border-radius:14px;background:#FDECC8;color:#7A4B00;text-align:left;font-size:.98rem}
+.hwait .hwdot{flex:none;width:10px;height:10px;border-radius:50%;background:#E0A526}
+.hwait .hwgo{margin-left:auto;font-weight:800;font-size:1.2rem}
+html[data-theme="dark"] .hwait{background:#4A3A14;color:#FFE1A3}
+/* Suppressions définitives (compte, club) : repliées ou à part, en rouge */
+.cdanger{margin-top:14px}
+details.cdanger summary{cursor:pointer;color:#B42318;font-weight:700;padding:6px 0}
+.card.cdanger{border:1px solid #F5C6C0}
+.cdanger h2{color:#B42318}
+html[data-theme="dark"] details.cdanger summary,html[data-theme="dark"] .cdanger h2{color:#FF8A80}
 .gtoval{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#FDECC8;color:#7A4B00;font-weight:700}
 html[data-theme="dark"] .gtoval{background:#4A3A14;color:#FFE1A3}

@@ -4,7 +4,7 @@ import { S, ui, withMatch } from '../state.js';
 import { esc, fdate } from '../util.js';
 import { sortedTeams, curG, inTeam, tally, cnt, miss, teamColor } from '../model.js';
 import { back, periodChips, exportButtons, statsView } from './common.js';
-import { canEdit, inClub, canDelMatch } from '../cloud.js';
+import { canEdit, inClub, canDelMatch, canEditMatch, cloud } from '../cloud.js';
 import { emCard, emManage } from './emarque.js';
 import { emScore } from './emstats.js';
 import { reportView } from './report.js';
@@ -39,6 +39,11 @@ const scoreTag = m => {
 // Statut d'un match pour le club : sauvegardé sur l'appareil, publié en attente de validation, ou validé (sans badge).
 const stTag = m => (!inClub() ? '' : m.st === 'local' ? '<span class="mst local">Non publié</span>' : m.st === 'pending' ? '<span class="mst pending">À valider</span>' : '');
 
+// Bouton d'action sur la carte : publier un match de l'appareil, valider un match publié
+const cardAct = m => (!inClub() ? ''
+  : m.st === 'local' ? `<button class="mact" data-x="gpub" data-id="${m.id}">Publier</button>`
+  : m.st === 'pending' && canEdit() ? `<button class="mact val" data-x="gval" data-id="${m.id}">Valider</button>` : '');
+
 export function gameCard(m, teams, del = true) {
   return `<div class="mcard" style="--tc:${colorOf(m, teams)}">
     <button class="mmain" data-x="gopen" data-id="${m.id}">
@@ -47,6 +52,7 @@ export function gameCard(m, teams, del = true) {
       ${m.by ? `<span class="mby">Stats : ${esc(m.by)}</span>` : ''}
       <span class="mstats">${keyStats(m).map(([v, l]) => `<span><b>${v}</b>${l}</span>`).join('')}</span>
     </button>
+    ${cardAct(m)}
     ${del && canDelMatch(m) ? `<button class="mdel" data-x="gdel" data-id="${m.id}" aria-label="Supprimer le match contre ${esc(m.opp)}">✕</button>` : ''}
   </div>`;
 }
@@ -86,8 +92,10 @@ export function games() {
     + '</div>';
 
   const toVal = inClub() && canEdit() ? all.filter(m => m.st === 'pending').length : 0;
+  const toPub = inClub() ? all.filter(m => m.st === 'local').length : 0;
   return back('Effectifs et matchs', 'view', 'club') + chips
-    + (toVal ? `<p class="gtoval">${toVal} match${toVal > 1 ? 's' : ''} publié${toVal > 1 ? 's' : ''} en attente de ta validation (badge « À valider »).</p>` : '')
+    + (toVal ? `<p class="gtoval">${toVal} match${toVal > 1 ? 's' : ''} publié${toVal > 1 ? 's' : ''} en attente de ta validation : vérifie-les, puis « Valider ».</p>` : '')
+    + (toPub > 1 ? `<div class="gtopub"><span>${toPub} matchs sauvegardés sur cet appareil, pas encore publiés.</span><button class="btn" data-x="gpuball">Tout publier</button></div>` : '')
     + `<div class="ghead"><h2>Matchs archivés (${L.length})</h2><button class="btn alt" data-x="impopen">Importer un match reçu</button></div>`
     + (L.length ? gameCards(L, teams) : '<div class="card"><p class="help">Aucun match archivé pour ce filtre.</p></div>');
 }
@@ -106,7 +114,7 @@ const byText = m => (m.by ? `<p class="help" style="margin:-4px 0 10px">Stats sa
 // Noms des joueurs d'un match archivé : ils sont copiés au moment de l'archivage,
 // on peut donc les corriger ici (à la main ou d'après l'équipe, par numéro de maillot).
 function namesCard(m) {
-  if (!canEdit() || !m.roster.length) return '';
+  if (!canEditMatch(m) || !m.roster.length) return '';
   const t = S.teams.find(z => inTeam(m, z));
   return `<details class="gnames gsec"${ui.gnOpen ? ' open' : ''}><summary><h4>Corriger les noms des joueurs</h4></summary>
     <p class="help">Les noms sont enregistrés avec le match au moment de l’archivage : modifier l’équipe ensuite ne les change pas. Corrige-les ici.</p>
@@ -118,7 +126,7 @@ function namesCard(m) {
 
 // Actions qu'on fait une fois (auteur, feuille, noms, exports, envoi, suppression) : regroupées, repliées.
 function manageCard(m) {
-  const edit = canEdit();
+  const edit = canEditMatch(m);
   const sec = (title, body) => body ? `<section class="gsec"><h4>${title}</h4>${body}</section>` : '';
   return `<details class="card gman"${ui.gmOpen ? ' open' : ''}><summary><h3>Gérer le match</h3></summary>
     ${edit ? sec('Auteur des stats', byInput(m)) : ''}
@@ -139,7 +147,7 @@ function stBox(m) {
       + '<button class="btn" data-x="gpub">Publier</button></div>';
   }
   if (m.st === 'pending') {
-    return `<div class="gst pending"><div><b>En attente de validation</b><span>Publié${m.by ? ' par ' + esc(m.by) : ''}. ${canEdit() ? 'Vérifie les stats, puis valide-le.' : 'Un coach ou un responsable doit le valider.'}</span></div>`
+    return `<div class="gst pending"><div><b>En attente de validation</b><span>Publié${m.by ? ' par ' + esc(m.by) : ''}. ${canEdit() ? 'Vérifie les stats, puis valide-le.' : m.author && m.author === cloud.uid ? 'Un coach ou un responsable doit le valider ; d’ici là, tu peux encore le corriger.' : 'Un coach ou un responsable doit le valider.'}</span></div>`
       + (canEdit() ? '<button class="btn" data-x="gval">Valider</button>' : '') + '</div>';
   }
   return '';

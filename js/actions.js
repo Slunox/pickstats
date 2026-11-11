@@ -17,7 +17,8 @@ import { render } from './render.js';
 import { readEmarque, fromEm, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix } from './emarque.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
-import { inClub, canDelMatch } from './cloud.js';
+import { inClub, canDelMatch, canEditMatch } from './cloud.js';
+import { deleteClub, deleteAccount } from './cloud.js';
 import { canEdit, memberName, copyCode, shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
 
 // --- Match ---
@@ -44,16 +45,32 @@ function endMatch() {
 
 // Sauvegarde du match terminé, sur l'appareil seulement (st : 'local') : il part au club quand on le publie.
 function archiveMatch() {
-  S.arch.push({
+  const m = {
     st: 'local',
     id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp, oppColor: S.oppColor || null, teamId: S.teamId, q: S.q,
     ev: S.ev.slice(), roster: roster().map(p => ({ n: p.n, name: p.name, in: true })),
     ...(cloud.name ? { by: cloud.name } : {}), // pseudo de celui qui a fait les stats
-  });
+  };
+  S.arch.push(m);
   endMatch();
   save();
-  toast(inClub() ? 'Match sauvegardé sur cet appareil. Publie-le pour le partager au club.' : 'Match sauvegardé');
+  if (!inClub()) { toast('Match sauvegardé'); return; }
+  // Dans un club : on propose de le publier tout de suite, pour qu'il ne reste pas oublié sur la tablette
+  ask('Match sauvegardé sur cet appareil. Le publier maintenant pour le club ?' + (canEdit() ? '' : ' Un coach ou un responsable le validera.'),
+    'Publier', () => { publish(m); save(); toast(pubMsg(m)); render(); }, false,
+    () => toast('Tu pourras le publier depuis la liste des matchs'), 'Plus tard');
 }
+
+// Publication au club : validé directement (coach, responsable) ou en attente de validation (bénévole)
+function publish(m) {
+  m.st = canEdit() ? 'ok' : 'pending';
+  m.author = cloud.uid;
+  if (!m.by && cloud.name) m.by = cloud.name;
+  if (m.st === 'ok') m.val = cloud.name || '';
+}
+const pubMsg = m => (m.st === 'ok' ? 'Match publié pour le club' : 'Match publié : un coach ou un responsable doit le valider');
+// Match visé : celui du bouton (carte de la liste) ou celui de la fiche ouverte
+const targetG = el => (el && el.dataset.id ? S.arch.find(z => String(z.id) === el.dataset.id) : curG());
 
 function startMatch() {
   const P = ui.P, er = $('#perr'), ch = P.rows.filter(r => r.in), t = S.teams.find(z => z.id === P.teamId);
@@ -249,18 +266,26 @@ const ACTIONS = {
   },
 
   // Publication au club : en attente de validation (bénévole) ou validé directement (coach, responsable)
-  gpub: () => {
-    const m = curG();
+  gpub: el => {
+    const m = targetG(el);
     if (!m || m.st !== 'local' || !inClub()) return false;
-    m.st = canEdit() ? 'ok' : 'pending';
-    m.author = cloud.uid;
-    if (!m.by && cloud.name) m.by = cloud.name;
-    if (m.st === 'ok') m.val = cloud.name || '';
+    publish(m);
     save();
-    toast(m.st === 'ok' ? 'Match publié pour le club' : 'Match publié : un coach ou un responsable doit le valider');
+    toast(pubMsg(m));
   },
-  gval: () => {
-    const m = curG();
+  // Tous les matchs sauvegardés sur cet appareil
+  gpuball: () => {
+    const L = S.arch.filter(m => m.st === 'local');
+    if (!L.length || !inClub()) return false;
+    ask(`Publier les ${L.length} matchs sauvegardés sur cet appareil ?` + (canEdit() ? '' : ' Un coach ou un responsable les validera.'), 'Tout publier', () => {
+      L.forEach(publish);
+      save();
+      toast(L.length + ' matchs publiés');
+    });
+    return false;
+  },
+  gval: el => {
+    const m = targetG(el);
     if (!m || m.st !== 'pending') return false;
     m.st = 'ok';
     m.val = cloud.name || '';
@@ -430,6 +455,22 @@ const ACTIONS = {
     ask('Retirer ' + (m ? memberName(m) : 'ce membre') + ' du club ? Il n’aura plus accès aux données du club.', 'Retirer', () => removeMember(el.dataset.u), true);
     return false;
   },
+  // Suppression du compte (mot de passe redemandé) et du club (nom retapé) : définitives, on confirme encore
+  cdelacct: () => {
+    ask('Supprimer définitivement ton compte ?', 'Supprimer', () => Promise.resolve(deleteAccount(ui.cdelpw)).then(() => {
+      if (cloud.status === 'off') { ui.sheet = null; ui.cdelpw = ''; ui.view = 'home'; toast('Ton compte a été supprimé'); }
+      render();
+    }), true);
+    return false;
+  },
+  cdelclub: () => {
+    const n = cloud.club ? cloud.club.name : '';
+    ask('Supprimer définitivement le club ' + n + ', pour tous ses membres ?', 'Supprimer le club', () => Promise.resolve(deleteClub(ui.cdelname)).then(() => {
+      if (!cloud.club) { ui.cdelname = ''; ui.view = 'home'; toast('Club supprimé'); }
+      render();
+    }), true);
+    return false;
+  },
   cleave: () => {
     ask('Quitter le club ' + (cloud.club ? cloud.club.name : '') + ' ? Tu n’auras plus accès à ses données en ligne (il te faudra un code pour revenir).', 'Quitter', leaveClub, true);
     return false;
@@ -457,6 +498,8 @@ function focusAfter(x) {
 }
 
 // Actions interdites aux bénévoles.
+// Actions sur un match, permises aussi à un bénévole sur son match pas encore validé (voir canEditMatch)
+const MATCH_EDIT = ['gnames', 'empick', 'emdel', 'emsave'];
 const EDIT_ONLY = ['tedit', 'addteam', 'tempick', 'gnames', 'delteam', 'addpl', 'delpl', 'tcolor', 'gval', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
 
 document.addEventListener('click', e => {
@@ -477,7 +520,7 @@ document.addEventListener('click', e => {
   // pour ne pas ajouter une action par erreur. Toucher un autre joueur change de joueur.
   if (ui.sel && x !== 'pl' && !el.closest('.bar') && !el.closest('#modal')) { ui.sel = null; render(); return; }
   // Bénévole d'un club : saisie seulement (les règles Firestore l'imposent aussi).
-  if (!canEdit() && EDIT_ONLY.includes(x)) { note('Réservé aux coachs et responsables du club.'); return; }
+  if (!canEdit() && EDIT_ONLY.includes(x) && !(MATCH_EDIT.includes(x) && canEditMatch(curG()))) { note('Réservé aux coachs et responsables du club.'); return; }
   if (!f || f(el) === false) return;
   render();
   focusAfter(x);
@@ -490,9 +533,8 @@ const INPUTS = {
   f: (d, t) => { S[d.f] = t.value; save(); },
   cn: (d, t) => { S.clubName = t.value; save(); },
   mby: (d, t) => {
-    if (!canEdit()) return;
     const m = (S.arch || []).find(z => String(z.id) === d.mby);
-    if (!m) return;
+    if (!canEditMatch(m)) return;
     const v = t.value.trim().slice(0, 20);
     if (v) m.by = v; else delete m.by;
     save();
@@ -507,7 +549,7 @@ const INPUTS = {
   },
   pn: (d, t) => { tm().players[+d.pn].name = t.value; save(); },
   // Nom d'un joueur dans un match archivé
-  gpn: (d, t) => { const m = curG(); if (m && canEdit()) { m.roster[+d.gpn].name = t.value; save(); } },
+  gpn: (d, t) => { const m = curG(); if (canEditMatch(m)) { m.roster[+d.gpn].name = t.value; save(); } },
   pu: (d, t) => { tm().players[+d.pu].num = t.value; save(); },
   po: (d, t) => { ui.P.opp = t.value; },
   // Correction d'une valeur lue sur la feuille e-Marque
@@ -523,6 +565,8 @@ const INPUTS = {
   cm: (d, t) => { ui.cmail = t.value; },
   ccode: (d, t) => { ui.ccode = t.value; },
   cpseudo: (d, t) => { ui.cpseudo = t.value; },
+  cdelpw: (d, t) => { ui.cdelpw = t.value; },
+  cdelname: (d, t) => { ui.cdelname = t.value; },
   cclub: (d, t) => { ui.cclub = t.value; },
   pnum: (d, t) => { ui.P.rows[+d.pnum].num = t.value; markDup(); },
   // Nom d'un joueur ajouté pour ce match (les noms des joueurs de l'équipe ne se modifient pas ici)
