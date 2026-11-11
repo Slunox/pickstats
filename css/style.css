@@ -84,6 +84,8 @@ html[data-theme="dark"] select{background-image:url("data:image/svg+xml,%3Csvg x
 .prow4{display:grid;grid-template-columns:34px 1fr 90px 52px;gap:8px;margin-bottom:8px;align-items:center}
 .prow4.head{font-weight:700;font-size:.85rem;color:var(--mut);margin-bottom:4px}
 .prow4 input{min-height:52px;font-size:1.1rem;min-width:0}
+/* Composition : nom d'un joueur de l'équipe, non modifiable ici */
+.prow4 .cname{font-size:1.1rem;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
 .prow4 input[type=checkbox]{width:30px;height:30px;min-height:0;accent-color:var(--a)}
 .prow4 input[data-cnum]{text-align:center;font-weight:800}.prow4 input.dup{border-color:#B91C1C}
 .del[disabled]{opacity:.3;cursor:default}
@@ -362,3 +364,15 @@ table.emst td.b{font-weight:800}table.emst .pn{background:var(--tc)}
 .mscore{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:.8rem;font-weight:800;color:#fff;background:var(--mut)}
 .mscore.w{background:#15803D}.mscore.l{background:#B91C1C}
 html[data-theme="dark"] .emwarn,html[data-theme="dark"] table.emt tr.bad th,html[data-theme="dark"] table.emt tr.bad td{background:#4A1F1A;color:#FFD9D3}
+
+/* Statut d'un match dans un club : sauvegardé sur l'appareil (non publié) ou publié en attente de validation */
+.mst{flex:none;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:800;white-space:nowrap}
+.mst.local{background:var(--bg);color:var(--mut);border:1px solid var(--line)}
+.mst.pending{background:#FDECC8;color:#7A4B00}
+html[data-theme="dark"] .mst.pending{background:#4A3A14;color:#FFE1A3}
+.gst{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:14px;padding:12px 14px;border-radius:14px;background:var(--card);border-left:5px solid var(--line)}
+.gst div{display:flex;flex-direction:column;gap:2px;min-width:0}.gst span{color:var(--mut);font-size:.88rem}
+.gst .btn{flex:none;margin:0}
+.gst.pending{border-left-color:#E0A526}
+.gtoval{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#FDECC8;color:#7A4B00;font-weight:700}
+html[data-theme="dark"] .gtoval{background:#4A3A14;color:#FFE1A3}

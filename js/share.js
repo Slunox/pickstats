@@ -189,7 +189,8 @@ export function importStatus(m) {
 
 export function addImported(m) {
   const t = teamFor(m);
-  const entry = { id: m.id, date: m.date, me: m.me, opp: m.opp, teamId: t ? t.id : null, q: m.q, ev: m.ev, roster: m.roster, ...(m.by ? { by: m.by } : {}), ...(m.oppColor ? { oppColor: m.oppColor } : {}) };
+  // Match reçu : sur l'appareil seulement, à publier pour le partager au club
+  const entry = { st: 'local', id: m.id, date: m.date, me: m.me, opp: m.opp, teamId: t ? t.id : null, q: m.q, ev: m.ev, roster: m.roster, ...(m.by ? { by: m.by } : {}), ...(m.oppColor ? { oppColor: m.oppColor } : {}) };
   const i = S.arch.findIndex(a => String(a.id) === String(m.id));
   if (i >= 0) S.arch[i] = entry; else S.arch.push(entry);
   save();

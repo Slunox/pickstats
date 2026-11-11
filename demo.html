@@ -27,8 +27,9 @@ header h1{font-size:20px;margin:0}
 header p{margin:0;color:var(--muted);font-size:14px}
 header .back{margin-left:auto;flex:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;text-decoration:none}
 header .back:hover{border-color:var(--accent)}
-.chaps{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
-.chap{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chaps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+@media (max-width:700px){.chaps{grid-template-columns:repeat(2,1fr)}}
+.chap{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chap.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 .dev{width:max-content;max-width:100%;margin:0 auto;background:var(--frame);border-radius:22px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
 .scr{position:relative;overflow:hidden;border-radius:10px;background:#fff}
@@ -42,11 +43,10 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
 .ring{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #2fae6a;pointer-events:none;animation:ring .6s ease-out forwards}
 @keyframes ring{from{transform:scale(.5);opacity:1}to{transform:scale(2);opacity:0}}
 /* Sous-titres par-dessus l'appli : en bas, ou en haut quand le doigt (ou un menu) est en bas */
-.sub{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);width:min(90%,720px);z-index:4;
+.sub{position:absolute;left:50%;top:0;transform:translateX(-50%);width:min(90%,720px);z-index:4;
   background:rgba(8,14,18,.88);color:#fff;border-radius:16px;padding:12px 18px 14px;
   box-shadow:0 10px 30px rgba(0,0,0,.4);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:opacity .35s, top .45s, bottom .45s;pointer-events:none}
-.sub.top{bottom:auto;top:5%}
+  transition:opacity .35s, top .7s cubic-bezier(.65,0,.35,1);pointer-events:none}
 .sub.off{opacity:0}
 .sub small{display:block;color:#5fd395;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:12px;margin-bottom:3px}
 .sub p{margin:0;font-size:clamp(15px,2.1vw,21px);line-height:1.4}
@@ -59,14 +59,14 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
   background:rgba(10,18,22,.78);color:#fff;text-align:center;padding:16px;z-index:5}
 .start h2{margin:0;font-size:clamp(20px,3vw,28px)}
 .start button{border:0;border-radius:999px;background:#2fae6a;color:#06210f;font:inherit;font-weight:700;font-size:clamp(16px,2.2vw,20px);padding:12px 26px;cursor:pointer}
-.start .opts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.start .opts{display:grid;grid-template-columns:repeat(3,minmax(0,250px));gap:10px;justify-content:center}
 .start .opts button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);text-align:left;border-radius:14px;padding:10px 16px}
 .start .opts button span{display:block;font-weight:400;font-size:13px;color:#cfe0d8}
 .start p{margin:0;max-width:520px;color:#d8e4df;font-size:14px}
 .start[hidden]{display:none}
 .dev.phone{border-radius:30px;padding:12px}
 .dev.phone .scr{border-radius:18px}
-.dev.phone .start .opts{flex-direction:column}
+.dev.phone .start .opts{grid-template-columns:minmax(0,300px)}
 .chap{font-weight:600}
 .chap:hover{border-color:var(--accent)}
 .chap[disabled],.bar button[disabled]{opacity:.5;cursor:default}
@@ -76,7 +76,7 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
 <div class="wrap">
   <header>
     <img src="icon-192.png" alt="">
-    <div><h1>Pick&amp;Stats en 3 minutes</h1><p>Démo animée de l’appli · données fictives</p></div>
+    <div><h1>Pick&amp;Stats en 6 minutes</h1><p>Démo animée de l’appli · données fictives</p></div>
     <a class="back" href="./">← Retour à l’appli</a>
   </header>
   <div class="chaps" id="chaps"></div>
@@ -88,9 +88,8 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
     <div class="sub off" id="sub" aria-live="polite"><small id="ctitle">Démo</small><p id="ctext"></p></div>
     <div class="start" id="start">
       <h2 id="stitle">La démo de Pick&amp;Stats</h2>
-      <button id="go">▶ Tout voir (3 min)</button>
+      <button id="go">▶ Tout voir (6 min)</button>
       <div class="opts" id="opts"></div>
-      <p id="snote">La vraie appli, pilotée toute seule. Rien n’est enregistré dans tes données : la démo a ses propres données, inventées.</p>
     </div>
   </div></div>
   <div class="bar">
@@ -143,9 +142,15 @@ async function find(sel) {
   throw new Error('Introuvable : ' + sel);
 }
 let seed = null;
-async function loadApp() {
+async function loadApp(ch) {
   if (!seed) seed = $('seed').textContent;
-  localStorage.setItem('bb-demo', seed);
+  const s = JSON.parse(seed);
+  // prep peut renvoyer une feuille e-Marque fictive, que l'appli « lit » au lieu d'un PDF
+  const sheet = ch && ch.prep ? ch.prep(s) : null;
+  if (sheet) localStorage.setItem('bb-demo-em', JSON.stringify(sheet)); else localStorage.removeItem('bb-demo-em');
+  localStorage.setItem('bb-demo', JSON.stringify(s));
+  // Compte et club simulés du chapitre (aucun : pas connecté)
+  if (ch && ch.cloud) localStorage.setItem('bb-demo-cloud', JSON.stringify(ch.cloud)); else localStorage.removeItem('bb-demo-cloud');
   await new Promise(ok => { frame.onload = ok; frame.src = 'index.html?demo&t=' + Date.now(); });
   await sleep(600);
 }
@@ -200,17 +205,34 @@ const hide = () => { finger.classList.remove('on'); fingerY = 0; };
 let total = 0, done = 0;
 let fingerY = 0;
 const sub = $('sub');
-// Sous-titre en haut si le doigt est dans la moitié basse ou si la barre d'actions du joueur est ouverte
-const place = () => sub.classList.toggle('top', fingerY > H * 0.5 || !!q('.bar .acts'));
+// Sous-titre en bas, ou en haut. Il ne change de côté que si le doigt passe dessous (ou si la barre
+// d'actions du joueur s'ouvre en bas), et glisse alors jusqu'à sa nouvelle place.
+let side = 'bottom';
+function place() {
+  const h = scr.clientHeight, sh = sub.offsetHeight, gap = h * 0.05, k = h / H;
+  const at = sd => (sd === 'top' ? gap : h - gap - sh);
+  if (q('.bar .acts')) side = 'top';
+  else if (fingerY) {
+    const fy = fingerY * k, y = at(side);
+    if (fy > y - 40 && fy < y + sh + 40) side = side === 'top' ? 'bottom' : 'top';
+  }
+  // Même côté (texte plus ou moins long) : pas de glissement, le bord reste fixe
+  const slide = side !== sub.dataset.side;
+  sub.dataset.side = side;
+  if (!slide) sub.style.transition = 'opacity .35s';
+  sub.style.top = at(side) + 'px';
+  if (!slide) { void sub.offsetHeight; sub.style.transition = ''; }
+}
+addEventListener('resize', place);
 
 // Une étape : [texte, temps de lecture en plus (ms), gestes].
 // Le sous-titre s'affiche d'abord, les gestes se font pendant la lecture,
 // puis on attend la fin de la lecture (et au moins un instant pour voir le résultat).
 async function step([text, extra, act]) {
   const t0 = clock;
+  $('ctext').textContent = text;
   place();
   sub.classList.remove('off');
-  $('ctext').textContent = text;
   done++;
   $('prog').style.width = Math.min(100, 100 * done / total) + '%';
   await sleep(350);
@@ -221,8 +243,36 @@ async function step([text, extra, act]) {
 }
 
 // --- Scénario ---
+// Liste déroulante : le doigt va dessus, puis la valeur change (comme un choix dans la liste)
+async function pick(sel, value) {
+  const el = await point(sel);
+  el.value = value;
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+  await sleep(700);
+}
+
+// Compte et club simulés pour un chapitre (mode démo de l'appli : rien n'est envoyé)
+const ME = role => ({
+  status: 'on', email: 'vincent@club.fr', name: 'Vincent', uid: 'demo-me',
+  club: { id: 'demo-club', name: 'Basket Club Démo', code: 'K7P29QXM', role },
+  members: [{ uid: 'demo-sophie', name: 'Sophie', role: 'admin' }, { uid: 'demo-karim', name: 'Karim', role: 'coach' },
+    { uid: 'demo-julie', name: 'Julie', role: 'benevole' }, { uid: 'demo-me', name: 'Vincent', role }],
+});
+
 const CHAPTERS = [
-  { title: 'À la table de marque', sub: 'Pour les bénévoles : saisir un match', steps: [
+  { title: 'Compte et club', sub: 'Pour tous : créer son compte, rejoindre son club', steps: [
+    ['Pour partager les équipes et les matchs, chacun a son compte et rejoint le club. Tout commence en haut de l’accueil.', 0, async () => { await point('[data-x="sheet"]', { slow: true }); }],
+    ['« Se connecter »… et pour une première fois : « Créer un compte ».', -300, async () => { await tap('[data-x="sheet"]', 500); await tap('[data-x="cmode"][data-v="signup"]'); }],
+    ['Un pseudo, visible par les membres du club, puis son e-mail et un mot de passe.', 300, async () => { await type('[data-cpseudo]', 'Vincent'); await type('[data-cm]', 'vincent@club.fr'); await type('#cpass', 'basket'); }],
+    ['« Créer mon compte ».', -900, async () => { await tap('[data-x="csignup"]'); }],
+    ['Le responsable du club donne un code d’invitation de 8 caractères. On le saisit ici…', 0, async () => { await type('[data-ccode]', 'K7P2-9QXM'); }],
+    ['Pas encore de club ? On peut aussi le créer : on en devient le responsable, et on invite les autres.', 0, async () => { await point('[data-x="ccreate"]', { slow: true }); }],
+    ['…puis « Rejoindre ».', -900, async () => { await tap('[data-x="cjoin"]'); hide(); }],
+    ['C’est fait : le club s’affiche en haut de l’accueil. On arrive bénévole : on saisit les stats, les coachs gèrent les équipes.', 300, async () => { await point('.acct', { slow: true }); }],
+    ['En le touchant : son pseudo, l’état de la synchronisation, et la page du club.', 0, async () => { await tap('[data-x="sheet"]'); }],
+    ['« Club et membres » : qui est responsable, coach ou bénévole. Le responsable peut changer le rôle de chacun.', 600, async () => { await tap('.sheet [data-x="view"][data-v="members"]'); hide(); }],
+  ] },
+  { title: 'Saisir un match', sub: 'Pour les bénévoles : à la table de marque', cloud: ME('benevole'), steps: [
     ['Pick&Stats complète l’e-Marque : la feuille compte les points et les fautes, l’appli compte tout le reste. Interceptions, pertes de balle, rebonds, tirs ratés…', 0, async () => { hide(); }],
     ['Avant le coup d’envoi : « Commencer un match ».', -600, async () => { await tap('[data-x="startpick"]'); }],
     ['On choisit l’équipe qui joue…', -800, async () => { await tap('[data-x="pickteam"][data-id="t-sm1"]'); }],
@@ -238,20 +288,67 @@ const CHAPTERS = [
     ['Une erreur ? « Annuler la dernière » efface l’action précédente. L’historique permet aussi de corriger plus tard.', 0, async () => { await tap('[data-x="undo"]'); }],
     ['Fin du quart-temps : on passe au suivant avec la flèche.', -400, async () => { await tap('[data-x="q+"]'); }],
     ['L’onglet Statistiques donne le tableau en direct, par quart-temps ou pour tout le match. Pratique pour le coach pendant les temps morts.', 400, async () => { await tap('nav [data-v="stats"]'); hide(); }],
-    ['Au coup de sifflet final : « Archiver ». Le match rejoint les matchs archivés, et avec un club en ligne il est partagé avec les coachs.', 0, async () => { await tap('nav .homebtn'); await tap('[data-x="harchive"]', 600); await tap('[data-x="myes"]'); hide(); }],
+    ['Au coup de sifflet final : « Sauvegarder ». Le match est gardé sur la tablette.', 0, async () => { await tap('nav .homebtn'); await tap('[data-x="harchive"]', 600); await tap('[data-x="myes"]'); hide(); }],
+    ['On l’ouvre depuis l’accueil : il est marqué « Non publié »…', -300, async () => { await tap('.lastg [data-x="gopen"]'); hide(); }],
+    ['…et on le publie : il part au club, en attente de validation par un coach ou un responsable.', 300, async () => { await tap('[data-x="gpub"]'); hide(); }],
   ] },
-  { title: 'Pour les coachs', sub: 'Équipes, feuille e-Marque, rapport', steps: [
+  { title: 'Gérer le club', sub: 'Pour les responsables : membres, rôles, validation', cloud: ME('admin'),
+    // Un match publié par Julie (bénévole), à valider
+    prep: s => {
+      const m = JSON.parse(JSON.stringify(s.arch.find(x => x.id === 1730000000001)));
+      Object.assign(m, { id: 1730000000009, date: '2026-11-08T15:00:00.000Z', opp: 'Saint-Médard', st: 'pending', author: 'demo-julie', by: 'Julie' });
+      s.arch.push(m);
+    },
+    steps: [
+      ['Le responsable gère le club depuis le bandeau en haut de l’accueil.', -300, async () => { await tap('[data-x="sheet"]'); }],
+      ['« Club et membres »…', -900, async () => { await tap('.sheet [data-x="view"][data-v="members"]'); hide(); }],
+      ['Le nom et le logo du club, affichés pour tous les membres et en haut des exports.', 0, async () => { await point('[data-cn]'); }],
+      ['Le code d’invitation à donner aux nouveaux membres. « Nouveau code » rend l’ancien inutilisable.', 300, async () => { await point('.ccode', { slow: true }); }],
+      ['Les membres et leur rôle. Julie, bénévole, devient coach : elle pourra modifier les équipes et valider les matchs.', 600, async () => { await pick('[data-crole="demo-julie"]', 'coach'); }],
+      ['Les matchs publiés par les bénévoles arrivent « À valider ».', 0, async () => { await tap('[data-x="view"][data-v="home"]', 400); await tap('[data-x="view"][data-v="club"]', 400); await tap('[data-x="view"][data-v="games"]'); }],
+      ['On ouvre le match…', -900, async () => { await tap('.mcard:has(.mst.pending) [data-x="gopen"]'); hide(); }],
+      ['…on vérifie les stats, puis « Valider » : il rejoint les matchs du club.', 300, async () => { await tap('[data-x="gval"]'); hide(); }],
+      ['Seuls les coachs et les responsables peuvent supprimer un match validé. Le reste est dans « Gérer le match » : exports, envoi, feuille e-Marque.', 300, async () => { await tap('details.gman summary'); hide(); }],
+    ] },
+  { title: 'Gérer les équipes', sub: 'Pour les coachs : équipes, joueurs, rapports', cloud: ME('coach'), steps: [
     ['« Effectifs et matchs » : les équipes du club et tous les matchs.', -400, async () => { hide(); await tap('[data-x="view"][data-v="club"]'); }],
     ['Chaque équipe a sa catégorie, sa couleur et ses joueurs, avec leur numéro habituel.', 0, async () => { await tap('[data-x="tedit"][data-id="t-sm1"]'); }],
-    ['Nouveau : on crée une équipe directement depuis la feuille e-Marque d’un match. Joueurs, numéros et catégorie sont repris tout seuls.', 300, async () => { await tap('[data-x="tback"]', 500); await point('[data-x="tempick"]', { slow: true }); }],
-    ['Les matchs archivés, avec le score quand la feuille e-Marque a été importée.', -300, async () => { await tap('[data-x="view"][data-v="games"]'); hide(); }],
-    ['La fiche du match : chaque chiffre de l’équipe est comparé à sa moyenne de la saison, en vert quand c’est mieux. Exports et envoi sont dans « Gérer le match ».', 600, async () => { await tap('[data-x="gopen"][data-id="1730000000000"]'); hide(); }],
-    ['L’onglet Joueurs : la feuille e-Marque et les actions saisies, joueur par joueur.', 0, async () => { await tap('[data-x="gtab"][data-v="players"]'); hide(); }],
-    ['On y importe les PDF de l’e-Marque. Points, tirs, lancers francs, fautes, temps de jeu et score de chaque quart-temps sont lus automatiquement.', 300, async () => { await point('[data-x="rpopen"]', { slow: true }); }],
-    ['Et on obtient un rapport complet du match. Les commentaires s’adaptent au résultat et aux chiffres.', 600, async () => { await tap('[data-x="rpopen"]'); hide(); }],
-    ['Le match quart-temps par quart-temps…', -300, async () => { await tap('[data-x="rp"][data-v="quarts"]'); hide(); }],
-    ['…l’adresse de chaque joueur…', -500, async () => { await tap('[data-x="rp"][data-v="joueurs"]'); hide(); }],
-    ['…et l’équipe face à l’adversaire : tirs, rebonds, ballons. Le rapport se télécharge aussi en fichier à partager.', 0, async () => { await tap('[data-x="rp"][data-v="equipe"]'); hide(); }],
+    ['La couleur de l’équipe, reprise sur l’écran de saisie, les matchs et les exports.', -300, async () => { await tap('[data-x="tcolor"][data-v="#DC2626"]'); }],
+    ['Un nouveau joueur ? « Ajouter un joueur », son nom et son numéro habituel.', 300, async () => { await tap('[data-x="addpl"]', 400); await type('[data-pn="10"]', 'Tom Garnier'); await type('[data-pu="10"]', '14'); }],
+    ['Une nouvelle équipe se crée aussi depuis la feuille e-Marque d’un match : joueurs, numéros et catégorie sont repris tout seuls.', 300, async () => { await tap('[data-x="tback"]', 500); await point('[data-x="tempick"]', { slow: true }); }],
+    ['Les équipes sont prêtes : les bénévoles les retrouvent au moment de commencer un match.', 300, async () => { hide(); }],
+  ] },
+  { title: 'Importer l’e-Marque', sub: 'Pour les coachs : score, tirs et fautes du match', cloud: ME('coach'),
+    // Match contre Mérignac sans sa feuille, adversaire mal écrit à la table ; la feuille sert de PDF fictif
+    prep: s => {
+      const m = s.arch.find(x => x.id === 1730000000002), sheet = m.em;
+      delete m.em; m.opp = 'Merignak';
+      return sheet;
+    },
+    steps: [
+      ['Après le match, on récupère la feuille e-Marque en PDF : le résumé et la feuille de marque.', 0, async () => { hide(); await tap('[data-x="view"][data-v="games"]'); }],
+      ['On ouvre le match. Pour l’instant, il n’a que les actions saisies à la table.', -300, async () => { await tap('[data-x="gopen"][data-id="1730000000002"]'); hide(); }],
+      ['En bas : « Importer la feuille e-Marque ». On choisit les deux PDF d’un coup.', 300, async () => { await tap('[data-x="empick"]', 1900); hide(); }],
+      ['Avant d’enregistrer, on vérifie : notre équipe sur la feuille, le score, le détail par quart-temps.', 300, async () => { await point('.emscore', { slow: true }); }],
+      ['L’adversaire avait été mal écrit à la table : son nom est repris de la feuille.', 0, async () => { await point('#emopp', { slow: true }); }],
+      ['Chaque joueur est relié par son numéro de maillot. Une ligne en rouge si les points ne collent pas aux tirs : on la corrige.', 300, async () => { await point('.emt', { slow: true }); }],
+      ['« Enregistrer dans le match ».', -800, async () => { await tap('[data-x="emsave"]'); hide(); }],
+      ['Le match a son score, et le détail des tirs : % à 2 pts, à 3 pts, aux lancers francs, et les fautes. Toujours comparé à la moyenne de la saison.', 600, async () => { await point('.emtiles', { slow: true }); }],
+      ['Quart-temps par quart-temps aussi, pour voir où le match s’est joué.', 0, async () => { await tap('[data-x="sq"][data-q="2"]'); }],
+      ['L’onglet Joueurs : points, temps de jeu et fautes de chacun, à côté des actions saisies.', 300, async () => { await tap('[data-x="gtab"][data-v="players"]'); hide(); }],
+      ['Et le rapport du match est prêt : c’est le chapitre suivant.', 0, async () => { await point('[data-x="rpopen"]', { slow: true }); }],
+    ] },
+  { title: 'Le rapport de match', sub: 'Pour les coachs : l’analyse, à partager', cloud: ME('coach'), steps: [
+    ['Chaque match qui a sa feuille e-Marque a son rapport. On ouvre le match…', -300, async () => { hide(); await tap('[data-x="view"][data-v="games"]'); await tap('[data-x="gopen"][data-id="1730000000000"]'); }],
+    ['…puis « Rapport du match ».', -900, async () => { await tap('[data-x="rpopen"]'); hide(); }],
+    ['Le résumé : le score, les chiffres clés comparés à la saison, les points forts et ce qui est à travailler.', 900, async () => { await scrollTo('.rp-page'); }],
+    ['Six pages : on passe de l’une à l’autre avec les onglets, les boutons en bas… ou en glissant le doigt sur l’écran.', 300, async () => { await tap('.rp-pager [data-go="1"]'); hide(); }],
+    ['L’équipe : tirs, rebonds, ballons perdus et gagnés, face à l’adversaire.', 600, async () => { hide(); }],
+    ['Le match quart-temps par quart-temps : le score, et le moment où il a basculé.', 600, async () => { await tap('[data-x="rp"][data-v="quarts"]'); hide(); }],
+    ['Chaque joueur : ses points, son temps de jeu, ses fautes, et tout ce qu’il a fait d’autre.', 600, async () => { await tap('[data-x="rp"][data-v="joueurs"]'); hide(); }],
+    ['L’adversaire : qui a marqué, et comment. À connaître pour le match retour.', 300, async () => { await tap('[data-x="rp"][data-v="adv"]'); hide(); }],
+    ['Et comment chaque chiffre est calculé.', 0, async () => { await tap('[data-x="rp"][data-v="methode"]'); hide(); }],
+    ['Pour le partager : dans « Gérer le match », « Télécharger le dossier » donne le rapport en fichier, à envoyer aux joueurs ou aux parents.', 300, async () => { await tap('[data-x="view"][data-v="game"]', 500); await tap('details.gman summary', 500); await point('[data-x="rpfile"]', { slow: true }); }],
     ['Pick&Stats : une saisie simple pour les bénévoles, une analyse poussée pour les coachs. Bon match !', 800, async () => { hide(); }],
   ] },
 ];
@@ -285,12 +382,13 @@ async function play(from = 0, only = false) {
   try {
     $('ctitle').textContent = CHAPTERS[from].title;
     $('ctext').textContent = 'Préparation de la démo…';
-    sub.classList.remove('top', 'off');
-    await loadApp();
+    side = 'bottom'; place();
+    sub.classList.remove('off');
+    await loadApp(CHAPTERS[from]);
     for (let i = from; i <= to; i++) {
       mark(i);
       $('ctitle').textContent = CHAPTERS[i].title;
-      if (i > from) await loadApp(); // chaque chapitre repart des données de démo
+      if (i > from) await loadApp(CHAPTERS[i]); // chaque chapitre repart des données de démo (et de son compte)
       for (const s of CHAPTERS[i].steps) { if (me !== run) return; await step(s); }
     }
     hide();
@@ -298,7 +396,6 @@ async function play(from = 0, only = false) {
     mark(-1);
     $('stitle').textContent = only ? `Fin du chapitre ${from + 1}` : 'Fin de la démo';
     $('go').textContent = only ? '↺ Revoir ce chapitre' : '↺ Revoir la démo';
-    $('snote').textContent = 'Choisis un chapitre pour le revoir seul.';
     $('start').hidden = false;
   } catch (e) {
     if (e !== Stop) { console.error(e); $('ctext').textContent = 'La démo s’est interrompue. Appuie sur « Recommencer ».'; }
@@ -307,7 +404,8 @@ async function play(from = 0, only = false) {
 // Ouverte comme un fichier (double-clic) : le navigateur refuse de lancer l'appli dans le cadre.
 if (!/^https?:$/.test(location.protocol)) {
   $('go').hidden = true;
-  $('start').querySelector('p').innerHTML = 'La démo doit être ouverte depuis une adresse web, pas comme un fichier.<br>'
+  const note = document.createElement('p'); $('start').appendChild(note);
+  note.innerHTML = 'La démo doit être ouverte depuis une adresse web, pas comme un fichier.<br>'
     + 'Ouvre <b>https://slunox.github.io/stats-basket/demo.html</b>, ou les Réglages de l’appli › « Voir la démo animée ».';
   $('opts').hidden = true;
   document.querySelectorAll('.chap, .bar button').forEach(b => { b.disabled = true; });

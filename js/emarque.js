@@ -375,6 +375,23 @@ export const oppName = s => tidyName(String(s || '').trim().replace(/\s+/g, ' ')
 const ROW_KEYS = ['min', 'pts', 'fg', 'p3', 'p2i', 'p2e', 'lf', 'f'];
 const pickRow = r => Object.fromEntries(ROW_KEYS.map(k => [k, r[k]]));
 
+// Inverse de toEm : feuille déjà lue, telle que la renvoie readEmarque.
+// Sert à la démo animée, qui « importe » une feuille fictive au lieu d'un PDF.
+export function fromEm(em) {
+  const side = em.side || 0, src = [em.us, em.them];
+  const team = t => ({ total: { ...t.total }, halves: t.halves || null, ot: t.ot || 0,
+    players: Object.entries(t.players || {}).map(([n, r]) => ({ n, ...r })) });
+  const per = t => (t.q || []).map((pts, i) => ({ pts, pl: Object.fromEntries(Object.entries(t.qp || {}).map(([n, a]) => [n, a[i]])) }));
+  const at = i => src[i === side ? 0 : 1];
+  const two = k => [at(0)[k], at(1)[k]];
+  return {
+    num: em.num || '', a: em.a || '', b: em.b || '', warn: [],
+    teams: [team(at(0)), team(at(1))],
+    quarters: em.us.q ? [per(at(0)), per(at(1))] : null,
+    ratios: em.us.adv != null ? { adv: two('adv'), run: two('run'), bench: two('bench'), ties: em.ties } : null,
+  };
+}
+
 // Données enregistrées avec le match archivé (m.em).
 export function toEm(d, side) {
   const team = i => {

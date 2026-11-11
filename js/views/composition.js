@@ -17,7 +17,7 @@ export function comp() {
   const rows = S.roster.length
     ? S.roster.map((r, i) => `<div class="prow4">
         <input type="checkbox" data-cin="${i}"${r.in !== false ? ' checked' : ''} aria-label="Présent">
-        <input data-cname="${i}" value="${esc(r.name)}" placeholder="Nom du joueur" aria-label="Nom">
+        ${r.nw ? `<input data-cname="${i}" value="${esc(r.name)}" placeholder="Nom du joueur" aria-label="Nom">` : `<span class="cname">${esc(r.name) || '<span class="z">Sans nom</span>'}</span>`}
         <input data-cnum="${i}" class="${dupN(r.n, i) ? 'dup' : ''}" value="${esc(r.n)}" inputmode="numeric" maxlength="3" placeholder="N°" aria-label="Numéro du match">
         <button class="del" data-x="cdel" data-i="${i}"${hasEv(r.n) ? ' disabled' : ''} aria-label="Retirer ce joueur">✕</button>
       </div>`).join('')
@@ -31,13 +31,13 @@ export function comp() {
     <label>Équipe adverse</label>
     <input data-f="opp" value="${esc(S.opp)}" placeholder="Nom de l’adversaire" maxlength="30" aria-label="Équipe adverse">
     ${oppSwatches(S.oppColor)}
-    <p class="help" style="margin:10px 0">Décoche un joueur pour le retirer de l’écran de saisie : ses stats déjà saisies restent dans les statistiques. Changer un numéro déplace aussi ses actions déjà saisies.</p>
+    <p class="help" style="margin:10px 0">Décoche un joueur pour le retirer de l’écran de saisie : ses stats déjà saisies restent dans les statistiques. Changer un numéro déplace aussi ses actions déjà saisies. Les noms des joueurs de l’équipe se modifient dans la fiche de l’équipe.</p>
     <div class="prow4 head"><span></span><span>Joueur</span><span>N° du match</span><span></span></div>
     ${rows}
     <p class="help">La croix est grisée pour un joueur qui a déjà des actions : décoche-le plutôt.</p>
     ${add}
-    <h3>Joueur absent de l’équipe</h3>
+    <h3>Joueur qui n’est pas dans l’équipe</h3>
     <button class="btn" data-x="cnew">Nouveau joueur</button>
-    <p class="help">${t ? 'Il est aussi ajouté à l’équipe ' + esc(t.name) + ' pour les prochains matchs.' : 'Il est ajouté à ce match uniquement.'}</p>
+    <p class="help">Il est ajouté à ce match uniquement : l’équipe${t ? ' ' + esc(t.name) : ''} ne change pas.</p>
   </div>`;
 }

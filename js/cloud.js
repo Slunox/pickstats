@@ -59,7 +59,8 @@ const KINDS = {
     del: id => { S.teams = S.teams.filter(t => String(t.id) !== id); },
   },
   matches: {
-    ids: () => S.arch.map(m => String(m.id)),
+    // Un match sauvegardé sur l'appareil (st : 'local') ne part pas tant qu'il n'est pas publié
+    ids: () => S.arch.filter(m => m.st !== 'local').map(m => String(m.id)),
     get: id => S.arch[byId(S.arch, id)],
     put: (id, d) => putIn('arch', id, d),
     del: id => { S.arch = S.arch.filter(m => String(m.id) !== id); },
@@ -134,6 +135,11 @@ export const ROLES = { admin: 'Responsable', coach: 'Coach', benevole: 'Bénévo
 const readOnly = () => !!(cloud.club && cloud.club.role === 'benevole');
 // Peut modifier les équipes, les matchs archivés et le club (vrai aussi sans club en ligne).
 export const canEdit = () => !readOnly();
+// Connecté à un club (publication et validation des matchs).
+export const inClub = () => !!clubId();
+// Suppression d'un match : sauvegardé sur l'appareil (tout le monde), publié non validé (son auteur),
+// validé ou ancien (responsables et coachs seulement).
+export const canDelMatch = m => m.st === 'local' || canEdit() || (m.st === 'pending' && !!m.author && m.author === cloud.uid);
 const col = (kind) => F.collection(db, 'clubs', clubId(), kind);
 const ref = (kind, id) => F.doc(db, 'clubs', clubId(), kind, id);
 
@@ -202,7 +208,12 @@ function flush() {
   const c = clubId();
   if (!db || !c) return;
   if (readOnly()) {
-    // Bénévole : n'envoie que les nouveaux matchs archivés (rien n'est modifié ni supprimé en ligne).
+    // Bénévole : n'envoie que les matchs qu'il publie, et ne supprime que ses matchs publiés pas encore validés
+    // (les règles Firestore refusent le reste).
+    tombs.filter(k => k.startsWith(c + '/matches/')).forEach(key => {
+      F.deleteDoc(ref('matches', key.split('/')[2])).catch(fail);
+      delete seen[key];
+    });
     tombs = tombs.filter(k => !k.startsWith(c + '/'));
     keepTombs();
     if (ready.matches) {
@@ -410,6 +421,7 @@ async function start() {
 // Au démarrage : se reconnecte si on l'était.
 export function initCloud(render) {
   redraw = render;
+  if (DEMO) { demo.init(); return; }
   if (cfg() && load(ON_KEY, 0)) start();
 }
 
@@ -449,7 +461,7 @@ async function run(f) {
 
 export const setMode = m => { cloud.mode = m; cloud.err = ''; cloud.info = ''; };
 
-export const login = (email, password) => run(async () => {
+export const login = (email, password) => DEMO ? demo.login(email, password) : run(async () => {
   if (!email) throw { code: 'auth/invalid-email' };
   cloud.status = 'loading';
   refresh();
@@ -463,7 +475,7 @@ const nameErr = n => (n.length < 2 ? 'Choisis un pseudo (2 caractères minimum).
 // Nom à afficher pour un membre : son pseudo (l'e-mail n'est jamais montré aux autres).
 export const memberName = m => cleanName(m && m.name) || 'Sans pseudo';
 
-export const signup = (email, password, name) => run(async () => {
+export const signup = (email, password, name) => DEMO ? demo.signup(email, password, name) : run(async () => {
   name = cleanName(name);
   if (nameErr(name)) { cloud.err = nameErr(name); return; }
   if (!email) throw { code: 'auth/invalid-email' };
@@ -475,7 +487,7 @@ export const signup = (email, password, name) => run(async () => {
 });
 
 // Change son pseudo (compte et fiche de membre du club).
-export const setName = name => run(async () => {
+export const setName = name => DEMO ? demo.setName(name) : run(async () => {
   name = cleanName(name);
   if (nameErr(name)) { cloud.err = nameErr(name); return; }
   await F.updateProfile(auth.currentUser, { displayName: name });
@@ -484,13 +496,14 @@ export const setName = name => run(async () => {
   cloud.info = 'Pseudo enregistré.';
 });
 
-export const resetPassword = email => run(async () => {
+export const resetPassword = email => DEMO ? demo.resetPassword(email) : run(async () => {
   if (!email) { cloud.err = 'Saisis ton adresse e-mail, puis touche « Mot de passe oublié ».'; return; }
   await F.sendPasswordResetEmail(auth, email.trim());
   cloud.info = 'Un e-mail pour choisir un nouveau mot de passe a été envoyé à ' + email.trim() + '.';
 });
 
 export async function logout() {
+  if (DEMO) return demo.logout();
   detach();
   store(ON_KEY, 0);
   if (auth) await F.signOut(auth);
@@ -511,7 +524,7 @@ function newCodeValue() {
 export const showCode = c => (c ? c.slice(0, 4) + '-' + c.slice(4) : '');
 const cleanCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-export const createClub = name => run(async () => {
+export const createClub = name => DEMO ? demo.createClub(name) : run(async () => {
   name = String(name || '').trim();
   if (!name) { cloud.err = 'Donne un nom à ton club.'; return; }
   const c = F.doc(F.collection(db, 'clubs')).id, code = newCodeValue(), now = new Date().toISOString();
@@ -526,7 +539,7 @@ export const createClub = name => run(async () => {
   watchMember(c);
 });
 
-export const joinClub = code => run(async () => {
+export const joinClub = code => DEMO ? demo.joinClub(code) : run(async () => {
   code = cleanCode(code);
   if (code.length !== 8) { cloud.err = 'Le code d’invitation a 8 caractères (par ex. K7P2-9QXM).'; return; }
   const inv = await F.getDoc(F.doc(db, 'invites', code));
@@ -544,7 +557,11 @@ export function keepLocal(add) {
   const c = cloud.club && cloud.club.id;
   if (!c) return;
   if (!add) { S.teams = []; S.arch = []; }
-  else if (readOnly()) S.teams = []; // bénévole : seuls ses matchs archivés partent, les équipes viennent du club
+  else if (readOnly()) {
+    // bénévole : les équipes viennent du club ; ses matchs restent sur l'appareil, à publier un par un
+    S.teams = [];
+    S.arch.forEach(m => { if (!m.st) m.st = 'local'; });
+  }
   S.cloudClub = c;
   cloud.ask = null;
   save();
@@ -552,7 +569,7 @@ export function keepLocal(add) {
 }
 
 // Responsable : nouveau code (l'ancien ne permet plus de rejoindre le club).
-export const renewCode = () => run(async () => {
+export const renewCode = () => DEMO ? demo.renewCode() : run(async () => {
   const c = cloud.club, code = newCodeValue();
   const b = F.writeBatch(db);
   b.set(F.doc(db, 'invites', code), { clubId: c.id });
@@ -565,7 +582,7 @@ export const renewCode = () => run(async () => {
 const admins = () => cloud.members.filter(m => m.role === 'admin');
 const rank = m => ['admin', 'coach', 'benevole'].indexOf(m.role || 'coach');
 
-export const setRole = (uid, role) => run(async () => {
+export const setRole = (uid, role) => DEMO ? demo.setRole(uid, role) : run(async () => {
   if (!ROLES[role]) return;
   if (role !== 'admin' && admins().length < 2 && admins().some(m => m.uid === uid)) {
     cloud.err = 'Le club doit garder au moins un responsable.';
@@ -574,11 +591,11 @@ export const setRole = (uid, role) => run(async () => {
   await F.updateDoc(F.doc(db, 'clubs', cloud.club.id, 'members', uid), { role });
 });
 
-export const removeMember = uid => run(async () => {
+export const removeMember = uid => DEMO ? demo.removeMember(uid) : run(async () => {
   await F.deleteDoc(F.doc(db, 'clubs', cloud.club.id, 'members', uid));
 });
 
-export const leaveClub = () => run(async () => {
+export const leaveClub = () => DEMO ? demo.leaveClub() : run(async () => {
   const c = cloud.club;
   if (c.role === 'admin' && admins().length < 2 && cloud.members.length > 1) {
     cloud.err = 'Tu es le seul responsable : nomme d’abord un autre responsable.';
@@ -613,6 +630,7 @@ export function cloudResync() {
 
 // Responsable : envoie le code d'invitation (partage du système, sinon copie).
 export async function shareCode() {
+  if (DEMO) { toast('Démo : le code serait envoyé par message'); return; }
   const k = cloud.club;
   if (!k || !k.code) return;
   const url = location.origin + location.pathname;
@@ -650,3 +668,97 @@ export async function copyCode() {
   }
   toast('Code copié : ' + code);
 }
+
+// --- Mode démo : compte et club simulés sur l'appareil (rien n'est envoyé) ---
+// Sert à la démo animée (demo.html) : on peut se connecter, créer un compte, rejoindre ou créer un club,
+// gérer les membres et leurs rôles. L'état est gardé dans 'bb-demo-cloud' (préparé par la démo pour chaque chapitre).
+const DEMO_CLOUD = 'bb-demo-cloud';
+const DEMO_CLUB = { id: 'demo-club', name: 'Basket Club Démo', code: 'K7P29QXM' };
+const DEMO_OTHERS = [
+  { uid: 'demo-sophie', name: 'Sophie', role: 'admin' },
+  { uid: 'demo-karim', name: 'Karim', role: 'coach' },
+  { uid: 'demo-julie', name: 'Julie', role: 'benevole' },
+];
+const demo = {
+  keep() {
+    store(DEMO_CLOUD, { status: cloud.status, email: cloud.email, name: cloud.name, uid: cloud.uid, club: cloud.club, members: cloud.members });
+    refresh();
+  },
+  init() {
+    const d = load(DEMO_CLOUD, null);
+    cloud.status = 'off';
+    if (d && d.status === 'on') {
+      Object.assign(cloud, d);
+      if (cloud.club) S.cloudClub = cloud.club.id;
+    }
+    refresh();
+  },
+  sort() { cloud.members.sort((a, b) => (a.role === b.role ? memberName(a).localeCompare(memberName(b), 'fr') : rank(a) - rank(b))); },
+  me(role) { return { uid: cloud.uid, name: cloud.name, role }; },
+  on(email, name) {
+    cloud.err = ''; cloud.info = '';
+    if (!String(email || '').trim()) { cloud.err = ERR['auth/invalid-email']; refresh(); return; }
+    Object.assign(cloud, { status: 'on', email: email.trim(), name: name || email.trim().split('@')[0], uid: 'demo-me', club: null, members: [] });
+    unfocus();
+    demo.keep();
+  },
+  login: (email) => demo.on(email, ''),
+  signup(email, password, name) {
+    name = cleanName(name);
+    if (nameErr(name)) { cloud.err = nameErr(name); refresh(); return; }
+    demo.on(email, name);
+  },
+  setName(name) {
+    name = cleanName(name);
+    if (nameErr(name)) { cloud.err = nameErr(name); refresh(); return; }
+    cloud.name = name;
+    cloud.members.forEach(m => { if (m.uid === cloud.uid) m.name = name; });
+    cloud.info = 'Pseudo enregistré.';
+    demo.keep();
+  },
+  resetPassword(email) { cloud.info = 'Démo : un e-mail serait envoyé à ' + (email || 'ton adresse') + '.'; refresh(); },
+  joinClub(code) {
+    cloud.err = ''; cloud.info = '';
+    if (cleanCode(code).length !== 8) { cloud.err = 'Le code d’invitation a 8 caractères (par ex. K7P2-9QXM).'; refresh(); return; }
+    unfocus();
+    cloud.club = { ...DEMO_CLUB, role: 'benevole' };
+    cloud.members = [...DEMO_OTHERS.map(m => ({ ...m })), demo.me('benevole')];
+    demo.sort();
+    S.cloudClub = DEMO_CLUB.id;
+    save();
+    demo.keep();
+  },
+  createClub(name) {
+    name = String(name || '').trim();
+    if (!name) { cloud.err = 'Donne un nom à ton club.'; refresh(); return; }
+    unfocus();
+    cloud.club = { id: DEMO_CLUB.id, name, code: DEMO_CLUB.code, role: 'admin' };
+    cloud.members = [demo.me('admin')];
+    if (!S.clubName) S.clubName = name;
+    S.cloudClub = DEMO_CLUB.id;
+    save();
+    demo.keep();
+  },
+  renewCode() {
+    const code = newCodeValue();
+    cloud.club.code = code;
+    cloud.info = 'Nouveau code : ' + showCode(code) + '. L’ancien ne fonctionne plus.';
+    demo.keep();
+  },
+  setRole(uid, role) {
+    if (!ROLES[role]) return;
+    if (role !== 'admin' && admins().length < 2 && admins().some(m => m.uid === uid)) { cloud.err = 'Le club doit garder au moins un responsable.'; refresh(); return; }
+    cloud.members.forEach(m => { if (m.uid === uid) m.role = role; });
+    if (uid === cloud.uid) cloud.club.role = role;
+    demo.sort();
+    demo.keep();
+  },
+  removeMember(uid) { cloud.members = cloud.members.filter(m => m.uid !== uid); demo.keep(); },
+  leaveClub() {
+    const name = cloud.club ? cloud.club.name : '';
+    cloud.club = null; cloud.members = [];
+    cloud.info = 'Tu as quitté le club ' + name + '. Ses équipes et matchs restent sur cet appareil.';
+    demo.keep();
+  },
+  logout() { Object.assign(cloud, { status: 'off', email: '', name: '', uid: '', club: null, members: [], err: '', info: '' }); demo.keep(); },
+};

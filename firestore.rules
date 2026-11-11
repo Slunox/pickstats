@@ -3,7 +3,7 @@ rules_version = '2';
 // Règles d'accès aux données (à coller dans Firestore > Règles, puis Publier).
 // Chacun peut créer son compte, mais ne voit que les données du club dont il est membre.
 // On devient membre en créant un club (responsable) ou avec son code d'invitation (bénévole).
-// Rôles : responsable (admin), coach, bénévole (saisie des stats et archivage seulement).
+// Rôles : responsable (admin), coach, bénévole (saisie des stats et publication de ses matchs, à valider).
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
@@ -64,10 +64,16 @@ service cloud.firestore {
         allow read: if isMember(c);
         allow write: if isEditor(c);
       }
-      // Un bénévole peut archiver un nouveau match, mais pas modifier ni supprimer un match existant.
+      // Matchs publiés. Un bénévole publie ses matchs « en attente de validation » (st == 'pending') ;
+      // un coach ou un responsable les valide (st == 'ok'). Un match validé n'est supprimé que par
+      // un coach ou un responsable ; un match en attente aussi par celui qui l'a publié.
       match /matches/{id} {
-        allow read, create: if isMember(c);
-        allow update, delete: if isEditor(c);
+        allow read: if isMember(c);
+        allow create: if isEditor(c)
+          || (isMember(c) && request.resource.data.st == 'pending' && request.resource.data.author == me());
+        allow update: if isEditor(c);
+        allow delete: if isEditor(c)
+          || (isMember(c) && resource.data.st == 'pending' && resource.data.author == me());
       }
     }
   }

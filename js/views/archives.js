@@ -4,7 +4,7 @@ import { S, ui, withMatch } from '../state.js';
 import { esc, fdate } from '../util.js';
 import { sortedTeams, curG, inTeam, tally, cnt, miss, teamColor } from '../model.js';
 import { back, periodChips, exportButtons, statsView } from './common.js';
-import { canEdit } from '../cloud.js';
+import { canEdit, inClub, canDelMatch } from '../cloud.js';
 import { emCard, emManage } from './emarque.js';
 import { emScore } from './emstats.js';
 import { reportView } from './report.js';
@@ -36,15 +36,18 @@ const scoreTag = m => {
   return `<span class="mscore ${r[0]}">${r[1]} ${a}–${b}</span>`;
 };
 
+// Statut d'un match pour le club : sauvegardé sur l'appareil, publié en attente de validation, ou validé (sans badge).
+const stTag = m => (!inClub() ? '' : m.st === 'local' ? '<span class="mst local">Non publié</span>' : m.st === 'pending' ? '<span class="mst pending">À valider</span>' : '');
+
 export function gameCard(m, teams, del = true) {
   return `<div class="mcard" style="--tc:${colorOf(m, teams)}">
     <button class="mmain" data-x="gopen" data-id="${m.id}">
-      <span class="mtop"><span class="mteam">${esc(m.me)}</span><span class="mdate">${longDate(m)}</span></span>
+      <span class="mtop"><span class="mteam">${esc(m.me)}</span>${stTag(m)}<span class="mdate">${longDate(m)}</span></span>
       <span class="mopp">contre <b>${esc(m.opp)}</b>${scoreTag(m)}</span>
       ${m.by ? `<span class="mby">Stats : ${esc(m.by)}</span>` : ''}
       <span class="mstats">${keyStats(m).map(([v, l]) => `<span><b>${v}</b>${l}</span>`).join('')}</span>
     </button>
-    ${del && canEdit() ? `<button class="mdel" data-x="gdel" data-id="${m.id}" aria-label="Supprimer le match contre ${esc(m.opp)}">✕</button>` : ''}
+    ${del && canDelMatch(m) ? `<button class="mdel" data-x="gdel" data-id="${m.id}" aria-label="Supprimer le match contre ${esc(m.opp)}">✕</button>` : ''}
   </div>`;
 }
 
@@ -82,7 +85,9 @@ export function games() {
     + (orphan.length ? chip('none', `Autres (${orphan.length})`) : '')
     + '</div>';
 
+  const toVal = inClub() && canEdit() ? all.filter(m => m.st === 'pending').length : 0;
   return back('Effectifs et matchs', 'view', 'club') + chips
+    + (toVal ? `<p class="gtoval">${toVal} match${toVal > 1 ? 's' : ''} publié${toVal > 1 ? 's' : ''} en attente de ta validation (badge « À valider »).</p>` : '')
     + `<div class="ghead"><h2>Matchs archivés (${L.length})</h2><button class="btn alt" data-x="impopen">Importer un match reçu</button></div>`
     + (L.length ? gameCards(L, teams) : '<div class="card"><p class="help">Aucun match archivé pour ce filtre.</p></div>');
 }
@@ -122,8 +127,22 @@ function manageCard(m) {
     ${sec('Exporter', exportButtons() + (m.em ? '<button class="btn alt" data-x="rpfile">Télécharger le dossier (HTML)</button>' : ''))}
     ${sec('Envoyer le match', `<p class="help" style="margin:0 0 10px">Pour un autre coach qui utilise Pick&amp;Stats : il pourra l’ajouter à ses matchs archivés et retrouver toutes les stats.</p>
       <button class="btn" data-x="sendlink">Envoyer un lien</button><button class="btn" data-x="sendfile">Envoyer un fichier</button>`)}
-    ${edit ? `<section class="gsec"><button class="btn bad" data-x="gdel" data-id="${m.id}">Supprimer ce match</button></section>` : ''}
+    ${canDelMatch(m) ? `<section class="gsec"><button class="btn bad" data-x="gdel" data-id="${m.id}">Supprimer ce match</button></section>` : ''}
   </details>`;
+}
+
+// Bandeau de statut dans un club : publier un match sauvegardé, valider un match publié.
+function stBox(m) {
+  if (!inClub()) return '';
+  if (m.st === 'local') {
+    return `<div class="gst local"><div><b>Sauvegardé sur cet appareil</b><span>${canEdit() ? 'Publie-le pour le partager avec le club.' : 'Publie-le pour le présenter : un coach ou un responsable le validera.'}</span></div>`
+      + '<button class="btn" data-x="gpub">Publier</button></div>';
+  }
+  if (m.st === 'pending') {
+    return `<div class="gst pending"><div><b>En attente de validation</b><span>Publié${m.by ? ' par ' + esc(m.by) : ''}. ${canEdit() ? 'Vérifie les stats, puis valide-le.' : 'Un coach ou un responsable doit le valider.'}</span></div>`
+      + (canEdit() ? '<button class="btn" data-x="gval">Valider</button>' : '') + '</div>';
+  }
+  return '';
 }
 
 // Fiche d'un match archivé : score, onglets Équipe / Joueurs, puis « Gérer le match ».
@@ -135,6 +154,7 @@ export function game() {
     const tab = ui.gtab === 'players' ? 'players' : 'team';
     const tabBtn = (v, l) => `<button class="chip${tab === v ? ' on' : ''}" data-x="gtab" data-v="${v}">${l}</button>`;
     return periodChips(ui.sq, 'sq', 'Total match')
+      + stBox(m)
       + `<div class="card"><h2>${esc(S.me)} contre ${esc(S.opp)} — ${fdate(m)}</h2>${byText(m)}${emScore()}`
       + (m.em ? '<div class="crow grep"><button class="btn" data-x="rpopen">Rapport du match</button></div>' : '')
       + `<div class="chips gtabs">${tabBtn('team', 'Équipe')}${tabBtn('players', 'Joueurs')}</div>`

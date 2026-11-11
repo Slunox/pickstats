@@ -16,8 +16,8 @@ export function settings() {
   const onOff = v => (v === false ? '0' : '1');
 
   const match = S.active ? card('Match en cours',
-    '<button class="btn" data-x="archive">Terminer et archiver le match</button><button class="btn bad" data-x="new">Effacer sans archiver</button>',
-    'Archiver range le match dans « Effectifs et matchs » (matchs archivés), avec sa date.') : '';
+    '<button class="btn" data-x="archive">Terminer et sauvegarder le match</button><button class="btn bad" data-x="new">Effacer sans sauvegarder</button>',
+    'Sauvegarder range le match dans « Effectifs et matchs », avec sa date, sur cet appareil. Pour le partager au club, ouvre-le et touche « Publier ».') : '';
 
   return (S.active ? '' : back('Accueil', 'view', 'home'))
     + card('Apparence',

@@ -6,7 +6,7 @@ import { S, ui, save, withMatch } from './state.js';
 import { $, uid, cmpN } from './util.js';
 import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, curTeamColor, oppColor, isLight, colorVars } from './model.js';
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
-import { MISS, SWAP } from './constants.js';
+import { MISS, SWAP, DEMO } from './constants.js';
 import { inCtx, pdf, backup, restoreFile, download } from './export.js';
 import { reportFile, swipeNav } from './views/report.js';
 import { oppOf } from './views/emarque.js';
@@ -14,27 +14,45 @@ import { shareImage } from './statimage.js';
 import { markDup } from './views/pick.js';
 import { logoFromFile } from './logo.js';
 import { render } from './render.js';
-import { readEmarque, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix } from './emarque.js';
+import { readEmarque, fromEm, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix } from './emarque.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
+import { inClub, canDelMatch } from './cloud.js';
 import { canEdit, memberName, copyCode, shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
 
 // --- Match ---
+
+// Feuille e-Marque lue (promesse) pour le match m : écran de vérification avant d'enregistrer.
+function emRead(m, reading) {
+  if (!m) return;
+  ui.emBusy = true;
+  render();
+  reading.then(d => {
+    const ours = [cloud.club && cloud.club.name, S.clubName, m.me].filter(Boolean);
+    ui.em = { gid: m.id, data: d, side: guessSide(d, { ours, opp: m.opp, nums: (m.roster || []).map(p => p.n) }) };
+    ui.view = 'emcheck';
+    window.scrollTo(0, 0);
+  }).catch(e => {
+    note(e && e.message && /e-Marque|PDF/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
+  }).finally(() => { ui.emBusy = false; render(); });
+}
 
 function endMatch() {
   S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.oppColor = null; S.roster = []; S.active = false; S.matchId = null;
   ui.sel = null; ui.sq = 'all';
 }
 
+// Sauvegarde du match terminé, sur l'appareil seulement (st : 'local') : il part au club quand on le publie.
 function archiveMatch() {
   S.arch.push({
+    st: 'local',
     id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp, oppColor: S.oppColor || null, teamId: S.teamId, q: S.q,
     ev: S.ev.slice(), roster: roster().map(p => ({ n: p.n, name: p.name, in: true })),
     ...(cloud.name ? { by: cloud.name } : {}), // pseudo de celui qui a fait les stats
   });
   endMatch();
   save();
-  toast('Match archivé');
+  toast(inClub() ? 'Match sauvegardé sur cet appareil. Publie-le pour le partager au club.' : 'Match sauvegardé');
 }
 
 function startMatch() {
@@ -162,17 +180,17 @@ const ACTIONS = {
 
   // Fin de match
   archive: () => {
-    if (!S.ev.length) { note('Aucune action à archiver.'); return false; }
+    if (!S.ev.length) { note('Aucune action à sauvegarder.'); return false; }
     archiveMatch();
     ui.view = 'games';
   },
   harchive: () => {
-    if (!S.ev.length) ask('Ce match n’a aucune action enregistrée. Le fermer sans l’archiver ?', 'Fermer', () => { endMatch(); save(); });
-    else ask('Terminer le match ' + S.me + ' contre ' + S.opp + ' et l’archiver ?', 'Archiver', archiveMatch);
+    if (!S.ev.length) ask('Ce match n’a aucune action enregistrée. Le fermer sans le sauvegarder ?', 'Fermer', () => { endMatch(); save(); });
+    else ask('Terminer le match ' + S.me + ' contre ' + S.opp + ' et le sauvegarder ?', 'Sauvegarder', archiveMatch);
     return false;
   },
   new: () => {
-    ask(S.ev.length ? 'Abandonner le match ' + S.me + ' contre ' + S.opp + ' sans l’archiver ? ' + (S.ev.length > 1 ? 'Ses ' + S.ev.length + ' actions seront effacées' : 'Son action sera effacée') + ' définitivement.' : 'Abandonner ce match ? Il n’a aucune action enregistrée.', 'Abandonner', () => { endMatch(); ui.view = 'home'; save(); }, true);
+    ask(S.ev.length ? 'Abandonner le match ' + S.me + ' contre ' + S.opp + ' sans le sauvegarder ? ' + (S.ev.length > 1 ? 'Ses ' + S.ev.length + ' actions seront effacées' : 'Son action sera effacée') + ' définitivement.' : 'Abandonner ce match ? Il n’a aucune action enregistrée.', 'Abandonner', () => { endMatch(); ui.view = 'home'; save(); }, true);
     return false;
   },
 
@@ -183,7 +201,12 @@ const ACTIONS = {
   gf: el => { ui.gfilter = el.dataset.v; },
   gback: () => { ui.view = 'games'; },
   // Feuille e-Marque d'un match archivé
-  empick: () => { const f = $('#emfile'); if (f) f.click(); return false; },
+  empick: () => {
+    // Démo animée : pas de fichier à choisir, l'appli « lit » la feuille fictive préparée par la démo
+    const demo = DEMO && localStorage.getItem('bb-demo-em');
+    if (demo) { emRead(curG(), new Promise(ok => setTimeout(() => ok(fromEm(JSON.parse(demo))), 1200))); return false; }
+    const f = $('#emfile'); if (f) f.click(); return false;
+  },
   emdel: () => {
     const m = curG();
     if (!m) return false;
@@ -213,14 +236,36 @@ const ACTIONS = {
     toast(renamed ? 'Feuille enregistrée · adversaire renommé « ' + n + ' »' : 'Feuille e-Marque enregistrée');
   },
   gdel: el => {
-    const id = el.dataset.id;
-    ask('Supprimer définitivement ce match archivé ?', 'Supprimer', () => {
+    const id = el.dataset.id, m = S.arch.find(z => String(z.id) === id);
+    if (!m) return false;
+    if (!canDelMatch(m)) { note(m.st === 'pending' ? 'Seuls son auteur, les coachs et les responsables peuvent supprimer ce match.' : 'Un match validé ne peut être supprimé que par un coach ou un responsable.'); return false; }
+    ask(m.st === 'local' ? 'Supprimer définitivement ce match ? Il n’a pas été publié : il disparaîtra de cet appareil.' : 'Supprimer définitivement ce match, pour tout le club ?', 'Supprimer', () => {
       S.arch = S.arch.filter(m => String(m.id) !== id);
       cloudDel('matches', id);
       ui.view = 'games';
       save();
     }, true);
     return false;
+  },
+
+  // Publication au club : en attente de validation (bénévole) ou validé directement (coach, responsable)
+  gpub: () => {
+    const m = curG();
+    if (!m || m.st !== 'local' || !inClub()) return false;
+    m.st = canEdit() ? 'ok' : 'pending';
+    m.author = cloud.uid;
+    if (!m.by && cloud.name) m.by = cloud.name;
+    if (m.st === 'ok') m.val = cloud.name || '';
+    save();
+    toast(m.st === 'ok' ? 'Match publié pour le club' : 'Match publié : un coach ou un responsable doit le valider');
+  },
+  gval: () => {
+    const m = curG();
+    if (!m || m.st !== 'pending') return false;
+    m.st = 'ok';
+    m.val = cloud.name || '';
+    save();
+    toast('Match validé');
   },
 
   // Envoi et réception d'un match
@@ -275,10 +320,9 @@ const ACTIONS = {
     save();
     if (!ok) toast('Donne-lui un numéro pour ce match');
   },
+  // Joueur ajouté pour ce match seulement (l'équipe ne change pas) ; nw : son nom reste modifiable
   cnew: () => {
-    const t = matchTeam(), r = { n: '', name: '', in: true };
-    if (t && canEdit()) { const p = { id: uid(), name: '', num: '' }; t.players.push(p); r.pid = p.id; }
-    S.roster.push(r);
+    S.roster.push({ n: '', name: '', in: true, nw: true });
     save();
   },
 
@@ -404,7 +448,7 @@ function focusAfter(x) {
 }
 
 // Actions interdites aux bénévoles.
-const EDIT_ONLY = ['tedit', 'addteam', 'tempick', 'gnames', 'delteam', 'addpl', 'delpl', 'tcolor', 'gdel', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
+const EDIT_ONLY = ['tedit', 'addteam', 'tempick', 'gnames', 'delteam', 'addpl', 'delpl', 'tcolor', 'gval', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
 
 document.addEventListener('click', e => {
   // Toucher le fond sombre ferme la fenêtre comme « Annuler ».
@@ -420,6 +464,9 @@ document.addEventListener('click', e => {
     return;
   }
   const x = el.dataset.x, f = ACTIONS[x];
+  // Menu d'actions ouvert : toucher un bouton en dehors (équipe, période, annuler…) ne fait que fermer le menu,
+  // pour ne pas ajouter une action par erreur. Toucher un autre joueur change de joueur.
+  if (ui.sel && x !== 'pl' && !el.closest('.bar') && !el.closest('#modal')) { ui.sel = null; render(); return; }
   // Bénévole d'un club : saisie seulement (les règles Firestore l'imposent aussi).
   if (!canEdit() && EDIT_ONLY.includes(x)) { note('Réservé aux coachs et responsables du club.'); return; }
   if (!f || f(el) === false) return;
@@ -469,11 +516,11 @@ const INPUTS = {
   cpseudo: (d, t) => { ui.cpseudo = t.value; },
   cclub: (d, t) => { ui.cclub = t.value; },
   pnum: (d, t) => { ui.P.rows[+d.pnum].num = t.value; markDup(); },
+  // Nom d'un joueur ajouté pour ce match (les noms des joueurs de l'équipe ne se modifient pas ici)
   cname: (d, t) => {
     const r = S.roster[+d.cname];
+    if (!r || !r.nw) return;
     r.name = t.value;
-    const team = canEdit() && matchTeam(), p = team && r.pid && team.players.find(z => z.id === r.pid);
-    if (p) p.name = r.name;
     save();
   },
   // Le numéro n'est validé qu'en quittant le champ (voir CHANGES.cnum)
@@ -518,18 +565,9 @@ document.addEventListener('change', e => {
     return;
   }
   if (t.id === 'emfile') {
-    const files = Array.from(t.files || []), m = curG();
+    const files = Array.from(t.files || []);
     t.value = '';
-    if (!files.length || !m) return;
-    ui.emBusy = true;
-    render();
-    readEmarque(files).then(d => {
-      const ours = [cloud.club && cloud.club.name, S.clubName, m.me].filter(Boolean);
-      ui.em = { gid: m.id, data: d, side: guessSide(d, { ours, opp: m.opp, nums: (m.roster || []).map(p => p.n) }) };
-      ui.view = 'emcheck';
-    }).catch(e => {
-      note(e && e.message && /e-Marque|PDF/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
-    }).finally(() => { ui.emBusy = false; render(); });
+    if (files.length) emRead(curG(), readEmarque(files));
     return;
   }
   if (t.id === 'tefile') {

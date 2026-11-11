@@ -33,7 +33,12 @@ js/views/*.js           Un fichier par écran
 js/views/account.js     Compte et club : bandeau de l’accueil, fenêtre de connexion, page « Club et membres »
 sw.js                   Service worker (mode hors ligne)
 demo.html               Démo animée : la vraie appli (index.html?demo) pilotée toute seule, avec sous-titres.
+                        6 chapitres : compte et club, saisie d’un match, gestion du club, gestion des équipes,
+                        import de l’e-Marque, rapport de match.
                         En mode démo, l’appli utilise ses propres données (clé « bb-demo ») et jamais le club en ligne.
+                        Compte et club y sont simulés sur l’appareil (clé « bb-demo-cloud », préparée par chapitre ;
+                        voir « Mode démo » à la fin de js/cloud.js).
+                        L’import e-Marque y lit une feuille fictive (clé « bb-demo-em ») au lieu d’un PDF.
                         Les données inventées (club, équipes, un match avec sa feuille e-Marque) sont dans la page.
                         À ouvrir par une adresse web (serveur), pas en double-cliquant sur le fichier.
 ```

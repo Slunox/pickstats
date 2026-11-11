@@ -89,7 +89,7 @@ function askStep(c) {
     return `<h2>Bienvenue dans ${esc(c.club.name || 'le club')}</h2>
     <p>Tu rejoins le club comme <b>bénévole</b> : tu saisis les stats des matchs, les équipes sont gérées par les coachs.</p>
     <p>Cette tablette contient déjà ${what}.</p>
-    ${a.matches ? '<button class="btn wide" data-x="cmerge" data-v="1">Ajouter mes matchs archivés au club</button>' : ''}
+    ${a.matches ? '<button class="btn wide" data-x="cmerge" data-v="1">Garder mes matchs sur la tablette (à publier ensuite)</button>' : ''}
     <button class="btn ${a.matches ? 'bad' : ''} wide" data-x="cmerge" data-v="0">${a.matches ? 'Tout retirer de la tablette' : 'Continuer'}</button>
     <p class="help">Les équipes de cette tablette sont remplacées par celles du club. Fais d’abord une sauvegarde si tu veux les garder.</p>`;
   }
@@ -106,7 +106,7 @@ function pseudoField(c) {
   return `<label for="cpseudo">Ton pseudo${none ? ' <small class="warn">à choisir</small>' : ''}</label>
     <div class="inrow"><input id="cpseudo" data-cpseudo="1" maxlength="20" autocomplete="nickname" placeholder="Ex. Vincent, Coach U15…" value="${esc(ui.cpseudo || c.name)}">
     <button class="btn${none ? '' : ' alt'}" data-x="csavename">Enregistrer</button></div>
-    <p class="help">Affiché aux membres du club et sur les matchs que tu archives, à la place de ton e-mail.</p>`;
+    <p class="help">Affiché aux membres du club et sur les matchs que tu publies, à la place de ton e-mail.</p>`;
 }
 
 function summaryStep(c) {
@@ -118,7 +118,7 @@ function summaryStep(c) {
     ${msgs(c)}
     <button class="btn wide" data-x="view" data-v="members">Club et membres</button>
     <button class="btn alt wide" data-x="clogout">Se déconnecter</button>
-    <p class="help">Les équipes, leur composition et les matchs archivés sont partagés avec les membres du club. Le match en cours reste sur cet appareil jusqu’à son archivage.</p>`;
+    <p class="help">Les équipes, leur composition et les matchs archivés sont partagés avec les membres du club. Un match sauvegardé reste sur cet appareil jusqu’à ce qu’il soit publié.</p>`;
 }
 
 export function sheet() {
@@ -164,7 +164,7 @@ export function members() {
     ${admin ? logoCard() : ''}
     ${code}
     <div class="card"><h2>Membres (${c.members.length})</h2>${c.members.map(m => memberRow(m, c, admin)).join('')}
-      <p class="help">${admin ? 'Les nouveaux membres arrivent bénévoles. ' : ''}Responsable : gère le club et ses membres. Coach : modifie les équipes et les matchs. Bénévole : saisit les stats et archive les matchs.</p></div>
+      <p class="help">${admin ? 'Les nouveaux membres arrivent bénévoles. ' : ''}Responsable : gère le club et ses membres. Coach : modifie les équipes et les matchs. Bénévole : saisit les stats et publie ses matchs, validés ensuite par un coach ou un responsable.</p></div>
     <div class="card"><h2>Quitter le club</h2>
       <p class="help" style="margin-bottom:10px">Tu n’auras plus accès aux données en ligne du club. Il te faudra un nouveau code pour revenir.</p>
       <button class="btn bad" data-x="cleave">Quitter le club</button></div>`;
