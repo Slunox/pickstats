@@ -502,8 +502,21 @@ export const resetPassword = email => DEMO ? demo.resetPassword(email) : run(asy
   cloud.info = 'Un e-mail pour choisir un nouveau mot de passe a été envoyé à ' + email.trim() + '.';
 });
 
-export async function logout() {
+// Déconnexion. Les données du club sont retirées de l'appareil (elles reviennent à la prochaine connexion) :
+// sur une tablette partagée, la personne suivante ne les voit pas. Avant, on s'assure que tout est parti :
+// renvoie false (sans se déconnecter) si des modifications n'ont pas pu être envoyées, sauf avec force.
+export async function logout(force) {
   if (DEMO) return demo.logout();
+  const c = clubId();
+  if (!force && db && c) {
+    clearTimeout(timer);
+    flush();
+    cloud.info = 'Envoi des dernières modifications…';
+    refresh();
+    const sent = await Promise.race([F.waitForPendingWrites(db).then(() => true, () => false), new Promise(ok => setTimeout(() => ok(false), 5000))]);
+    cloud.info = '';
+    if (!sent || tombs.some(k => k.startsWith(c + '/'))) { refresh(); return false; }
+  }
   detach();
   store(ON_KEY, 0);
   if (auth) await F.signOut(auth);
@@ -511,7 +524,21 @@ export async function logout() {
   cloud.email = '';
   cloud.err = '';
   cloud.info = '';
+  clearClubData();
   refresh();
+  return true;
+}
+
+// Retire de l'appareil ce qui vient du club : équipes, matchs publiés, nom et logo.
+// Restent : les matchs sauvegardés mais pas publiés (ils n'existent qu'ici) et le match en cours.
+// S.cloudClub est gardé : en se reconnectant au même club, tout revient sans question.
+function clearClubData() {
+  if (!S.cloudClub) return; // jamais relié à un club : les données sont seulement celles de l'appareil
+  S.teams = [];
+  S.arch = (S.arch || []).filter(m => m.st === 'local');
+  S.clubName = '';
+  S.clubLogo = '';
+  save();
 }
 
 // Code d'invitation : 8 caractères faciles à lire (sans 0/O, 1/I/L).
@@ -760,5 +787,5 @@ const demo = {
     cloud.info = 'Tu as quitté le club ' + name + '. Ses équipes et matchs restent sur cet appareil.';
     demo.keep();
   },
-  logout() { Object.assign(cloud, { status: 'off', email: '', name: '', uid: '', club: null, members: [], err: '', info: '' }); demo.keep(); },
+  logout() { Object.assign(cloud, { status: 'off', email: '', name: '', uid: '', club: null, members: [], err: '', info: '' }); clearClubData(); demo.keep(); return true; },
 };

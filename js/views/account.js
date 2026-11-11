@@ -118,7 +118,8 @@ function summaryStep(c) {
     ${msgs(c)}
     <button class="btn wide" data-x="view" data-v="members">Club et membres</button>
     <button class="btn alt wide" data-x="clogout">Se déconnecter</button>
-    <p class="help">Les équipes, leur composition et les matchs archivés sont partagés avec les membres du club. Un match sauvegardé reste sur cet appareil jusqu’à ce qu’il soit publié.</p>`;
+    <p class="help">Les équipes, leur composition et les matchs archivés sont partagés avec les membres du club. Un match sauvegardé reste sur cet appareil jusqu’à ce qu’il soit publié.</p>
+    <p class="help">En te déconnectant, les équipes et les matchs du club sont retirés de cet appareil : ils reviennent à la prochaine connexion. Les matchs pas encore publiés restent ici.</p>`;
 }
 
 export function sheet() {

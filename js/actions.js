@@ -400,7 +400,16 @@ const ACTIONS = {
   // Données partagées du club
   clogin: () => { login(ui.cmail || '', ($('#cpass') || {}).value || ''); return false; },
   creset: () => { resetPassword(ui.cmail || ''); return false; },
-  clogout: () => { logout(); return false; },
+  // Déconnexion : si des modifications n'ont pas pu partir (hors ligne), on prévient avant de les perdre
+  clogout: () => {
+    // Une fois déconnecté, la fenêtre du compte se ferme : on revient simplement à l'accueil
+    const closed = () => { ui.sheet = null; ui.sheetFlow = false; render(); };
+    logout().then(ok => {
+      if (ok === false) ask('Des modifications n’ont pas encore été envoyées au club (pas de connexion ?). En te déconnectant maintenant, elles seront perdues.', 'Se déconnecter quand même', () => logout(true).then(closed), true);
+      else closed();
+    });
+    return false;
+  },
   cmode: el => { setMode(el.dataset.v); },
   sheet: () => { ui.sheet = 'account'; ui.sheetFlow = !(cloud.club && !cloud.ask); cloud.err = ''; cloud.info = ''; },
   sclose: () => { ui.sheet = null; ui.sheetFlow = false; },
