@@ -33,7 +33,7 @@ function pasteForm() {
   <div class="card imp">
     <h2>Importer un match</h2>
     <label>Lien reçu</label>
-    <textarea data-imp="1" placeholder="Colle ici le lien reçu (…/stats-basket/#m=…)" aria-label="Lien reçu">${esc(ui.impText || '')}</textarea>
+    <textarea data-imp="1" placeholder="Colle ici le lien reçu (…/pickstats/#m=…)" aria-label="Lien reçu">${esc(ui.impText || '')}</textarea>
     <p class="adderr" id="imperr">${esc(ui.impErr || '')}</p>
     <button class="btn go2" data-x="impgo">Importer</button>
     <h3>Ou à partir d’un fichier reçu</h3>

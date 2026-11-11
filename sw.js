@@ -2,7 +2,7 @@
 // Sans réseau (ou réseau très lent), l'appli s'ouvre avec la copie gardée en mémoire.
 // Ce fichier n'a pas besoin d'être modifié à chaque mise à jour,
 // sauf pour ajouter un nouveau fichier à FILES (indispensable pour le mode hors ligne).
-const CACHE = 'stats-basket-2';
+const CACHE = 'pickstats-1';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'css/style.css',

@@ -456,7 +456,7 @@ if (!/^https?:$/.test(location.protocol)) {
   $('go').hidden = true;
   const note = document.createElement('p'); $('start').appendChild(note);
   note.innerHTML = 'La démo doit être ouverte depuis une adresse web, pas comme un fichier.<br>'
-    + 'Ouvre <b>https://slunox.github.io/stats-basket/demo.html</b>, ou les Réglages de l’appli › « Voir la démo animée ».';
+    + 'Ouvre <b>https://slunox.github.io/pickstats/demo.html</b>, ou les Réglages de l’appli › « Voir la démo animée ».';
   $('opts').hidden = true;
   document.querySelectorAll('.bar button').forEach(b => { b.disabled = true; });
 } else loadApp().catch(() => {}); // l'accueil de l'appli derrière le bouton de lancement

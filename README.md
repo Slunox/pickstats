@@ -1,7 +1,7 @@
 # Pick&Stats
 
 Appli web (PWA) pour saisir les statistiques d'un match de basket sur tablette.
-En ligne : https://slunox.github.io/stats-basket/
+En ligne : https://slunox.github.io/pickstats/
 
 ## Organisation du code
 
@@ -47,7 +47,7 @@ demo.html               Démo animée : la vraie appli (index.html?demo) piloté
 
 Tout nouveau fichier JS ou CSS doit être ajouté à la liste `FILES` de `sw.js`,
 sinon il ne sera pas disponible hors ligne. Toujours utiliser des chemins relatifs
-(`./js/...`), car l'appli est servie depuis le sous-dossier `/stats-basket/`.
+(`./js/...`), car l'appli est servie depuis le sous-dossier `/pickstats/`.
 
 ## Tester en local
 
