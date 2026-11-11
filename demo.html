@@ -27,15 +27,14 @@ header h1{font-size:20px;margin:0}
 header p{margin:0;color:var(--muted);font-size:14px}
 header .back{margin-left:auto;flex:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;text-decoration:none}
 header .back:hover{border-color:var(--accent)}
-.chaps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
-@media (max-width:700px){.chaps{grid-template-columns:repeat(2,1fr)}}
-.chap{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chap.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+@media (max-width:700px){header p{display:none}header h1{font-size:17px}header .back{padding:7px 10px}.wrap{padding-top:10px;padding-bottom:12px}}
 .dev{width:max-content;max-width:100%;margin:0 auto;background:var(--frame);border-radius:22px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
 .scr{position:relative;overflow:hidden;border-radius:10px;background:#fff}
 .inner{position:absolute;left:0;top:0;width:1024px;height:720px;transform-origin:0 0}
 iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
-.finger{position:absolute;left:0;top:0;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
+/* Voile transparent sur l'appli : on regarde la démo, on ne peut pas toucher l'appli (le doigt de la démo, lui, clique) */
+.shield{position:absolute;inset:0;z-index:1}
+.finger{z-index:2;position:absolute;left:0;top:0;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
   background:var(--finger);box-shadow:0 2px 10px rgba(0,0,0,.35);opacity:0;pointer-events:none;
   transition:left .7s cubic-bezier(.4,0,.2,1),top .7s cubic-bezier(.4,0,.2,1),opacity .3s,transform .15s}
 .finger.on{opacity:.75}
@@ -50,11 +49,27 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
 .sub.off{opacity:0}
 .sub small{display:block;color:#5fd395;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:12px;margin-bottom:3px}
 .sub p{margin:0;font-size:clamp(15px,2.1vw,21px);line-height:1.4}
-.bar{display:flex;align-items:center;gap:10px;margin-top:12px}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
 .bar button{border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:600;padding:9px 16px;cursor:pointer}
 .bar button.alt{background:var(--panel);color:var(--fg);border:1px solid var(--line)}
-.prog{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
-.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+/* Barre de progression cliquable : zone haute pour le doigt, piste fine au milieu, repères de chapitres */
+.prog{flex:1 1 200px;min-width:200px;height:24px;position:relative;cursor:pointer;touch-action:manipulation}
+.prog::before,.prog i{content:'';position:absolute;left:0;top:9px;height:6px;border-radius:3px;transition:height .15s,top .15s}
+.prog::before{right:0;background:var(--line)}
+.prog i{width:0;background:var(--accent);transition:width .4s,height .15s,top .15s}
+.prog:hover::before,.prog:hover i{top:7px;height:10px;border-radius:5px}
+/* Pas assez de place à côté des boutons (téléphone) : la barre passe au-dessus, sur toute la largeur, plus épaisse */
+@media (max-width:700px){
+  .prog{order:-1;flex-basis:100%;height:32px}
+  .prog::before,.prog i,.prog:hover::before,.prog:hover i{top:11px;height:10px;border-radius:5px}
+  .bar button{flex:1;padding:9px 8px;font-size:14px;white-space:nowrap}
+  /* Sous-titres plus petits : le cadre est réduit */
+  .dev.phone .sub{padding:8px 12px 10px;border-radius:12px;width:94%}
+  .dev.phone .sub p{font-size:14px;line-height:1.35}
+  .dev.phone .sub small{font-size:10px;margin-bottom:1px}
+}
+.prog b{position:absolute;top:5px;width:2px;height:14px;margin-left:-1px;border-radius:1px;background:var(--muted);pointer-events:none}
+@media (max-width:700px){.prog b{top:8px;height:16px}}
 .start{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
   background:rgba(10,18,22,.78);color:#fff;text-align:center;padding:16px;z-index:5}
 .start h2{margin:0;font-size:clamp(20px,3vw,28px)}
@@ -67,9 +82,14 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
 .dev.phone{border-radius:30px;padding:12px}
 .dev.phone .scr{border-radius:18px}
 .dev.phone .start .opts{grid-template-columns:minmax(0,300px)}
-.chap{font-weight:600}
-.chap:hover{border-color:var(--accent)}
-.chap[disabled],.bar button[disabled]{opacity:.5;cursor:default}
+/* Petit cadre : choix des chapitres plus compact */
+.dev.small .start{gap:8px}
+.dev.small .start h2{font-size:18px}
+.dev.small .start button{font-size:15px;padding:8px 18px}
+.dev.small .start .opts{gap:6px}
+.dev.small .start .opts button{padding:7px 12px;font-size:13px;border-radius:10px}
+.dev.small .start .opts button span{display:none}
+.bar button[disabled]{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
@@ -79,10 +99,10 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
     <div><h1>Pick&amp;Stats en 6 minutes</h1><p>Démo animée de l’appli · données fictives</p></div>
     <a class="back" href="./">← Retour à l’appli</a>
   </header>
-  <div class="chaps" id="chaps"></div>
   <div class="dev"><div class="scr" id="scr">
     <div class="inner" id="inner">
       <iframe id="app" title="Pick&amp;Stats (démo)" tabindex="-1"></iframe>
+      <div class="shield" aria-hidden="true"></div>
       <div class="finger" id="finger"></div>
     </div>
     <div class="sub off" id="sub" aria-live="polite"><small id="ctitle">Démo</small><p id="ctext"></p></div>
@@ -93,9 +113,10 @@ iframe{border:0;width:1024px;height:720px;display:block;background:#fff}
     </div>
   </div></div>
   <div class="bar">
-    <button id="pp">❚❚ Pause</button>
+    <button id="pp" disabled>❚❚ Pause</button>
+    <button class="alt" id="stop" disabled>■ Arrêter</button>
     <button class="alt" id="again">↺ Recommencer</button>
-    <div class="prog"><i id="prog"></i></div>
+    <div class="prog" id="track" title="Aller à ce moment de la démo"><i id="prog"></i></div>
   </div>
 </div>
 
@@ -112,20 +133,25 @@ if (PHONE) scr.parentElement.classList.add('phone');
 // --- Mise à l'échelle du cadre ---
 function fit() {
   const w = document.querySelector('.wrap').clientWidth - 32 - 24;
-  // Sur téléphone, on garde de la place sous le cadre pour les sous-titres
-  const s = Math.min(1, w / W, PHONE ? (innerHeight - 200) / H : Math.max(0.45, (innerHeight - 200) / H));
+  // Hauteur laissée au cadre : l'écran moins l'en-tête, la barre du bas (boutons et progression) et les marges,
+  // pour que tout tienne sans faire défiler la page, même sur un petit téléphone
+  const around = document.querySelector('.wrap').offsetHeight - scr.offsetHeight + 4;
+  const s = Math.min(1, w / W, PHONE ? (innerHeight - around) / H : Math.max(0.45, (innerHeight - around) / H));
   inner.style.transform = `scale(${s})`;
   scr.style.width = W * s + 'px';
   scr.style.height = H * s + 'px';
+  scr.parentElement.classList.toggle('small', H * s < 480);
 }
 addEventListener('resize', fit);
 fit();
 
 // --- Lecture : pause, arrêt ---
 let paused = false, run = 0, clock = 0; // clock : temps de lecture écoulé, hors pauses
+let fast = false; // avance rapide (clic sur la barre) : les étapes d'avant sont rejouées sans attendre
 const Stop = {};
 async function sleep(ms) {
   const me = run;
+  if (fast) { await new Promise(r => setTimeout(r, 20)); if (me !== run) throw Stop; return; }
   let t = 0;
   while (t < ms) {
     await new Promise(r => setTimeout(r, 50));
@@ -138,7 +164,8 @@ async function sleep(ms) {
 const doc = () => frame.contentDocument;
 const q = sel => doc() && doc().querySelector(sel);
 async function find(sel) {
-  for (let i = 0; i < 60; i++) { const el = q(sel); if (el) return el; await sleep(100); }
+  const t0 = Date.now();
+  while (Date.now() - t0 < 6000) { const el = q(sel); if (el) return el; await sleep(100); }
   throw new Error('Introuvable : ' + sel);
 }
 let seed = null;
@@ -155,10 +182,26 @@ async function loadApp(ch) {
   await sleep(600);
 }
 
+// Fait défiler l'appli jusqu'à l'élément (au centre, ou en haut), sans toucher à la page autour du cadre
+// (scrollIntoView ferait aussi défiler la page de la démo).
+function scrollIn(el, block) {
+  const win = frame.contentWindow, d = doc();
+  let box = el.parentElement;
+  while (box && box !== d.body && box !== d.documentElement) {
+    const st = win.getComputedStyle(box);
+    if (/(auto|scroll)/.test(st.overflowY) && box.scrollHeight > box.clientHeight) break;
+    box = box.parentElement;
+  }
+  const inner = box && box !== d.body && box !== d.documentElement;
+  const r = el.getBoundingClientRect(), view = inner ? box.getBoundingClientRect() : { top: 0, height: win.innerHeight };
+  const off = r.top - view.top - (block === 'center' ? (view.height - r.height) / 2 : 8);
+  (inner ? box : win).scrollBy({ top: off, behavior: fast ? 'instant' : 'smooth' });
+}
+
 // Doigt : va sur l'élément, le touche (clic réel dans l'appli)
 async function point(sel, opts = {}) {
   const el = typeof sel === 'string' ? await find(sel) : sel;
-  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  scrollIn(el, 'center');
   await sleep(450);
   const r = el.getBoundingClientRect();
   finger.classList.add('on');
@@ -196,7 +239,7 @@ async function type(sel, text) {
 }
 async function scrollTo(sel) {
   const el = await find(sel);
-  el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  scrollIn(el, 'start');
   await sleep(900);
 }
 const hide = () => { finger.classList.remove('on'); fingerY = 0; };
@@ -228,7 +271,14 @@ addEventListener('resize', place);
 // Une étape : [texte, temps de lecture en plus (ms), gestes].
 // Le sous-titre s'affiche d'abord, les gestes se font pendant la lecture,
 // puis on attend la fin de la lecture (et au moins un instant pour voir le résultat).
-async function step([text, extra, act]) {
+async function step([text, extra, act], quick) {
+  if (quick) { // avance rapide : les gestes seulement, pour mettre l'appli dans le bon état
+    $('ctext').textContent = 'Avance rapide…';
+    fast = true;
+    try { await act(); } finally { fast = false; }
+    done++;
+    return;
+  }
   const t0 = clock;
   $('ctext').textContent = text;
   place();
@@ -354,46 +404,46 @@ const CHAPTERS = [
 ];
 
 // --- Lecture ---
-const chips = $('chaps');
-// Chapitres : pastilles au-dessus du cadre et boutons de l'écran de départ (un chapitre seul)
+// Chapitres : boutons de l'écran de départ (un chapitre seul)
 CHAPTERS.forEach((c, i) => {
-  const b = document.createElement('button');
-  b.className = 'chap'; b.textContent = `${i + 1}. ${c.title}`;
-  b.onclick = () => play(i, true);
-  chips.appendChild(b);
   const o = document.createElement('button');
   o.innerHTML = `${i + 1}. ${c.title}<span>${c.sub}</span>`;
   o.onclick = () => play(i, true);
   $('opts').appendChild(o);
 });
-const mark = i => [...chips.children].forEach((b, k) => b.classList.toggle('on', k === i));
+// Pause et Arrêter : seulement pendant la lecture
+const playing = on => { $('pp').disabled = $('stop').disabled = !on; };
 
 let last = { from: 0, only: false };
-async function play(from = 0, only = false) {
+async function play(from = 0, only = false, at = 0) {
   const me = ++run;
   last = { from, only };
   const to = only ? from : CHAPTERS.length - 1;
   paused = false; $('pp').textContent = '❚❚ Pause';
   $('start').hidden = true;
-  total = CHAPTERS.slice(from, to + 1).reduce((a, c) => a + c.steps.length, 0); done = 0;
-  $('prog').style.width = '0';
+  total = CHAPTERS.slice(from, to + 1).reduce((a, c) => a + c.steps.length, 0);
+  // Chapitre de l'étape demandée : les chapitres d'avant sont sautés (chacun repart de zéro)
+  let first = from, gi = 0;
+  while (first < to && gi + CHAPTERS[first].steps.length <= at) gi += CHAPTERS[first++].steps.length;
+  done = gi;
+  $('prog').style.width = 100 * at / total + '%';
+  ticks(from, to);
   hide();
-  mark(from);
+  playing(true);
   try {
-    $('ctitle').textContent = CHAPTERS[from].title;
+    $('ctitle').textContent = `${first + 1}. ${CHAPTERS[first].title}`;
     $('ctext').textContent = 'Préparation de la démo…';
     side = 'bottom'; place();
     sub.classList.remove('off');
-    await loadApp(CHAPTERS[from]);
-    for (let i = from; i <= to; i++) {
-      mark(i);
-      $('ctitle').textContent = CHAPTERS[i].title;
-      if (i > from) await loadApp(CHAPTERS[i]); // chaque chapitre repart des données de démo (et de son compte)
-      for (const s of CHAPTERS[i].steps) { if (me !== run) return; await step(s); }
+    await loadApp(CHAPTERS[first]);
+    for (let i = first; i <= to; i++) {
+      $('ctitle').textContent = `${i + 1}. ${CHAPTERS[i].title}`;
+      if (i > first) await loadApp(CHAPTERS[i]); // chaque chapitre repart des données de démo (et de son compte)
+      for (const s of CHAPTERS[i].steps) { if (me !== run) return; await step(s, gi++ < at); }
     }
     hide();
     sub.classList.add('off');
-    mark(-1);
+    playing(false);
     $('stitle').textContent = only ? `Fin du chapitre ${from + 1}` : 'Fin de la démo';
     $('go').textContent = only ? '↺ Revoir ce chapitre' : '↺ Revoir la démo';
     $('start').hidden = false;
@@ -408,10 +458,42 @@ if (!/^https?:$/.test(location.protocol)) {
   note.innerHTML = 'La démo doit être ouverte depuis une adresse web, pas comme un fichier.<br>'
     + 'Ouvre <b>https://slunox.github.io/stats-basket/demo.html</b>, ou les Réglages de l’appli › « Voir la démo animée ».';
   $('opts').hidden = true;
-  document.querySelectorAll('.chap, .bar button').forEach(b => { b.disabled = true; });
+  document.querySelectorAll('.bar button').forEach(b => { b.disabled = true; });
 } else loadApp().catch(() => {}); // l'accueil de l'appli derrière le bouton de lancement
 $('go').onclick = () => play(last.from, last.only);
 $('again').onclick = () => play(last.from, last.only);
+// Repères des débuts de chapitres sur la barre (quand on regarde tout)
+function ticks(from, to) {
+  const track = $('track'), n = CHAPTERS.slice(from, to + 1).reduce((a, c) => a + c.steps.length, 0);
+  track.querySelectorAll('b').forEach(b => b.remove());
+  let k = 0;
+  for (let i = from; i < to; i++) {
+    k += CHAPTERS[i].steps.length;
+    const b = document.createElement('b'); b.style.left = 100 * k / n + '%'; track.appendChild(b);
+  }
+}
+ticks(0, CHAPTERS.length - 1);
+// Clic sur la barre : la démo reprend à cette étape
+$('track').onclick = e => {
+  if ($('go').hidden) return; // ouverte comme un fichier : pas de lecture possible
+  const r = e.currentTarget.getBoundingClientRect();
+  const to = last.only ? last.from : CHAPTERS.length - 1;
+  const n = CHAPTERS.slice(last.from, to + 1).reduce((a, c) => a + c.steps.length, 0);
+  const at = Math.max(0, Math.min(n - 1, Math.floor((e.clientX - r.left) / r.width * n)));
+  play(last.from, last.only, at);
+};
+// Arrêter : retour à l'écran de départ, pour choisir un autre chapitre
+$('stop').onclick = () => {
+  run++;
+  hide();
+  sub.classList.add('off');
+  playing(false);
+  $('prog').style.width = '0';
+  last = { from: 0, only: false };
+  $('stitle').textContent = 'La démo de Pick&Stats';
+  $('go').textContent = '▶ Tout voir (6 min)';
+  $('start').hidden = false;
+};
 $('pp').onclick = () => { paused = !paused; $('pp').textContent = paused ? '▶ Reprendre' : '❚❚ Pause'; };
 </script>
 </body>
