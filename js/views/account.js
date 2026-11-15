@@ -178,12 +178,12 @@ export function members() {
   const head = ui.cnEdit && canName
     ? `<div class="card clubhead">${clubAvatar(clubName, 'big')}
       <div class="chname"><label for="cnin" style="margin-top:0">Nom du club</label>
-        <input id="cnin" data-cn="1" value="${esc(S.clubName || '')}" placeholder="Nom de ton club" maxlength="40" enterkeyhint="done">
-        <p class="help" style="margin:4px 0 0">Affiché pour tous les membres et en haut des exports PDF.</p></div>
-      <button class="btn sm" data-x="cnok">OK</button></div>`
+        <div class="chrow"><input id="cnin" data-cn="1" value="${esc(S.clubName || '')}" placeholder="Nom de ton club" maxlength="40" enterkeyhint="done">
+        <button class="btn sm" data-x="cnok">OK</button></div>
+        <p class="help" style="margin:4px 0 0">Affiché pour tous les membres et en haut des exports PDF.</p></div></div>`
     : `<div class="card clubhead">${clubAvatar(clubName, 'big')}
-      <div class="chname"><h2>${esc(clubName)}</h2><p class="help"><span class="cdot${c.offline ? ' off' : ''}"></span>Tu es ${(ROLES[k.role] || 'Coach').toLowerCase()} · ${syncText(c)}</p></div>
-      ${canName ? '<button class="btn alt sm" data-x="cnedit">Modifier</button>' : ''}</div>`;
+      <div class="chname"><div class="chrow"><h2>${esc(clubName)}</h2>${canName ? '<button class="btn alt sm" data-x="cnedit">Modifier</button>' : ''}</div>
+      <p class="help"><span class="cdot${c.offline ? ' off' : ''}"></span>Tu es ${(ROLES[k.role] || 'Coach').toLowerCase()} · ${syncText(c)}</p></div></div>`;
   return back('Accueil', 'view', 'home') + head + `
     ${msgs(c)}
     ${admin ? logoCard() : ''}
