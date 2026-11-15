@@ -410,7 +410,10 @@ const ACTIONS = {
     }
   },
   logopick: () => { $('#logofile').click(); return false; },
-  logodel: () => { S.clubLogo = ''; save(); },
+  logodel: () => {
+    ask(`Retirer le logo du club ?${inClub() ? ' Il disparaîtra pour tous les membres.' : ''}`, 'Retirer', () => { S.clubLogo = ''; save(); }, true);
+    return false;
+  },
   tcolor: el => { tm().color = el.dataset.v; save(); },
   addpl: () => { tm().players.push({ id: uid(), name: '', num: '' }); save(); },
   delpl: el => { tm().players.splice(+el.dataset.i, 1); save(); },

@@ -1,6 +1,6 @@
 // Données fixes de l'appli : libellés, listes d'actions, catégories.
 
-export const APP_VERSION = '3.2';
+export const APP_VERSION = '1.0';
 // Mode démo (index.html?demo, utilisé par demo.html) : données à part, sans club en ligne,
 // pour ne jamais toucher aux vraies données de l'appareil.
 export const DEMO = typeof location !== 'undefined' && /[?&]demo(=|&|$)/.test(location.search);
