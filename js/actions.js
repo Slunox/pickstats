@@ -10,6 +10,13 @@ import { MISS, SWAP, DEMO } from './constants.js';
 import { inCtx, pdf, backup, restoreFile, download } from './export.js';
 import { reportFile, swipeNav } from './views/report.js';
 import { oppOf } from './views/emarque.js';
+import { sheetBody, sheetFile, SHEET_CSS } from './views/emsheet.js';
+
+// Nom de fichier d'un match : équipe-adversaire-date, sans accents ni espaces.
+const fileName = m => {
+  const clean = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '_');
+  return `${clean(m.me)}-${clean(m.opp)}-${String(m.date).slice(0, 10)}`;
+};
 import { shareImage } from './statimage.js';
 import { markDup } from './views/pick.js';
 import { logoFromFile } from './logo.js';
@@ -235,8 +242,22 @@ const ACTIONS = {
   rpfile: () => {
     const m = curG();
     if (!m || !m.em) return false;
-    const clean = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]+/g, '_');
-    download(`stats-${clean(m.me)}-${clean(m.opp)}-${String(m.date).slice(0, 10)}.html`, withMatch(m, () => reportFile(m)), 'text/html');
+    download(`stats-${fileName(m)}.html`, withMatch(m, () => reportFile(m)), 'text/html');
+    return false;
+  },
+  // Feuille e-Marque recr\u00e9\u00e9e : \u00e9cran, fichier HTML, impression (PDF)
+  emsopen: () => { ui.view = 'emsheet'; window.scrollTo(0, 0); },
+  emsfile: () => {
+    const m = curG();
+    if (!m || !m.em) return false;
+    download(`feuille-${fileName(m)}.html`, withMatch(m, () => sheetFile(m)), 'text/html');
+    return false;
+  },
+  emsprint: () => {
+    const m = curG();
+    if (!m || !m.em) return false;
+    $('#print').innerHTML = `<style>${SHEET_CSS}#print .ems{--l:#bbb;--m:#555;color:#000}</style>` + withMatch(m, () => sheetBody(m));
+    window.print();
     return false;
   },
   emside: el => { ui.em.side = +el.dataset.v; ui.em.opp = null; },

@@ -14,8 +14,9 @@ import { settings } from './views/settings.js';
 import { importView } from './views/import.js';
 import { members } from './views/account.js';
 import { emCheck } from './views/emarque.js';
+import { emSheet } from './views/emsheet.js';
 
-const VIEWS = { home, club, tedit, pick, games, game, play, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, report };
+const VIEWS = { home, club, tedit, pick, games, game, play, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, emsheet: emSheet, report };
 
 // Écrans qui affichent la barre d'onglets du match en cours
 const MATCH_VIEWS = ['play', 'hist', 'stats', 'comp', 'set'];

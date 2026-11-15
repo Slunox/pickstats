@@ -2,7 +2,7 @@
 // Sans réseau (ou réseau très lent), l'appli s'ouvre avec la copie gardée en mémoire.
 // Ce fichier n'a pas besoin d'être modifié à chaque mise à jour,
 // sauf pour ajouter un nouveau fichier à FILES (indispensable pour le mode hors ligne).
-const CACHE = 'pickstats-1';
+const CACHE = 'pickstats-2';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'css/style.css',
@@ -10,7 +10,7 @@ const FILES = [
   'js/awake.js', 'js/export.js', 'js/render.js', 'js/actions.js', 'js/share.js', 'js/cloud.js', 'js/cloud-config.js', 'js/logo.js', 'js/statimage.js',
   'js/views/common.js', 'js/views/home.js', 'js/views/club.js', 'js/views/pick.js',
   'js/views/play.js', 'js/views/history.js', 'js/views/stats.js', 'js/views/archives.js',
-  'js/emarque.js', 'js/emarque-glyphs.js', 'js/views/emarque.js', 'js/views/emstats.js', 'js/views/report.js',
+  'js/emarque.js', 'js/emarque-glyphs.js', 'js/views/emarque.js', 'js/views/emstats.js', 'js/views/report.js', 'js/views/emsheet.js',
   'js/views/composition.js', 'js/views/settings.js', 'js/views/import.js', 'js/views/account.js', 'js/views/icons.js',
   // Lecture des PDF de l'e-Marque : pour pouvoir importer une feuille même sans réseau
   'js/vendor/pdf.min.js', 'js/vendor/pdf.worker.min.js',

@@ -23,12 +23,13 @@ export function emCard(m) {
   </div>`;
 }
 
-// Feuille déjà importée : infos, Remplacer / Retirer (dans « Gérer le match »).
+// Feuille déjà importée : infos, voir / exporter la feuille recréée (pour tous), Remplacer / Retirer (dans « Gérer le match »).
 export function emManage(m) {
-  if (!m.em || !canEditMatch(m)) return '';
+  if (!m.em) return '';
   if (ui.emBusy) return '<p class="help">Lecture du PDF…</p>';
   return `<p class="help" style="margin-top:0">Importée${m.em.num ? ' (rencontre n° ' + esc(m.em.num) + ')' : ''}${m.em.us && m.em.us.q ? ', avec le score par quart-temps' : ' (sans la feuille de marque : pas de détail par quart-temps)'}.</p>
-    <button class="btn alt" data-x="empick">Remplacer</button><button class="btn alt" data-x="emdel">Retirer</button>${EM_INPUT}`;
+    <button class="btn" data-x="emsopen">Voir et exporter la feuille</button>`
+    + (canEditMatch(m) ? `<button class="btn alt" data-x="empick">Remplacer</button><button class="btn alt" data-x="emdel">Retirer</button>${EM_INPUT}` : '');
 }
 
 // Nom de l'adversaire à enregistrer : celui de la feuille (l'autre équipe), sauf s'il a été corrigé.
