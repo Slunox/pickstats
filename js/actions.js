@@ -588,6 +588,8 @@ const INPUTS = {
   // Correction d'une valeur lue sur la feuille e-Marque
   // Nom de l'adversaire corrigé avant d'enregistrer la feuille e-Marque
   emo: (d, t) => { if (ui.em) ui.em.opp = t.value; },
+  // Nom d'un joueur mal lu sur la feuille (lettre inconnue « ? ») : « équipe|joueur »
+  emn: (d, t) => { const [ti, i] = d.emn.split('|'); if (ui.em) ui.em.data.teams[+ti].players[+i].name = t.value; },
   emv: (d, t) => {
     const [i, k] = d.emv.split('|'), p = ui.em.data.teams[ui.em.side].players[+i];
     p[k] = k === 'min' ? t.value.trim() : (parseInt(t.value, 10) || 0);

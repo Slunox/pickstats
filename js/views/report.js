@@ -6,6 +6,7 @@
 import { S, ui } from '../state.js';
 import { esc, fdate } from '../util.js';
 import { roster1, curTeamColor, oppColor, isLight, seasonGames } from '../model.js';
+import { playerName } from '../emarque.js';
 import { WON } from '../constants.js';
 
 // --- Mise en forme ---
@@ -69,7 +70,8 @@ function build() {
       return { m: mk, a: mk + c('m2', i + 1, n) + c('m3', i + 1, n) };
     });
     return {
-      n, name: roster1(n).name, ...e, p2, a2, a3, fg: p2 + e.p3, afg, a1: e.lf + m1,
+      // Nom de l'effectif ; sinon celui de la feuille, remis à l'endroit (« EGERSZEGI, Rémy » → « Rémy Egerszegi »)
+      n, ...e, name: roster1(n).name || playerName(e.name), p2, a2, a3, fg: p2 + e.p3, afg, a1: e.lf + m1,
       ppt: afg ? (2 * p2 + 3 * e.p3) / afg : null, stl, fd, to, trav, bal: stl + fd - to - trav, byQ,
     };
   }).sort((a, b) => (b.pts - a.pts) || (+a.n - +b.n));
@@ -152,7 +154,7 @@ const FACT = {
 const andList = l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' et ' + l[l.length - 1] : l[0] || '');
 
 // Bloc sous le score : un titre (résultat et scénario), puis quelques lignes étiquetées
-// (le tournant, ce qui a fait la différence ou manqué, ce qui a tenu). Les chiffres détaillés sont dans les tuiles.
+// (le tournant, ce qui a fait la différence ou coûté le match, le ou les points positifs). Les chiffres détaillés sont dans les tuiles.
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 function headline(D, names) {
   const { em, us, th, quarters } = D, [, T] = names, d = us.total.pts - th.total.pts, ad = Math.abs(d);
@@ -180,8 +182,8 @@ function headline(D, names) {
       if (top.length) rows.push(['up', 'La différence', cap(andList(top))]);
       if (against.length) rows.push(['down', 'Malgré', cap(andList(against))]);
     } else {
-      if (top.length) rows.push(['down', 'Ce qui a manqué', cap(andList(top))]);
-      if (against.length) rows.push(['up', 'Ce qui a tenu', cap(andList(against))]);
+      if (top.length) rows.push(['down', 'Ce qui a coûté le match', cap(andList(top))]);
+      if (against.length) rows.push(['up', against.length > 1 ? 'Les points positifs' : 'Le point positif', cap(andList(against))]);
     }
   } else {
     const plus = F.filter(f => f.v >= 4).sort((a, b) => b.v - a.v)[0], minus = F.filter(f => f.v <= -4).sort((a, b) => a.v - b.v)[0];
@@ -520,6 +522,9 @@ function pages(D) {
   }
 
   // 4. Joueurs : qui a fait quoi, sur tout le match (au tir, puis avec le ballon)
+  // Tableaux triés par numéro de maillot (le graphique des points reste trié par points)
+  const byNum = (a, b) => (+a.n - +b.n) || String(a.n).localeCompare(String(b.n));
+  const pnum = players.slice().sort(byNum);
   const ppt = s.afg ? ((2 * s.p2 + 3 * s.p3) / s.afg).toFixed(2).replace('.', ',') : '–';
   const shotTd = (m, a) => `<td class="n">${a ? `${ma(m, a)} <span class="${tone(m, a)}">${Math.round(100 * m / a)} %</span>` : '–'}</td>`;
   const prow = p => `<tr><td>${esc(p.n)}</td><td>${esc(p.name) || '–'}</td><td class="n">${esc(p.min) || '–'}</td><td class="n b">${p.pts}</td>`
@@ -527,11 +532,11 @@ function pages(D) {
     + `<td class="n">${p.ppt == null ? '–' : p.ppt.toFixed(2).replace('.', ',')}</td><td class="n ${p.f >= 5 ? 'low' : ''}">${p.f}</td></tr>`;
   const pfoot = `<tr><td></td><td>Équipe</td><td class="n">${esc(us.total.min)}</td><td class="n">${us.total.pts}</td>`
     + shotTd(s.fg, s.afg) + shotTd(s.p2, s.a2) + shotTd(s.p3, s.a3) + shotTd(s.lf, s.a1) + `<td class="n">${ppt}</td><td class="n">${us.total.f}</td></tr>`;
-  const brows = players.slice().sort((a, b) => b.bal - a.bal).map(p => `<tr><td>${esc(p.n)}</td><td>${esc(p.name) || '–'}</td><td class="n">${p.stl}</td><td class="n">${p.fd}</td><td class="n">${p.to}</td><td class="n">${p.trav}</td><td class="n ${p.bal > 0 ? 'good' : p.bal < 0 ? 'low' : ''}">${sgn(p.bal)}</td></tr>`).join('');
+  const brows = pnum.map(p => `<tr><td>${esc(p.n)}</td><td>${esc(p.name) || '–'}</td><td class="n">${p.stl}</td><td class="n">${p.fd}</td><td class="n">${p.to}</td><td class="n">${p.trav}</td><td class="n ${p.bal > 0 ? 'good' : p.bal < 0 ? 'low' : ''}">${sgn(p.bal)}</td></tr>`).join('');
   const bal = b.stl + b.fd - b.to - b.trav;
   P.joueurs = card('Au tir', 'Tentés = réussis (e-Marque) + ratés (saisie). Pts/tir : points marqués à 2 pts / 3 pts ÷ tirs tentés (hors lancers). En vert : 50 % et plus ; en rouge : moins de 35 %.',
     table('<th>N°</th><th>Joueur</th><th class="n">Temps</th><th class="n">Pts</th><th class="n">Tirs</th><th class="n">2 pts</th><th class="n">3 pts</th><th class="n">LF</th><th class="n">Pts/tir</th><th class="n">Fautes</th>',
-      players.map(prow).join(''), pfoot))
+      pnum.map(prow).join(''), pfoot))
     + card('Points par joueur', 'Par type de panier. En bout de barre : points et adresse à 2 pts / 3 pts.', legend([[cLF, 'Lancers francs'], [c2, 'Paniers à 2 pts'], [c3, 'Paniers à 3 pts']])
       + stacked(players.map(p => ({ label: `#${p.n} ${first(p.name)}`.trim(), parts: [{ v: p.lf, color: cLF, name: 'Lancers francs' }, { v: 2 * p.p2, color: c2, name: 'Paniers à 2 pts' }, { v: 3 * p.p3, color: c3, name: 'Paniers à 3 pts' }], tail: `${p.pts} pts${p.afg ? ' · ' + Math.round(100 * p.fg / p.afg) + ' %' : ''}` }))))
     + card('Avec le ballon', 'Bilan = interceptions + fautes provoquées − balles perdues − marchers. Indicateur interne, pas une évaluation officielle.',
@@ -539,8 +544,8 @@ function pages(D) {
         `<tr><td></td><td>Équipe</td><td class="n">${b.stl}</td><td class="n">${b.fd}</td><td class="n">${b.to}</td><td class="n">${b.trav}</td><td class="n">${sgn(bal)}</td></tr>`));
 
   // 5. Adversaire
-  const opp = Object.entries(th.players || {}).map(([n, p]) => ({ n, ...p })).sort((a, b) => (b.pts - a.pts) || (+a.n - +b.n));
-  const oNames = opp.some(p => p.name), oName = p => (oNames ? `<td>${esc(p.name) || '–'}</td>` : '');
+  const opp = Object.entries(th.players || {}).map(([n, p]) => ({ n, ...p })).sort(byNum);
+  const oNames = opp.some(p => p.name), oName = p => (oNames ? `<td>${esc(playerName(p.name)) || '–'}</td>` : '');
   P.adv = card(`Joueurs de ${esc(T)}`, 'Paniers réussis uniquement (e-Marque).',
     table(`<th>N°</th>${oNames ? '<th>Joueur</th>' : ''}<th class="n">Temps</th><th class="n">Pts</th><th class="n">Tirs</th><th class="n">3 pts</th><th class="n">2 pts int.</th><th class="n">2 pts ext.</th><th class="n">LF</th><th class="n">Fautes</th>`,
       opp.map(p => `<tr><td>${esc(p.n)}</td>${oName(p)}<td class="n">${esc(p.min)}</td><td class="n b">${p.pts}</td><td class="n">${p.fg}</td><td class="n">${p.p3}</td><td class="n">${p.p2i}</td><td class="n">${p.p2e}</td><td class="n">${p.lf}</td><td class="n ${p.f >= 5 ? 'low' : ''}">${p.f}</td></tr>`).join('')));
@@ -581,29 +586,35 @@ export function reportFile(m) {
   const title = `Stats ${S.me} – ${S.opp} ${fdate(m)}`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title>`
     // Thème clair ou sombre : celui de l'appareil, sauf choix avec le bouton soleil/lune (mémorisé)
-    + `<script>try{var t=localStorage.getItem('rp-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>`
+    + `<script>document.documentElement.className+=' js';try{var t=localStorage.getItem('rp-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>`
     + `<style>:root{--card:#fff;--ink:#1b2420;--mut:#5d6862;--line:#dfe3df;--bg:#f6f7f5;color-scheme:light}`
     + `@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){${DARK}}}:root[data-theme="dark"]{${DARK}}`
     + `body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.5}`
     + `.rp-theme{margin-left:auto;align-self:flex-start;flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);display:grid;place-items:center;cursor:pointer}`
     + `.rp-theme:hover{border-color:var(--rp-accent)}.rp-theme:focus-visible{outline:2px solid var(--rp-accent);outline-offset:2px}.rp-theme svg{width:20px;height:20px}`
     + `.rp-theme .sun{display:none}.dark .rp-theme .sun{display:block}.dark .rp-theme .moon{display:none}`
+    // Sans JavaScript (aperçu de l'iPhone, visionneuses HTML) : pas de bouton de thème, on suit l'appareil
+    + `html:not(.js) .rp-theme{display:none}@media (prefers-color-scheme:dark){html:not(.js) .rp{--rp-good:#5cc28f;--rp-low:#f08a7e}}`
     + `.dark .rp-eyebrow,.dark .rp-ptitle span{color:color-mix(in srgb,var(--rp-accent) 55%,#fff)}`
     + `@media print{:root,:root[data-theme="dark"]{--card:#fff;--ink:#000;--mut:#555;--line:#ccc;--bg:#fff;color-scheme:light}.rp-theme{display:none}}`
-    + `.rp{max-width:1100px;margin:0 auto;padding:24px 16px 48px}.rp-page{margin-top:22px}.rp-page[hidden]{display:none}`
-    // Onglets collés en haut, une page à la fois ; à l'impression, toutes les pages à la suite
+    + `.rp{position:relative;max-width:1100px;margin:0 auto;padding:24px 16px 48px}.rp-page{margin-top:22px}`
+    // Onglets collés en haut, une page à la fois. Ils marchent sans JavaScript : chaque onglet est l'étiquette
+    // d'un bouton radio caché, et le CSS affiche la page dont le bouton est coché. À l'impression, toutes les pages à la suite.
+    + `.rp-r{position:absolute;top:0;left:0;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}.rp .rp-page{display:none}`
+    + PAGES.map(([id]) => `#p-${id}:checked~#${id}{display:flex}#p-${id}:checked~nav label[for="p-${id}"]{color:var(--ink);font-weight:600;border-bottom-color:var(--rp-accent)}`
+      + `#p-${id}:focus-visible~nav label[for="p-${id}"]{outline:2px solid var(--rp-accent);outline-offset:-2px}`).join('')
     + `nav.rp-nav{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);padding-top:6px;scrollbar-width:thin}`
-    + `nav.rp-nav button{flex:none;font:inherit;font-size:14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--mut);padding:10px 14px;cursor:pointer;white-space:nowrap}`
-    + `nav.rp-nav button:hover{color:var(--ink)}nav.rp-nav button[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--rp-accent)}`
-    + `nav.rp-nav button:focus-visible,.rp-pg button:focus-visible{outline:2px solid var(--rp-accent);outline-offset:2px}`
+    + `nav.rp-nav label{flex:none;font-size:14px;border-bottom:3px solid transparent;color:var(--mut);padding:10px 14px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}`
+    + `nav.rp-nav label:hover{color:var(--ink)}`
     + `.rp-pg{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:8px}`
-    + `.rp-pg button{font:inherit;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px;color:var(--ink);cursor:pointer}.rp-pg button:hover{border-color:var(--rp-accent)}`
-    + `@media print{body{background:#fff}.rp{padding:0}nav.rp-nav,.rp-pg{display:none!important}.rp-page,.rp-page[hidden]{display:flex!important;break-before:page}.rp-page:first-of-type{break-before:auto}}`
+    + `.rp-pg label{font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px;color:var(--ink);cursor:pointer}.rp-pg label:hover{border-color:var(--rp-accent)}`
+    + `@media print{body{background:#fff}.rp{padding:0}nav.rp-nav,.rp-pg,.rp-r{display:none!important}.rp .rp-page{display:flex!important;break-before:page}.rp .rp-page:first-of-type{break-before:auto}}`
     + `${RP_CSS}.dark .rp{--rp-good:#5cc28f;--rp-low:#f08a7e}</style></head><body>`
     + `<div class="rp" style="--rp-accent:${curTeamColor()}">${head(m).replace('</header>', THEME_BTN + '</header>')}`
-    + `<nav class="rp-nav" role="tablist" aria-label="Pages du dossier">${PAGES.map(([id, l], i) => `<button type="button" role="tab" id="tab-${id}" aria-controls="${id}" aria-selected="${i === 0}" data-page="${id}">${l}</button>`).join('')}</nav>`
-    + PAGES.map(([id, l], i) => `<section class="rp-page" id="${id}" role="tabpanel" aria-labelledby="tab-${id}"${i ? ' hidden' : ''}><div class="rp-ptitle"><span>Page ${i + 1} sur ${PAGES.length}</span><h2>${l}</h2></div>${P[id]}`
-      + `<div class="rp-pg">${i ? `<button type="button" data-go="-1">← ${PAGES[i - 1][1]}</button>` : '<span></span>'}${i < PAGES.length - 1 ? `<button type="button" data-go="1">${PAGES[i + 1][1]} →</button>` : '<span></span>'}</div></section>`).join('')
+    + PAGES.map(([id, l], i) => `<input type="radio" class="rp-r" name="rp-page" id="p-${id}" aria-label="${l}"${i ? '' : ' checked'}>`).join('')
+    + `<nav class="rp-nav" aria-label="Pages du dossier">${PAGES.map(([id, l]) => `<label for="p-${id}">${l}</label>`).join('')}</nav>`
+    + PAGES.map(([id, l], i) => `<section class="rp-page" id="${id}"><div class="rp-ptitle"><span>Page ${i + 1} sur ${PAGES.length}</span><h2>${l}</h2></div>${P[id]}`
+      + `<div class="rp-pg">${i ? `<label for="p-${PAGES[i - 1][0]}" data-go="-1">← ${PAGES[i - 1][1]}</label>` : '<span></span>'}${i < PAGES.length - 1 ? `<label for="p-${PAGES[i + 1][0]}" data-go="1">${PAGES[i + 1][1]} →</label>` : '<span></span>'}</div></section>`).join('')
     + `<footer class="rp-foot">Document interne${S.clubName ? ' ' + esc(S.clubName) : ''} – ${esc(S.me)}. Statistiques individuelles à usage du staff et de l’équipe, à ne pas diffuser publiquement. Généré par Pick&amp;Stats.</footer></div>`
     + `<script>${TABS_JS}${THEME_JS}(${swipeNav})(document);</script></body></html>`;
 }
@@ -649,30 +660,25 @@ export function swipeNav(root) {
     x0 = null;
     if (Math.abs(dx) < 70 || Math.abs(dx) < 2 * Math.abs(dy) || Date.now() - t0 > 800) return;
     var go = dx < 0 ? '1' : '-1';
-    var b = root.querySelector('.rp-page:not([hidden]) .rp-pg [data-go="' + go + '"], .rp-pager [data-go="' + go + '"]');
-    if (b) b.click();
+    // Bouton précédent / suivant de la page affichée (dans le fichier, les autres pages sont masquées par le CSS)
+    var all = root.querySelectorAll('.rp-pg [data-go="' + go + '"], .rp-pager [data-go="' + go + '"]');
+    for (var i = 0; i < all.length; i++) if (all[i].offsetParent) { all[i].click(); return; }
   }, { passive: true });
 }
 
-// Navigation par onglets du fichier exporté : clic, flèches du clavier, boutons précédent/suivant, #page dans l'adresse.
+// Fichier exporté, quand le JavaScript est permis : en plus des onglets en CSS,
+// retour en haut de page, onglet actif visible dans la barre, #page dans l'adresse (à l'ouverture et au changement).
 const TABS_JS = `(function(){
-  var pages=[].slice.call(document.querySelectorAll('.rp-page')), ids=pages.map(function(p){return p.id;});
-  var tabs=[].slice.call(document.querySelectorAll('nav.rp-nav button'));
-  function show(id,focus){
-    if(ids.indexOf(id)<0) id=ids[0];
-    pages.forEach(function(p){p.hidden=p.id!==id;});
-    tabs.forEach(function(b){var on=b.getAttribute('data-page')===id;b.setAttribute('aria-selected',on?'true':'false');b.tabIndex=on?0:-1;
-      if(on&&focus)b.focus();if(on){var n=b.parentNode;n.scrollLeft=Math.max(0,b.offsetLeft-n.offsetLeft-16);}});
-    try{history.replaceState(null,'','#'+id);}catch(e){}
+  var radios=[].slice.call(document.querySelectorAll('.rp-r')), ids=radios.map(function(r){return r.id.slice(2);});
+  function sync(){
+    var i=0; radios.forEach(function(r,k){if(r.checked)i=k;});
+    var l=document.querySelector('nav.rp-nav label[for="p-'+ids[i]+'"]'), n=l.parentNode;
+    n.scrollLeft=Math.max(0,l.offsetLeft-n.offsetLeft-16);
+    try{history.replaceState(null,'','#'+ids[i]);}catch(e){}
   }
-  tabs.forEach(function(b){b.addEventListener('click',function(){show(b.getAttribute('data-page'));window.scrollTo(0,0);});});
-  document.querySelector('nav.rp-nav').addEventListener('keydown',function(e){
-    var cur=ids.indexOf(document.querySelector('nav.rp-nav [aria-selected="true"]').getAttribute('data-page'));
-    if(e.key==='ArrowRight'){show(ids[(cur+1)%ids.length],true);e.preventDefault();}
-    if(e.key==='ArrowLeft'){show(ids[(cur-1+ids.length)%ids.length],true);e.preventDefault();}
-  });
-  document.querySelectorAll('.rp-pg button').forEach(function(b){b.addEventListener('click',function(){var cur=ids.indexOf(b.closest('.rp-page').id);show(ids[cur+Number(b.getAttribute('data-go'))]);window.scrollTo(0,0);});});
-  show(location.hash.slice(1));
+  radios.forEach(function(r){r.addEventListener('change',function(){sync();window.scrollTo(0,0);});});
+  var k=ids.indexOf(location.hash.slice(1)); if(k>=0) radios[k].checked=true;
+  sync();
 })();`;
 
 // Styles du rapport (préfixe rp-), communs à l'appli et au fichier exporté.

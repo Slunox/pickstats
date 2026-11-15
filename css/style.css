@@ -353,6 +353,7 @@ table.st .grp .g{box-shadow:inset 3px 0 0 var(--card),inset -3px 0 0 var(--card)
 /* Feuille e-Marque : vérification et stats combinées */
 .emscore{display:flex;align-items:baseline;gap:8px;margin:12px 0 4px;font-size:1.6rem}.emscore span{font-size:.95rem;color:var(--mut);font-weight:700}
 .emwarn{margin:8px 0;padding:10px 12px;border-radius:10px;background:#FDE2DE;color:#7A1D12;font-weight:600;font-size:.9rem}
+.emfix{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:12px}.emfix h3{margin:0 0 4px}.emfn{display:block;margin:10px 0 0}.emfn span{display:block;font-size:.85rem;color:var(--mut);font-weight:600}.emfn input{width:100%;margin:4px 0 0}
 table.emt{min-width:560px}table.emt td{padding:6px 4px}
 .card .emi{width:46px;min-height:0;margin:0;padding:8px 4px;text-align:center;font-size:1rem;font-variant-numeric:tabular-nums}.card .emi.w{width:68px}
 table.emt tr.bad th,table.emt tr.bad td{background:#FDE2DE}table.emt tr.bad th{color:#7A1D12}

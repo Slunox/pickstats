@@ -52,6 +52,13 @@ export function emCheck() {
       + '</tr>';
   }).join('');
 
+  // Noms avec une lettre que l'appli n'a pas su lire (« ? ») : à corriger à la main, pour les deux équipes.
+  const unread = d.teams.flatMap((t, ti) => t.players.map((p, i) => ({ p, ti, i })).filter(z => String(z.p.name || '').includes('?')));
+  const fixNames = unread.length ? `<div class="emfix"><h3>Noms à corriger</h3>
+    <p class="help" style="margin-top:0">L’appli n’a pas su lire une lettre de ${unread.length > 1 ? 'ces noms' : 'ce nom'} (remplacée par « ? ») : corrige-${unread.length > 1 ? 'les' : 'le'} d’après la feuille.</p>
+    ${unread.map(({ p, ti, i }) => `<label class="emfn"><span>${ti === side ? 'Mon équipe' : esc(oppOf(E) || m.opp)} · n° ${esc(p.n)}</span>
+      <input data-emn="${ti}|${i}" value="${esc(p.name)}" maxlength="40" autocomplete="off"></label>`).join('')}</div>` : '';
+
   const bad = us.players.filter(p => !checkRow(p)).length;
   const sum = us.players.reduce((a, p) => a + (+p.pts || 0), 0);
   const missing = [...nums].filter(n => !us.players.some(p => p.n === n));
@@ -79,6 +86,7 @@ export function emCheck() {
       <tbody>${rows}</tbody>
     </table></div>
     <p class="help">Les joueurs sont reliés par leur numéro de maillot. Corrige une valeur si elle ne correspond pas à la feuille.</p>
+    ${fixNames}
     <button class="btn go2" data-x="emsave">Enregistrer dans le match</button>
   </div>`;
 }
