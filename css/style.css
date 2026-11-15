@@ -243,7 +243,7 @@ html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2
 .sheet input,.card input{min-height:50px}
 
 /* Club et membres */
-.clubhead{display:flex;align-items:center;gap:16px}.clubhead h2{margin:0}
+.clubhead{display:flex;align-items:center;gap:16px}.clubhead h2{margin:0;overflow-wrap:anywhere}.clubhead .chname{flex:1;min-width:0}.clubhead .chname input{width:100%}.clubhead>.btn{flex:none;align-self:flex-start}
 .ccode{font-size:2.2rem;font-weight:800;letter-spacing:.14em;margin:4px 0 6px;font-variant-numeric:tabular-nums;color:var(--a);-webkit-user-select:text;user-select:text}
 .mrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
 .mrow:last-of-type{border-bottom:0}

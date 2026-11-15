@@ -173,13 +173,19 @@ export function members() {
       <p class="help">Les nouveaux membres le saisissent après avoir créé leur compte et arrivent bénévoles. « Nouveau code » rend l’ancien inutilisable ; les membres actuels restent.</p>
       <div class="crow"><button class="btn" data-x="cshare">Envoyer le code</button><button class="btn alt" data-x="crenew">Nouveau code</button></div>
     </div>` : '';
-  return back('Accueil', 'view', 'home') + `
-    <div class="card clubhead">${clubAvatar(k.name, 'big')}
-      <div><h2>${esc(k.name)}</h2><p class="help"><span class="cdot${c.offline ? ' off' : ''}"></span>Tu es ${(ROLES[k.role] || 'Coach').toLowerCase()} · ${syncText(c)}</p></div></div>
+  // En-tête : logo, nom, rôle. Coach et responsable changent le nom ici (bouton « Modifier »).
+  const canName = k.role !== 'benevole', clubName = S.clubName || k.name;
+  const head = ui.cnEdit && canName
+    ? `<div class="card clubhead">${clubAvatar(clubName, 'big')}
+      <div class="chname"><label for="cnin" style="margin-top:0">Nom du club</label>
+        <input id="cnin" data-cn="1" value="${esc(S.clubName || '')}" placeholder="Nom de ton club" maxlength="40" enterkeyhint="done">
+        <p class="help" style="margin:4px 0 0">Affiché pour tous les membres et en haut des exports PDF.</p></div>
+      <button class="btn sm" data-x="cnok">OK</button></div>`
+    : `<div class="card clubhead">${clubAvatar(clubName, 'big')}
+      <div class="chname"><h2>${esc(clubName)}</h2><p class="help"><span class="cdot${c.offline ? ' off' : ''}"></span>Tu es ${(ROLES[k.role] || 'Coach').toLowerCase()} · ${syncText(c)}</p></div>
+      ${canName ? '<button class="btn alt sm" data-x="cnedit">Modifier</button>' : ''}</div>`;
+  return back('Accueil', 'view', 'home') + head + `
     ${msgs(c)}
-    ${k.role === 'benevole' ? '' : `<div class="card"><h2>Nom du club</h2>
-      <input data-cn="1" value="${esc(S.clubName || '')}" placeholder="Nom de ton club" maxlength="40" aria-label="Nom du club">
-      <p class="help">Affiché en haut des exports PDF et pour tous les membres.</p></div>`}
     ${admin ? logoCard() : ''}
     ${code}
     <div class="card"><h2>Membres (${c.members.length})</h2>${c.members.map(m => memberRow(m, c, admin)).join('')}

@@ -410,6 +410,9 @@ const ACTIONS = {
     }
   },
   logopick: () => { $('#logofile').click(); return false; },
+  // Nom du club, modifié dans l'en-tête de « Club et membres »
+  cnedit: () => { ui.cnEdit = true; ui.cnPrev = S.clubName; },
+  cnok: () => { S.clubName = (S.clubName || '').trim() || ui.cnPrev || ''; ui.cnEdit = false; save(); },
   logodel: () => {
     ask(`Retirer le logo du club ?${inClub() ? ' Il disparaîtra pour tous les membres.' : ''}`, 'Retirer', () => { S.clubLogo = ''; save(); }, true);
     return false;
@@ -519,7 +522,13 @@ function focusAfter(x) {
   if (x === 'cnew') { const a = document.querySelectorAll('[data-cname]'); if (a.length) a[a.length - 1].focus(); }
   if (x === 'cadd') { const a = document.querySelectorAll('[data-cnum]'), l = a[a.length - 1]; if (l && !l.value) l.focus(); }
   if (x === 'addpl') { const a = document.querySelectorAll('[data-pn]'); if (a.length) a[a.length - 1].focus(); }
+  if (x === 'cnedit') { const i = $('#cnin'); if (i) { i.focus(); i.select(); } }
 }
+
+// Touche Entrée dans le nom du club : valide comme « OK ».
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'cnin') { e.preventDefault(); ACTIONS.cnok(); render(); }
+});
 
 // Actions interdites aux bénévoles.
 // Actions sur un match, permises aussi à un bénévole sur son match pas encore validé (voir canEditMatch)
