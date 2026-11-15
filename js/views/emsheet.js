@@ -6,6 +6,7 @@ import { S, withMatch } from '../state.js';
 import { esc } from '../util.js';
 import { roster1, curG } from '../model.js';
 import { back } from './common.js';
+import { matchInfo } from '../emarque.js';
 
 // Styles propres à la feuille (repris tels quels dans le fichier exporté et à l'impression).
 export const SHEET_CSS = `.ems{--l:var(--line,#d6dbd7);--m:var(--mut,#5d6862)}
@@ -67,9 +68,8 @@ function ratios(m, A, B) {
 // Contenu de la feuille (à appeler dans withMatch).
 export function sheetBody(m) {
   const [A, B] = sides(m), em = m.em;
-  const date = new Date(m.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   return `<div class="ems">
-    <div class="emsh"><div><h2>Résumé de la rencontre</h2><p>${em.num ? 'Rencontre n° ' + esc(em.num) + ' · ' : ''}${date}</p></div>${S.clubName ? `<p>${esc(S.clubName)}</p>` : ''}</div>
+    <div class="emsh"><div><h2>Résumé de la rencontre</h2><p>${esc(matchInfo(em, m.date))}</p></div>${S.clubName ? `<p>${esc(S.clubName)}</p>` : ''}</div>
     <div class="emsc"><div><span>Locaux</span><div class="t">${esc(A.name)}</div><b>${A.t.total.pts}</b></div><span>–</span><div><span>Visiteurs</span><div class="t">${esc(B.name)}</div><b>${B.t.total.pts}</b></div></div>
     ${periodTable(A, B)}
     ${teamTable(A, 'Locaux')}

@@ -6,7 +6,7 @@
 import { S, ui } from '../state.js';
 import { esc, fdate } from '../util.js';
 import { roster1, curTeamColor, oppColor, isLight, seasonGames } from '../model.js';
-import { playerName } from '../emarque.js';
+import { playerName, matchInfo } from '../emarque.js';
 import { WON } from '../constants.js';
 
 // --- Mise en forme ---
@@ -563,9 +563,8 @@ function pages(D) {
 function head(m) {
   const logo = S.clubLogo ? `<div class="rp-logo"><img src="${S.clubLogo}" alt=""></div>` : '';
   const club = S.clubName ? esc(S.clubName) + ' · ' : '';
-  const date = new Date(m.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   return `<header class="rp-top">${logo}<div><p class="rp-eyebrow">${club}Dossier de statistiques</p><h1>${esc(S.me)} – ${esc(S.opp)}</h1>`
-    + `<p class="rp-muted">${S.em.num ? 'Rencontre n° ' + esc(S.em.num) + ' · ' : ''}${date}</p></div></header>`;
+    + `<p class="rp-muted">${esc(matchInfo(S.em, m.date))}</p></div></header>`;
 }
 
 // Écran du rapport dans l'appli (à appeler dans withMatch).

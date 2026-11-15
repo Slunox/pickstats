@@ -278,6 +278,20 @@ export function playerName(s) {
   return [p, tidyName(nom.trim())].filter(Boolean).join(' ');
 }
 
+// Date courte : « dim 15 nov 2026 ». Abréviations écrites à la main pour ne pas confondre juin et juillet.
+const DAYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+const MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
+export const shortDate = date => { const d = new Date(date); return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; };
+
+// Ligne d'infos du match (texte brut, à échapper) : « Rencontre n° 8828 · dim 15 nov 2026 à 14h00
+// · DM2 · Poule C · Blanquefort ».
+export function matchInfo(em, date) {
+  const e = em || {};
+  const day = shortDate(date);
+  return [e.num && 'Rencontre n° ' + e.num, day + (e.time ? ' à ' + e.time.replace(':', 'h') : ''),
+    e.cat, e.poule && 'Poule ' + e.poule, e.place].filter(Boolean).join(' · ');
+}
+
 // Numéro d'équipe en fin de nom : « ENTENTE PESSAC BASKET CLUB-3 » → « 3 ».
 export const teamSuffix = s => (/-\s*(\d{1,2})\s*$/.exec(String(s || '')) || [])[1] || '';
 
@@ -307,7 +321,7 @@ export async function readEmarque(files) {
   }
   if (!res) throw new Error(NOT_RESUME);
   const file = namesFromFile(resFile.name), head = namesFromPage(res.pages[0]);
-  const d = { num: head.num || file.num, a: head.a || file.a, b: head.b || file.b, teams: res.teams, quarters: null, ratios: res.pages[1] ? parseRatios(res.pages[1]) : null, warn: [], level: levelOf(res.pages[0]) };
+  const d = { num: head.num || file.num, a: head.a || file.a, b: head.b || file.b, teams: res.teams, quarters: null, ratios: res.pages[1] ? parseRatios(res.pages[1]) : null, warn: [], level: levelOf(res.pages[0]), cat: head.cat, poule: head.poule, time: head.time, place: head.place };
   if (feuille) {
     const ev = parseFeuille(feuille);
     const q = d.teams.map((t, i) => periods(ev[i], t.total.pts, t.ot));
@@ -324,19 +338,35 @@ export async function readEmarque(files) {
 // Noms des équipes et numéro de rencontre lus dans l'en-tête du résumé :
 // « Équipe A | ENTENTE SPORTIVE BLANQUEFORT - 1 », « Équipe B | … », « Rencontre N° » (valeur sur la ligne du dessous).
 // Plus fiable que le nom du fichier, où l'on ne sait pas toujours où finit le nom de l'équipe A.
+// Aussi : heure (« Heure | 14:00 »), lieu (« Lieu | BLANQUEFORT »), poule (« Poule | C ») et, dans la colonne
+// de gauche, la compétition (« Départementale », « masculine seniors », « - Division 2 », puis le code « DM2 »).
 export function namesFromPage(pageLines) {
-  const out = { num: '', a: '', b: '' };
+  const out = { num: '', a: '', b: '', cat: '', poule: '', time: '', place: '' };
+  const comp = [];
+  let inHead = true; // l'en-tête s'arrête au tableau des locaux
   (pageLines || []).forEach((l, i) => {
+    if (l.toks[0] && /^(LOCAUX|VISITEURS)$/i.test(l.toks[0].w.trim())) inHead = false;
+    if (inHead && i < 12 && l.toks[0] && l.toks[0].x < 100) comp.push(l.toks[0].w.trim());
     l.toks.forEach((t, j) => {
-      const m = /^[ÉE]quipe\s*([AB])$/i.exec(t.w.trim());
-      const next = l.toks[j + 1];
-      if (m && next && !/\?/.test(next.w)) out[m[1].toLowerCase()] = next.w.replace(/\s*-\s*(\d{1,2})\s*$/, '-$1').replace(/\s+/g, ' ').trim();
-      if (/^Rencontre\s*N/i.test(t.w) && pageLines[i + 1]) {
-        const v = pageLines[i + 1].toks.find(k => Math.abs(k.x - t.x) < 15 && /^\d+$/.test(k.s));
+      const w = t.w.trim(), m = /^[ÉE]quipe\s*([AB])$/i.exec(w);
+      const next = l.toks[j + 1], nw = next ? next.w.replace(/\s+/g, ' ').trim() : '';
+      if (m && next && !/\?/.test(nw)) out[m[1].toLowerCase()] = nw.replace(/\s*-\s*(\d{1,2})\s*$/, '-$1');
+      if (/^Rencontre\s*N/i.test(w)) {
+        // Le numéro est soit juste à droite, soit sur la ligne du dessous
+        const v = next && /^\d+$/.test(next.s) && next.x - t.x < 80 ? next
+          : pageLines[i + 1] && pageLines[i + 1].toks.find(k => Math.abs(k.x - t.x) < 15 && /^\d+$/.test(k.s));
         if (v) out.num = v.s;
       }
+      if (!next || /\?/.test(nw)) return;
+      if (/^Heure$/i.test(w) && /^\d{1,2}[:h]\d{2}$/i.test(nw)) out.time = nw.replace(/h/i, ':');
+      if (/^Lieu$/i.test(w)) out.place = tidyName(nw);
+      if (/^Poule$/i.test(w) && nw.length <= 4) out.poule = nw;
     });
   });
+  // La compétition : son code (« DM2 »), sinon le nom en toutes lettres (sans l'en-tête de la fédération)
+  const code = comp.find(s => /^[A-Z]{1,4}\d{0,2}$/.test(s) && /\d|^[A-Z]{2,4}$/.test(s));
+  const c = comp.filter(s => s !== code && !/[?]|F[ÉE]D[ÉE]RATION|RUE|PARIS|TEL/i.test(s));
+  out.cat = code || c.join(' ').replace(/\s+-\s+/g, ' – ').replace(/\s+/g, ' ').trim();
   return out;
 }
 
@@ -386,6 +416,7 @@ export function fromEm(em) {
   const two = k => [at(0)[k], at(1)[k]];
   return {
     num: em.num || '', a: em.a || '', b: em.b || '', warn: [],
+    cat: em.cat || '', poule: em.poule || '', time: em.time || '', place: em.place || '',
     teams: [team(at(0)), team(at(1))],
     quarters: em.us.q ? [per(at(0)), per(at(1))] : null,
     ratios: em.us.adv != null ? { adv: two('adv'), run: two('run'), bench: two('bench'), ties: em.ties } : null,
@@ -409,6 +440,8 @@ export function toEm(d, side) {
   };
   return {
     num: d.num || '', a: d.a || '', b: d.b || '', side,
+    // Compétition, poule, heure et lieu (en-tête du résumé), seulement s'ils ont été lus
+    ...Object.fromEntries(['cat', 'poule', 'time', 'place'].filter(k => d[k]).map(k => [k, d[k]])),
     ...(d.ratios && d.ratios.ties != null ? { ties: d.ratios.ties } : {}),
     us: team(side),
     them: { name: (side ? d.a : d.b) || '', ...team(1 - side) },
