@@ -398,7 +398,7 @@ export function toEm(d, side) {
     const t = d.teams[i], q = d.quarters && d.quarters[i], r = d.ratios;
     return {
       total: pickRow(t.total), halves: t.halves || null, ot: t.ot || 0,
-      players: Object.fromEntries(t.players.map(p => [p.n, pickRow(p)])),
+      players: Object.fromEntries(t.players.map(p => [p.n, { ...pickRow(p), ...(p.name ? { name: p.name } : {}) }])),
       // Points par quart-temps, et par joueur : { n: [{ pts, lf, p2, p3 } par quart-temps] }
       ...(q ? {
         q: q.map(p => p.pts),

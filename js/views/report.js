@@ -540,9 +540,10 @@ function pages(D) {
 
   // 5. Adversaire
   const opp = Object.entries(th.players || {}).map(([n, p]) => ({ n, ...p })).sort((a, b) => (b.pts - a.pts) || (+a.n - +b.n));
+  const oNames = opp.some(p => p.name), oName = p => (oNames ? `<td>${esc(p.name) || '–'}</td>` : '');
   P.adv = card(`Joueurs de ${esc(T)}`, 'Paniers réussis uniquement (e-Marque).',
-    table('<th>N°</th><th class="n">Temps</th><th class="n">Pts</th><th class="n">Tirs</th><th class="n">3 pts</th><th class="n">2 pts int.</th><th class="n">2 pts ext.</th><th class="n">LF</th><th class="n">Fautes</th>',
-      opp.map(p => `<tr><td>${esc(p.n)}</td><td class="n">${esc(p.min)}</td><td class="n b">${p.pts}</td><td class="n">${p.fg}</td><td class="n">${p.p3}</td><td class="n">${p.p2i}</td><td class="n">${p.p2e}</td><td class="n">${p.lf}</td><td class="n ${p.f >= 5 ? 'low' : ''}">${p.f}</td></tr>`).join('')));
+    table(`<th>N°</th>${oNames ? '<th>Joueur</th>' : ''}<th class="n">Temps</th><th class="n">Pts</th><th class="n">Tirs</th><th class="n">3 pts</th><th class="n">2 pts int.</th><th class="n">2 pts ext.</th><th class="n">LF</th><th class="n">Fautes</th>`,
+      opp.map(p => `<tr><td>${esc(p.n)}</td>${oName(p)}<td class="n">${esc(p.min)}</td><td class="n b">${p.pts}</td><td class="n">${p.fg}</td><td class="n">${p.p3}</td><td class="n">${p.p2i}</td><td class="n">${p.p2e}</td><td class="n">${p.lf}</td><td class="n ${p.f >= 5 ? 'low' : ''}">${p.f}</td></tr>`).join('')));
 
   // 6. Méthode
   P.methode = `<div class="rp-notes">`
