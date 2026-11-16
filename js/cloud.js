@@ -811,6 +811,10 @@ const demo = {
     cloud.status = 'off';
     if (d && d.status === 'on') {
       Object.assign(cloud, d);
+      // Rangés par rôle dès l'affichage, comme l'appli le fait en recevant les membres de Firestore.
+      // Sans ça, ils apparaissent dans l'ordre où la démo les a écrits et se replacent tous au
+      // premier changement de rôle, alors que seul le membre concerné devrait bouger.
+      demo.sort();
       if (cloud.club) S.cloudClub = cloud.club.id;
     }
     refresh();
