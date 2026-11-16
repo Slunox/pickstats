@@ -179,6 +179,18 @@ function onSnap(kind, snap) {
 // Champs du document du club partagés avec l'appareil : [champ Firestore, clé dans S]
 const CLUB_FIELDS = [['name', 'clubName'], ['logo', 'clubLogo']];
 
+// Oublie les repères du nom et du logo du club c. À appeler chaque fois que les données du club
+// sont retirées de l'appareil (déconnexion, changement de club) ou remplacées en bloc (restauration) :
+// sans ça, le vide laissé sur l'appareil passe pour une modification à envoyer, et flush() efface
+// le nom et le logo en ligne, donc pour tous les membres. Les équipes et les matchs n'ont pas ce
+// problème : onSnap distingue « absent de l'appareil » (lh === null) de « modifié ici », ce qui est
+// impossible pour un champ texte, où retiré et vide se ressemblent.
+function forgetClubFields(c) {
+  if (!c) return;
+  CLUB_FIELDS.forEach(([f]) => { delete seen[c + '/' + f]; });
+  keepSeen();
+}
+
 // Nom et logo du club : même principe, sur le document du club.
 function onClubSnap(snap) {
   const c = clubId();
@@ -311,6 +323,7 @@ function attach(c) {
     S.arch = [];
     S.clubName = '';
     S.clubLogo = '';
+    forgetClubFields(S.cloudClub);
     S.cloudClub = c;
     save();
   } else if (!S.cloudClub && (S.teams.length || S.arch.length)) {
@@ -545,6 +558,7 @@ function clearClubData() {
   S.arch = (S.arch || []).filter(m => m.st === 'local');
   S.clubName = '';
   S.clubLogo = '';
+  forgetClubFields(S.cloudClub); // retiré d'ici, mais gardé en ligne : le club le redonnera
   save();
 }
 
@@ -723,9 +737,12 @@ export function cloudDel(kind, id) {
 
 // Après une restauration de sauvegarde : relit tout depuis Firestore
 // (ce qui n'est pas dans la sauvegarde revient, ce qui a changé est envoyé).
+// Le nom et le logo du club reviennent toujours du club : une sauvegarde faite avant
+// qu'ils existent ne doit pas les effacer pour tout le monde.
 export function cloudResync() {
   if (!clubId()) return;
   S.cloudClub = clubId();
+  forgetClubFields(clubId());
   save();
   listen();
 }
