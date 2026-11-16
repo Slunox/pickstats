@@ -384,7 +384,7 @@ const CHAPTERS = [
     steps: [
       ['Le responsable gère le club depuis le bandeau en haut de l’accueil.', -300, async () => { await tap('[data-x="sheet"]'); }],
       ['« Club et membres »…', -900, async () => { await tap('.sheet [data-x="view"][data-v="members"]'); hide(); }],
-      ['Le nom et le logo du club, affichés pour tous les membres et en haut des exports.', 0, async () => { await point('[data-cn]'); }],
+      ['Le nom et le logo du club, affichés pour tous les membres et en haut des exports. « Modifier », à côté du nom, pour le changer.', 300, async () => { await tap('[data-x="cnedit"]', 400); await point('[data-cn]'); await tap('[data-x="cnok"]', 400); }],
       ['Le code d’invitation à donner aux nouveaux membres. « Nouveau code » rend l’ancien inutilisable.', 300, async () => { await point('.ccode', { slow: true }); }],
       ['Les membres et leur rôle. Julie, bénévole, devient coach : elle pourra modifier les équipes et valider les matchs.', 600, async () => { await pick('[data-crole="demo-julie"]', 'coach'); }],
       ['Les matchs publiés par les bénévoles arrivent « À valider ».', 0, async () => { await tap('[data-x="view"][data-v="home"]', 400); await tap('[data-x="view"][data-v="club"]', 400); await tap('[data-x="view"][data-v="games"]'); }],
