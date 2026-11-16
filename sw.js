@@ -5,7 +5,9 @@
 // suite, ouvrir l'appli une fois (elle, reste en réseau d'abord) ou changer CACHE ci-dessous.
 // Ce fichier n'a pas besoin d'être modifié à chaque mise à jour,
 // sauf pour ajouter un nouveau fichier à FILES (indispensable pour le mode hors ligne).
-const CACHE = 'pickstats-3';
+// À changer quand la démo dépend d'une modification de l'appli : elle lit l'appli depuis le cache,
+// un fichier d'avant la modification lui ferait chercher un bouton qui n'existe pas encore.
+const CACHE = 'pickstats-4';
 const FILES = [
   './', 'index.html', 'demo.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'css/style.css',
