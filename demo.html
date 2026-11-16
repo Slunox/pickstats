@@ -183,6 +183,11 @@ async function loadApp(ch) {
   // Compte et club simulés du chapitre (aucun : pas connecté)
   if (ch && ch.cloud) localStorage.setItem('bb-demo-cloud', JSON.stringify(ch.cloud)); else localStorage.removeItem('bb-demo-cloud');
   await new Promise(ok => { frame.onload = ok; frame.src = 'index.html?demo&t=' + Date.now(); });
+  // Style propre à la démo, ajouté dans l'appli : met en avant le champ en cours de remplissage,
+  // puisque la démo écrit dedans sans lui donner le focus (voir type()).
+  const st = doc().createElement('style');
+  st.textContent = '.demotyping{border-color:var(--a);box-shadow:0 0 0 3px rgba(20,80,107,.2)}';
+  doc().head.appendChild(st);
   await sleep(600);
 }
 
@@ -261,16 +266,20 @@ async function tap(sel, after = 700) {
   el.click();
   await sleep(after);
 }
+// Le doigt remplit un champ. Sans lui donner le focus : sur tablette et sur téléphone, le clavier
+// du système monterait par-dessus la démo. Le champ est simplement mis en avant le temps de la
+// saisie. Rien dans l'appli n'a besoin du focus : les champs réagissent à « input », et ceux qui
+// se valident en quittant le champ (numéro d'un joueur en cours de match) ne servent pas ici.
 async function type(sel, text) {
   const el = await point(sel);
-  el.focus({ preventScroll: true });
+  el.classList.add('demotyping');
   el.value = '';
   for (const c of text) {
     el.value += c;
     el.dispatchEvent(new Event('input', { bubbles: true }));
     await sleep(90);
   }
-  el.blur();
+  el.classList.remove('demotyping');
   await sleep(400);
 }
 async function scrollTo(sel) {

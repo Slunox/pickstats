@@ -519,7 +519,10 @@ function popPlus(a) {
   setTimeout(() => s.remove(), 800);
 }
 
+// Le champ qui vient d'apparaître prend le focus, pour écrire dedans sans le toucher.
+// Jamais en démo : personne ne tape, et le clavier du système monterait par-dessus l'appli.
 function focusAfter(x) {
+  if (DEMO) return;
   if (x === 'cnew') { const a = document.querySelectorAll('[data-cname]'); if (a.length) a[a.length - 1].focus(); }
   if (x === 'cadd') { const a = document.querySelectorAll('[data-cnum]'), l = a[a.length - 1]; if (l && !l.value) l.focus(); }
   if (x === 'addpl') { const a = document.querySelectorAll('[data-pn]'); if (a.length) a[a.length - 1].focus(); }
