@@ -259,6 +259,8 @@ html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2
 .mrow:last-of-type{border-bottom:0}
 .mname{flex:1;min-width:0}.mname b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mname span{color:var(--mut);font-size:.88rem}
 .macts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+/* Liste des rôles : un contrôle de ligne, pas un champ pleine largeur comme dans un formulaire */
+.rolesel{width:auto;min-width:132px;min-height:44px;padding:8px 36px 8px 12px;background-position:right 12px center}
 .btn.sm{padding:10px 12px;margin:0;font-size:.9rem}
 @media(max-width:560px){.mrow:not(.self){flex-wrap:wrap}.mrow:not(.self) .macts{width:100%;justify-content:flex-start;padding-left:48px}}
 

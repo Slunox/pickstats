@@ -241,11 +241,8 @@ async function point(sel, opts = {}) {
   await sleep(opts.slow ? 1100 : 800);
   return el;
 }
-async function tap(sel, after = 700) {
-  const el = await point(sel);
-  // L'appli a pu bouger pendant l'attente : on recale le doigt avant de toucher, et on lui
-  // laisse le temps d'arriver, sinon l'onde partirait d'un endroit et le doigt d'un autre.
-  if (at(el)) await sleep(800);
+// Le doigt appuie là où il est posé : il s'enfonce et l'onde part de ce point.
+async function press() {
   finger.classList.add('tap');
   const ring = document.createElement('div');
   ring.className = 'ring';
@@ -254,6 +251,13 @@ async function tap(sel, after = 700) {
   setTimeout(() => ring.remove(), 700);
   await sleep(150);
   finger.classList.remove('tap');
+}
+async function tap(sel, after = 700) {
+  const el = await point(sel);
+  // L'appli a pu bouger pendant l'attente : on recale le doigt avant de toucher, et on lui
+  // laisse le temps d'arriver, sinon l'onde partirait d'un endroit et le doigt d'un autre.
+  if (at(el)) await sleep(800);
+  await press();
   el.click();
   await sleep(after);
 }
@@ -325,11 +329,19 @@ async function step([text, extra, act], quick) {
 }
 
 // --- Scénario ---
-// Liste déroulante : le doigt va dessus, puis la valeur change (comme un choix dans la liste)
+// Liste déroulante : le doigt la touche vraiment, puis la valeur change (le menu déroulant est
+// dessiné par le système, il ne s'afficherait pas dans la démo). L'appli se redessine ensuite et
+// la ligne peut changer de place (les membres sont rangés par rôle) : le doigt la suit, sinon
+// il resterait pointé sur une autre ligne.
 async function pick(sel, value) {
   const el = await point(sel);
+  if (at(el)) await sleep(800);
+  await press();
   el.value = value;
   el.dispatchEvent(new Event('change', { bubbles: true }));
+  await sleep(400);
+  const moved = q(sel);
+  if (moved) { await still(moved, 800); at(moved); }
   await sleep(700);
 }
 
@@ -386,7 +398,7 @@ const CHAPTERS = [
       ['« Club et membres »…', -900, async () => { await tap('.sheet [data-x="view"][data-v="members"]'); hide(); }],
       ['Le nom et le logo du club, affichés pour tous les membres et en haut des exports. « Modifier », à côté du nom, pour le changer.', 300, async () => { await tap('[data-x="cnedit"]', 400); await point('[data-cn]'); await tap('[data-x="cnok"]', 400); }],
       ['Le code d’invitation à donner aux nouveaux membres. « Nouveau code » rend l’ancien inutilisable.', 300, async () => { await point('.ccode', { slow: true }); }],
-      ['Les membres et leur rôle. Julie, bénévole, devient coach : elle pourra modifier les équipes et valider les matchs.', 600, async () => { await pick('[data-crole="demo-julie"]', 'coach'); }],
+      ['Les membres, rangés par rôle. Julie, bénévole, devient coach : elle remonte parmi les coachs et pourra modifier les équipes et valider les matchs.', 600, async () => { await pick('[data-crole="demo-julie"]', 'coach'); }],
       ['Les matchs publiés par les bénévoles arrivent « À valider ».', 0, async () => { await tap('[data-x="view"][data-v="home"]', 400); await tap('[data-x="view"][data-v="club"]', 400); await tap('[data-x="view"][data-v="games"]'); }],
       ['On ouvre le match…', -900, async () => { await tap('.mcard:has(.mst.pending) [data-x="gopen"]'); hide(); }],
       ['…on vérifie les stats, puis « Valider » : il rejoint les matchs du club.', 300, async () => { await tap('[data-x="gval"]'); hide(); }],
