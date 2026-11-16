@@ -23,7 +23,7 @@ import { logoFromFile } from './logo.js';
 import { render } from './render.js';
 import { readEmarque, fromEm, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix } from './emarque.js';
 import { keepAwake, releaseAwake } from './awake.js';
-import { sendLink, sendFile, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
+import { sendLink, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
 import { inClub, canDelMatch, canEditMatch } from './cloud.js';
 import { deleteClub, deleteAccount } from './cloud.js';
 import { canEdit, memberName, copyCode, shareCode, setName, login, signup, logout, resetPassword, setMode, createClub, joinClub, keepLocal, renewCode, setRole, removeMember, leaveClub, cloudDel, cloud } from './cloud.js';
@@ -324,7 +324,6 @@ const ACTIONS = {
 
   // Envoi et réception d'un match
   sendlink: () => { sendLink(); return false; },
-  sendfile: () => { sendFile(); return false; },
   impopen: () => { ui.imp = null; ui.impErr = ''; ui.impText = ''; ui.view = 'import'; },
   impcancel: () => { ui.imp = null; ui.impErr = ''; ui.view = 'games'; },
   impgo: () => {

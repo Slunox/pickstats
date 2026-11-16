@@ -136,7 +136,7 @@ function manageCard(m) {
       ? '<button class="btn" data-x="rpshare">Partager le dossier</button><button class="btn alt" data-x="rpfile">Télécharger le dossier (HTML)</button>'
       : ''))}
     ${sec('Envoyer le match', `<p class="help" style="margin:0 0 10px">Pour un autre coach qui utilise Pick&amp;Stats : il pourra l’ajouter à ses matchs archivés et retrouver toutes les stats.</p>
-      <button class="btn" data-x="sendlink">Envoyer un lien</button><button class="btn" data-x="sendfile">Envoyer un fichier</button>`)}
+      <button class="btn" data-x="sendlink">Envoyer un lien</button>`)}
     ${canDelMatch(m) ? `<section class="gsec"><button class="btn bad" data-x="gdel" data-id="${m.id}">Supprimer ce match</button></section>` : ''}
   </details>`;
 }

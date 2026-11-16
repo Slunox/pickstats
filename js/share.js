@@ -145,25 +145,8 @@ export function sendLink() {
   } else copy(url);
 }
 
-export function sendFile() {
-  const m = matchToSend();
-  if (!m) return;
-  const name = ('match-' + m.me + '-' + m.opp).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]+/g, '_') + '.json';
-  const json = JSON.stringify({ app: 'stats-basket', kind: 'match', v: 1, code: encodeMatch(m) });
-  const file = new File([json], name, { type: 'application/json' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    navigator.share({ files: [file], title: m.me + ' contre ' + m.opp }).catch(() => {});
-    return;
-  }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(file);
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-// Lit un fichier de match reçu.
+// Lit un fichier de match reçu. L'appli n'en produit plus (le lien suffit, et les navigateurs
+// refusent de partager un .json), mais les fichiers déjà envoyés restent lisibles.
 export async function readMatchFile(f) {
   try {
     const d = JSON.parse(await f.text());

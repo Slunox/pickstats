@@ -23,11 +23,11 @@ export function periodChips(cur, x, allLabel) {
 // Image des stats à partager. Le dossier complet a ses propres boutons sur la fiche du match.
 export const exportButtons = () => '<button class="btn" data-x="share">Partager une image des stats</button>';
 
-// Envoi du match à un autre utilisateur de l'appli.
+// Envoi du match à un autre utilisateur de l'appli : tout le match tient dans le lien.
 export const sendCard = () => `<div class="card">
   <h2>Envoyer le match</h2>
   <p class="help" style="margin:0 0 10px">Pour un autre coach qui utilise Pick&amp;Stats : il pourra l’ajouter à ses matchs archivés et retrouver toutes les stats.</p>
-  <button class="btn" data-x="sendlink">Envoyer un lien</button><button class="btn" data-x="sendfile">Envoyer un fichier</button>
+  <button class="btn" data-x="sendlink">Envoyer un lien</button>
 </div>`;
 
 // --- Stats à l'écran ---
