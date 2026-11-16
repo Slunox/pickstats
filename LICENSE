@@ -1,0 +1,31 @@
+Copyright (c) 2026 Vincent Claverie — Tous droits réservés
+
+Le code de Pick&Stats est public pour être consulté : c'est une application web,
+le navigateur doit recevoir ses fichiers pour les exécuter. Le rendre visible
+n'en cède pas les droits.
+
+Sauf autorisation écrite de l'auteur, il est interdit de le copier, le modifier,
+le redistribuer, le publier ailleurs ou l'exploiter, en tout ou en partie, que ce
+soit à titre gratuit ou commercial. Lire le code, s'en inspirer pour apprendre et
+en discuter restent bien sûr libres.
+
+Pour toute autre utilisation, demande : ça se discute.
+
+Les bibliothèques tierces fournies avec l'application gardent leur propre licence
+(voir js/vendor/).
+
+---
+
+Copyright (c) 2026 Vincent Claverie — All rights reserved
+
+The source of Pick&Stats is public so that it can be read: it is a web app, and
+the browser has to receive its files in order to run them. Making it visible does
+not give away any rights to it.
+
+Without the author's written permission, you may not copy, modify, redistribute,
+republish or otherwise exploit it, in whole or in part, for free or commercially.
+Reading the code, learning from it and discussing it are of course fine.
+
+For anything else, just ask.
+
+Third-party libraries shipped with the app keep their own licence (see js/vendor/).

@@ -3,6 +3,9 @@
 Appli web (PWA) pour saisir les statistiques d'un match de basket sur tablette.
 En ligne : https://slunox.github.io/pickstats/
 
+© 2026 Vincent Claverie — tous droits réservés. Le code est visible, pas libre de droits :
+voir [LICENSE](LICENSE).
+
 ## Organisation du code
 
 ```
