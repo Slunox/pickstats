@@ -313,6 +313,18 @@ function place() {
 }
 addEventListener('resize', place);
 
+// Les gestes d'une étape. Une cible introuvable (bouton déplacé, ou appli plus ancienne que la
+// démo dans le cache du service worker) saute l'étape au lieu d'arrêter la démo : le sous-titre
+// reste affiché et la suite se déroule. Un geste manqué ne doit jamais coûter tout le film.
+async function gestures(act) {
+  try { await act(); }
+  catch (e) {
+    if (e === Stop) throw e;
+    hide();
+    console.warn('Démo : étape sautée.', e && e.message ? e.message : e);
+  }
+}
+
 // Une étape : [texte, temps de lecture en plus (ms), gestes].
 // Le sous-titre s'affiche d'abord, les gestes se font pendant la lecture,
 // puis on attend la fin de la lecture (et au moins un instant pour voir le résultat).
@@ -320,7 +332,7 @@ async function step([text, extra, act], quick) {
   if (quick) { // avance rapide : les gestes seulement, pour mettre l'appli dans le bon état
     $('ctext').textContent = 'Avance rapide…';
     fast = true;
-    try { await act(); } finally { fast = false; }
+    try { await gestures(act); } finally { fast = false; }
     done++;
     return;
   }
@@ -331,7 +343,7 @@ async function step([text, extra, act], quick) {
   done++;
   $('prog').style.width = Math.min(100, 100 * done / total) + '%';
   await sleep(350);
-  await act();
+  await gestures(act);
   place();
   const read = Math.max(2000, text.length * 52) + extra;
   await sleep(Math.max(900, read - (clock - t0)));
