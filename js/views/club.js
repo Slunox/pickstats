@@ -6,7 +6,7 @@ import { esc, plural } from '../util.js';
 import { sortedTeams, tm, teamColor, TEAM_COLORS } from '../model.js';
 import { back } from './common.js';
 import { cloud, canEdit } from '../cloud.js';
-import { logoCard } from './account.js';
+import { clubHead } from './account.js';
 
 export function club() {
   const n = (S.arch || []).length;
@@ -17,15 +17,11 @@ export function club() {
       </div>`).join('')
     : '<p class="help">Aucune équipe pour l’instant.</p>';
 
-  // Membre d'un club en ligne : le nom se change dans « Club et membres ».
-  const name = cloud.club && !cloud.ask ? '' : `
-  <div class="card">
-    <h2>Nom du club</h2>
-    <input data-cn="1" value="${esc(S.clubName || '')}" placeholder="Nom de ton club" maxlength="40" aria-label="Nom du club">
-    <p class="help">Affiché en haut des exports PDF.</p>
-  </div>${logoCard()}`;
+  // Membre d'un club en ligne : le nom et le logo se changent dans « Club et membres ».
+  const head = cloud.club && !cloud.ask ? ''
+    : clubHead(true, true, 'Affiché en haut des exports PDF et sur l’image des stats.');
 
-  return back('Accueil', 'view', 'home') + name + `
+  return back('Accueil', 'view', 'home', 'Effectifs et matchs') + head + `
   <div class="card">
     <h2>Équipes</h2>
     ${teams}
@@ -42,7 +38,7 @@ export function club() {
 
 export function tedit() {
   const t = tm();
-  if (!t) return back('Effectifs et matchs', 'view', 'club');
+  if (!t) return back('Effectifs et matchs', 'view', 'club', 'Équipe');
   const autre = t.cat === 'Autre';
   const sufLabel = autre ? 'Nom de l’équipe' : 'Numéro d’équipe (facultatif)';
   const sufHelp = autre
@@ -55,7 +51,7 @@ export function tedit() {
       <button class="del" data-x="delpl" data-i="${i}" aria-label="Supprimer ce joueur">✕</button>
     </div>`).join('');
 
-  return back('Effectifs et matchs', 'tback') + `
+  return back('Effectifs et matchs', 'tback', null, ui.tnew === t.id ? 'Nouvelle équipe' : 'Modifier l’équipe') + `
   <div class="card">
     <h2>${ui.tnew === t.id ? 'Nouvelle équipe' : 'Équipe'} : <span id="tprev">${esc(t.name)}</span></h2>
     <label>Catégorie</label>

@@ -6,8 +6,12 @@ import { esc, qLabel } from '../util.js';
 import { periods, tally, cnt, miss, curTeamColor, oppInk, allP, shortNames, seasonGames } from '../model.js';
 import { emStats, emTable, emMade } from './emstats.js';
 
-export const back = (label, x, v) =>
-  `<button class="btn alt" data-x="${x}"${v ? ` data-v="${v}"` : ''}>‹ ${label}</button>`;
+// En-tête d'écran : le bouton de retour (où l'on revient) et le titre (où l'on est).
+// label vide : pas de bouton, le titre seul (écran atteint par la barre d'onglets).
+export const back = (label, x, v, title) => '<div class="pgh">'
+  + (label ? `<button class="btn alt" data-x="${x}"${v ? ` data-v="${v}"` : ''}>‹ ${label}</button>` : '')
+  + (title ? `<h1>${esc(title)}</h1>` : '')
+  + '</div>';
 
 // Pastilles de choix de période : « Tout », Q1, Q2…
 export function periodChips(cur, x, allLabel) {

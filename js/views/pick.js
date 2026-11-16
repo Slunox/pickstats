@@ -9,7 +9,7 @@ function chooseTeam() {
   const list = S.teams.length
     ? sortedTeams().map(t => `<button class="teamrow" data-x="pickteam" data-id="${t.id}"><b>${esc(t.name)}</b><span>${plural(t.players.length, 'joueur')}</span></button>`).join('')
     : '<p class="help">Tu n’as pas encore créé d’équipe.</p><button class="btn" data-x="view" data-v="club">Effectifs et matchs</button>';
-  return back('Accueil', 'view', 'home') + `<div class="card"><h2>Quelle équipe joue ?</h2>${list}</div>`;
+  return back('Accueil', 'view', 'home', 'Nouveau match') + `<div class="card"><h2>Quelle équipe joue ?</h2>${list}</div>`;
 }
 
 export function pick() {
@@ -26,7 +26,7 @@ export function pick() {
       </div>`).join('')
     : '<p class="help">Cette équipe n’a aucun joueur. Ajoute-en depuis « Effectifs et matchs ».</p>';
 
-  return back('Choisir une autre équipe', 'pickback') + `
+  return back('Choisir une autre équipe', 'pickback', null, 'Composition') + `
   <div class="card">
     <h2>${esc(t ? t.name : '')} : composition</h2>
     <label>Équipe adverse</label>

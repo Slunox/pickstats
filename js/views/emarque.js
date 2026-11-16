@@ -68,7 +68,7 @@ export function emCheck() {
     missing.length ? `<p class="help">Joueurs de la composition absents de la feuille : ${missing.map(n => '#' + esc(n)).join(', ')}.</p>` : '',
   ].join('');
 
-  return back('Annuler', 'emcancel') + `<div class="card">
+  return back('Annuler', 'emcancel', null, 'Feuille e-Marque') + `<div class="card">
     <h2>Vérifier la feuille e-Marque</h2>
     <p class="help" style="margin-top:0">${esc(m.me)} contre ${esc(m.opp)}${d.num ? ' · rencontre n° ' + esc(d.num) : ''}</p>
     <label>Mon équipe sur la feuille</label>

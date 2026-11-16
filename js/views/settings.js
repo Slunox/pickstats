@@ -19,7 +19,7 @@ export function settings() {
     '<button class="btn" data-x="archive">Terminer et sauvegarder le match</button><button class="btn bad" data-x="new">Effacer sans sauvegarder</button>',
     'Sauvegarder range le match dans « Effectifs et matchs », avec sa date, sur cet appareil. Pour le partager au club, ouvre-le et touche « Publier ».') : '';
 
-  return (S.active ? '' : back('Accueil', 'view', 'home'))
+  return back(S.active ? '' : 'Accueil', 'view', 'home', 'Réglages')
     + card('Apparence',
       choice('theme', 't', [['light', 'Clair'], ['dark', 'Sombre'], ['auto', 'Automatique']], S.theme || 'light'),
       'Automatique suit le réglage clair ou sombre de la tablette.')

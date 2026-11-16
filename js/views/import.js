@@ -16,7 +16,7 @@ function preview(m) {
       ? `<p class="help">Tu as déjà une autre version de ce match (${plural(existing(m).ev.length, 'action')}). Celle-ci va la remplacer.</p><button class="btn go2" data-x="impadd">Remplacer par cette version</button>`
       : '<button class="btn go2" data-x="impadd">Ajouter à mes matchs archivés</button>';
 
-  return back('Matchs archivés', 'impcancel') + `
+  return back('Matchs archivés', 'impcancel', null, 'Match reçu') + `
   <div class="card">
     <h2>Match reçu</h2>
     <div class="grow"><div>
@@ -29,7 +29,7 @@ function preview(m) {
 }
 
 function pasteForm() {
-  return back('Matchs archivés', 'impcancel') + `
+  return back('Matchs archivés', 'impcancel', null, 'Importer un match') + `
   <div class="card imp">
     <h2>Importer un match</h2>
     <label>Lien reçu</label>

@@ -93,7 +93,7 @@ export function games() {
 
   const toVal = inClub() && canEdit() ? all.filter(m => m.st === 'pending').length : 0;
   const toPub = inClub() ? all.filter(m => m.st === 'local').length : 0;
-  return back('Effectifs et matchs', 'view', 'club') + chips
+  return back('Effectifs et matchs', 'view', 'club', 'Matchs archivés') + chips
     + (toVal ? `<p class="gtoval">${toVal} match${toVal > 1 ? 's' : ''} publié${toVal > 1 ? 's' : ''} en attente de ta validation : vérifie-les, puis « Valider ».</p>` : '')
     + (toPub > 1 ? `<div class="gtopub"><span>${toPub} matchs sauvegardés sur cet appareil, pas encore publiés.</span><button class="btn" data-x="gpuball">Tout publier</button></div>` : '')
     + `<div class="ghead"><h2>Matchs archivés (${L.length})</h2><button class="btn alt" data-x="impopen">Importer un match reçu</button></div>`
@@ -104,7 +104,7 @@ export function games() {
 export function report() {
   const m = curG();
   if (!m || !m.em) return '<div class="card"><p class="help">Pas de feuille e-Marque pour ce match.</p></div>';
-  return back('Fiche du match', 'view', 'game') + withMatch(m, () => reportView(m));
+  return back('Fiche du match', 'view', 'game', 'Rapport du match') + withMatch(m, () => reportView(m));
 }
 
 // Auteur des stats : modifiable par les coachs et responsables (match archivé sans pseudo, ou erreur)
@@ -157,7 +157,7 @@ function stBox(m) {
 export function game() {
   const m = curG();
   if (!m) return '<div class="card"><p class="help">Match introuvable.</p></div>';
-  return back('Matchs archivés', 'gback') + withMatch(m, () => {
+  return back('Matchs archivés', 'gback', null, 'Fiche du match') + withMatch(m, () => {
     const q = ui.sq === 'all' ? null : +ui.sq;
     const tab = ui.gtab === 'players' ? 'players' : 'team';
     const tabBtn = (v, l) => `<button class="chip${tab === v ? ' on' : ''}" data-x="gtab" data-v="${v}">${l}</button>`;

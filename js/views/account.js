@@ -8,17 +8,24 @@ import { ICON } from './icons.js';
 
 const msgs = c => (c.err ? `<p class="cerr">${esc(c.err)}</p>` : '') + (c.info ? `<p class="cinfo">${esc(c.info)}</p>` : '');
 
-// Initiales du club pour sa pastille (« BC Blanquefort » -> « BB »).
+// Initiales du club pour sa pastille (« BC Blanquefort » -> « BB »). Vide s'il n'a pas encore de nom.
 export function initials(name) {
   const w = String(name || '').trim().split(/[\s\-']+/).filter(Boolean);
-  if (!w.length) return '?';
+  if (!w.length) return '';
   return (w.length === 1 ? w[0].slice(0, 2) : w[0][0] + w[w.length - 1][0]).toUpperCase();
 }
 
-// Pastille du club : son logo, sinon ses initiales.
-export const clubAvatar = (name, cls = '') => (S.clubLogo
-  ? `<span class="av img ${cls}"><img src="${S.clubLogo}" alt=""></span>`
-  : `<span class="av ${cls}">${esc(initials(name))}</span>`);
+// Nom du club : celui de l'appareil, sinon celui reçu du club en ligne. Vide tant qu'aucun n'est saisi.
+export const clubName = () => (S.clubName || '').trim() || ((cloud.club && cloud.club.name) || '').trim();
+// Nom affiché : jamais vide, pour ne pas laisser un titre ou une pastille sans rien.
+export const clubLabel = () => clubName() || 'Mon club';
+
+// Pastille du club : son logo, ses initiales, ou l'écusson tant qu'il n'a ni logo ni nom.
+export const clubAvatar = (name, cls = '') => {
+  if (S.clubLogo) return `<span class="av img ${cls}"><img src="${S.clubLogo}" alt=""></span>`;
+  const i = initials(name);
+  return i ? `<span class="av ${cls}">${esc(i)}</span>` : `<span class="av ghost ${cls}">${ICON.shield}</span>`;
+};
 
 const syncText = c => (c.offline ? 'Hors ligne' : c.pending ? 'Envoi en cours…' : 'À jour');
 
@@ -29,8 +36,8 @@ export function accountBar() {
   if (c.status === 'none') return '';
   let avatar, title, sub, cls = '';
   if (c.status === 'on' && c.club && !c.ask) {
-    avatar = clubAvatar(c.club.name || S.clubName);
-    title = esc(c.club.name || S.clubName || 'Mon club');
+    avatar = clubAvatar(clubName());
+    title = esc(clubLabel());
     sub = `<span class="cdot${c.offline ? ' off' : ''}"></span>${c.name ? esc(c.name) + ' · ' : ''}${(ROLES[c.club.role] || 'Coach').toLowerCase()} · ${syncText(c)}`;
     cls = ' on';
   } else if (c.status === 'on') {
@@ -125,8 +132,8 @@ function pseudoField(c) {
 
 function summaryStep(c) {
   const k = c.club;
-  return `<div class="sumhead">${clubAvatar(k.name, 'big')}
-      <div><h2>${esc(k.name)}</h2><p class="help">${ROLES[k.role] || 'Coach'} · ${esc(c.email)}</p></div></div>
+  return `<div class="sumhead">${clubAvatar(clubName(), 'big')}
+      <div><h2>${esc(clubLabel())}</h2><p class="help">${ROLES[k.role] || 'Coach'} · ${esc(c.email)}</p></div></div>
     <p class="cstate"><span class="cdot${c.offline ? ' off' : ''}"></span>${c.offline ? 'Hors ligne : les modifications partiront au retour du réseau.' : c.pending ? 'Envoi en cours…' : 'Données à jour.'}</p>
     ${pseudoField(c)}
     ${msgs(c)}
@@ -165,7 +172,7 @@ function memberRow(m, c, admin) {
 
 export function members() {
   const c = cloud, k = c.club;
-  if (!k || c.ask) return back('Accueil', 'view', 'home') + '<div class="card"><p>Tu n’es connecté à aucun club.</p><button class="btn" data-x="sheet">Se connecter</button></div>';
+  if (!k || c.ask) return back('Accueil', 'view', 'home', 'Club et membres') + '<div class="card"><p>Tu n’es connecté à aucun club.</p><button class="btn" data-x="sheet">Se connecter</button></div>';
   const admin = k.role === 'admin';
   const code = admin ? `<div class="card">
       <h2>Code d’invitation</h2>
@@ -173,20 +180,11 @@ export function members() {
       <p class="help">Les nouveaux membres le saisissent après avoir créé leur compte et arrivent bénévoles. « Nouveau code » rend l’ancien inutilisable ; les membres actuels restent.</p>
       <div class="crow"><button class="btn" data-x="cshare">Envoyer le code</button><button class="btn alt" data-x="crenew">Nouveau code</button></div>
     </div>` : '';
-  // En-tête : logo, nom, rôle. Coach et responsable changent le nom ici (bouton « Modifier »).
-  const canName = k.role !== 'benevole', clubName = S.clubName || k.name;
-  const head = ui.cnEdit && canName
-    ? `<div class="card clubhead">${clubAvatar(clubName, 'big')}
-      <div class="chname"><label for="cnin" style="margin-top:0">Nom du club</label>
-        <div class="chrow"><input id="cnin" data-cn="1" value="${esc(S.clubName || '')}" placeholder="Nom de ton club" maxlength="40" enterkeyhint="done">
-        <button class="btn sm" data-x="cnok">OK</button></div>
-        <p class="help" style="margin:4px 0 0">Affiché pour tous les membres et en haut des exports PDF.</p></div></div>`
-    : `<div class="card clubhead">${clubAvatar(clubName, 'big')}
-      <div class="chname"><div class="chrow"><h2>${esc(clubName)}</h2>${canName ? '<button class="btn alt sm" data-x="cnedit">Modifier</button>' : ''}</div>
-      <p class="help"><span class="cdot${c.offline ? ' off' : ''}"></span>Tu es ${(ROLES[k.role] || 'Coach').toLowerCase()} · ${syncText(c)}</p></div></div>`;
-  return back('Accueil', 'view', 'home') + head + `
+  // En-tête : écusson, nom, rôle. Le nom se change ici (coachs et responsables), le logo aussi (responsables).
+  const head = clubHead(k.role !== 'benevole', admin,
+    `<span class="cdot${c.offline ? ' off' : ''}"></span>Tu es ${(ROLES[k.role] || 'Coach').toLowerCase()} · ${syncText(c)}`);
+  return back('Accueil', 'view', 'home', 'Club et membres') + head + `
     ${msgs(c)}
-    ${admin ? logoCard() : ''}
     ${code}
     <div class="card"><h2>Membres (${c.members.length})</h2>${c.members.map(m => memberRow(m, c, admin)).join('')}
       <p class="help">${admin ? 'Les nouveaux membres arrivent bénévoles. ' : ''}Responsable : gère le club et ses membres. Coach : modifie les équipes et les matchs. Bénévole : saisit les stats et publie ses matchs, validés ensuite par un coach ou un responsable.</p></div>
@@ -200,13 +198,22 @@ export function members() {
       <button class="btn bad" data-x="cdelclub">Supprimer le club</button></div>` : ''}`;
 }
 
-// Logo du club (responsable, ou sans club en ligne).
-export function logoCard() {
-  return `<div class="card"><h2>Logo du club</h2>
-    <div class="logorow">${clubAvatar(S.clubName, 'big')}
-      <div class="crow" style="margin:0"><button class="btn" data-x="logopick">${S.clubLogo ? 'Changer le logo' : 'Choisir une image'}</button>`
-    + (S.clubLogo ? '<button class="btn alt" data-x="logodel">Retirer</button>' : '')
-    + `</div></div>
-    <input type="file" id="logofile" accept="image/*" hidden>
-    <p class="help">Affiché à la place des initiales, pour tous les membres du club, et en haut des exports PDF. Une image carrée rend mieux.</p></div>`;
+// Bloc du haut du club : écusson, nom et une ligne d'état. Le logo se change en touchant l'écusson,
+// le nom avec « Modifier ». sub est du HTML (pastille de synchro).
+// canLogo : responsable, ou appareil sans club en ligne — les règles Firestore réservent le logo au responsable.
+export function clubHead(canName, canLogo, sub) {
+  const nm = clubName(), av = clubAvatar(nm, 'big');
+  const shield = canLogo
+    ? `<button class="avedit" data-x="logopick" aria-label="${S.clubLogo ? 'Changer le logo du club' : 'Ajouter un logo au club'}">${av}<span class="avcam">${ICON.camera}</span></button>`
+      + '<input type="file" id="logofile" accept="image/*" hidden>'
+    : av;
+  const row = ui.cnEdit && canName
+    ? `<div class="chrow"><input id="cnin" data-cn="1" value="${esc(S.clubName || '')}" placeholder="Nom de ton club" maxlength="40" enterkeyhint="done" aria-label="Nom du club">
+        <button class="btn sm" data-x="cnok">OK</button></div>`
+    : `<div class="chrow"><h2${nm ? '' : ' class="mut"'}>${esc(clubLabel())}</h2>${canName ? '<button class="btn alt sm" data-x="cnedit">Modifier</button>' : ''}</div>`;
+  const tips = [sub, canLogo ? `Touche l’écusson pour ${S.clubLogo ? 'changer le' : 'choisir un'} logo` : '']
+    .filter(Boolean).join('<br>')
+    + (canLogo && S.clubLogo ? ' · <button class="link" data-x="logodel">Retirer</button>' : '');
+  return `<div class="card clubhead">${shield}<div class="chname">${row}
+    <p class="help">${tips}</p></div></div>`;
 }

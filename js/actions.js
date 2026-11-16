@@ -158,6 +158,7 @@ const ACTIONS = {
     ui.view = el.dataset.v;
     ui.sheet = null;
     ui.sel = null;
+    ui.cnEdit = false;
   },
   resume: () => { ui.view = 'play'; },
 
@@ -412,7 +413,7 @@ const ACTIONS = {
   logopick: () => { $('#logofile').click(); return false; },
   // Nom du club, modifié dans l'en-tête de « Club et membres »
   cnedit: () => { ui.cnEdit = true; ui.cnPrev = S.clubName; },
-  cnok: () => { S.clubName = (S.clubName || '').trim() || ui.cnPrev || ''; ui.cnEdit = false; save(); },
+  cnok: () => { S.clubName = (S.clubName || '').trim() || (ui.cnPrev || '').trim(); ui.cnEdit = false; save(); },
   logodel: () => {
     ask(`Retirer le logo du club ?${inClub() ? ' Il disparaîtra pour tous les membres.' : ''}`, 'Retirer', () => { S.clubLogo = ''; save(); }, true);
     return false;
@@ -564,7 +565,9 @@ document.addEventListener('click', e => {
 
 const INPUTS = {
   f: (d, t) => { S[d.f] = t.value; save(); },
-  cn: (d, t) => { S.clubName = t.value; save(); },
+  // Un nom vide n'est jamais enregistré : il effacerait celui du club pour tous les membres.
+  // Le champ peut être vidé pour être retapé ; c'est l'ancien nom qui reste jusqu'au premier caractère.
+  cn: (d, t) => { if (t.value.trim()) { S.clubName = t.value; save(); } },
   mby: (d, t) => {
     const m = (S.arch || []).find(z => String(z.id) === d.mby);
     if (!canEditMatch(m)) return;

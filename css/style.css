@@ -52,6 +52,10 @@ nav button.on{background:var(--dk);color:#fff}
 .chips.scroll::-webkit-scrollbar{display:none}
 .chips.scroll .chip{flex:0 0 auto;white-space:nowrap;scroll-snap-align:start}
 .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px;overflow-x:auto}
+/* En-tête d'écran : retour à gauche, titre de l'écran à côté */
+.pgh{display:flex;align-items:center;gap:12px;margin-bottom:12px;min-width:0}
+.pgh .btn{margin:0;flex:none}
+.pgh h1{margin:0;font-size:1.15rem;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card h2{margin:0 0 10px;font-size:1.2rem}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 th,td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -209,10 +213,11 @@ html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2
 .acct-t small{color:var(--mut);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .acct:not(.on) .acct-t b{color:var(--a)}
 .chev{font-size:1.6rem;color:var(--mut);line-height:1}
-.av{flex:0 0 44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--a);color:#fff;font-weight:800;font-size:1rem;letter-spacing:.02em}
+/* width en plus de flex-basis : la pastille garde sa taille hors d'un conteneur flex (bouton de l'écusson) */
+.av{flex:0 0 44px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--a);color:#fff;font-weight:800;font-size:1rem;letter-spacing:.02em}
 .av.ghost{background:var(--bg);color:var(--a)}.av svg{width:24px;height:24px}
-.av.big{flex-basis:60px;height:60px;font-size:1.35rem}
-.av.sm{flex-basis:36px;height:36px;font-size:.9rem;background:var(--bg);color:var(--ink)}
+.av.big{flex-basis:60px;width:60px;height:60px;font-size:1.35rem}.av.big svg{width:30px;height:30px}
+.av.sm{flex-basis:36px;width:36px;height:36px;font-size:.9rem;background:var(--bg);color:var(--ink)}
 .cdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#16A34A;margin-right:6px;vertical-align:1px}.cdot.off{background:#D97706}
 
 /* Fenêtre (layer) */
@@ -243,7 +248,12 @@ html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2
 .sheet input,.card input{min-height:50px}
 
 /* Club et membres */
-.clubhead{display:flex;align-items:center;gap:16px}.clubhead h2{margin:0;overflow-wrap:anywhere}.clubhead .chname{flex:1;min-width:0}.clubhead .chrow{display:flex;align-items:center;gap:10px}.clubhead .chrow h2{min-width:0}.clubhead .chrow input{flex:1;min-width:0;margin:0}.clubhead .chrow .btn{flex:none}
+.clubhead{display:flex;align-items:center;gap:16px}.clubhead h2{margin:0;overflow-wrap:anywhere}.clubhead .chname{flex:1;min-width:0}.clubhead .chrow{display:flex;align-items:center;gap:10px}.clubhead .chrow h2{min-width:0}.clubhead .chrow h2.mut{color:var(--mut)}.clubhead .chrow input{flex:1;min-width:0;margin:0}.clubhead .chrow .btn{flex:none}
+.clubhead .help .link{display:inline;margin:0;padding:0;font-size:inherit}
+/* Écusson modifiable : la pastille devient un bouton, avec la pastille appareil photo en coin */
+.avedit{position:relative;flex:none;display:block;border-radius:50%}
+.avedit .avcam{position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:var(--dk);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--card)}
+.avedit .avcam svg{width:15px;height:15px}
 .ccode{font-size:2.2rem;font-weight:800;letter-spacing:.14em;margin:4px 0 6px;font-variant-numeric:tabular-nums;color:var(--a);-webkit-user-select:text;user-select:text}
 .mrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
 .mrow:last-of-type{border-bottom:0}
@@ -280,7 +290,6 @@ small.warn{color:#B45309;font-weight:700}
 .sw{width:44px;height:44px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 2px var(--line)}
 .sw.on{box-shadow:0 0 0 3px var(--ink)}
 .av.img{background:#fff;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}.av.img img{width:100%;height:100%;object-fit:contain}
-.logorow{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px}.logorow .btn{margin:4px 8px 4px 0}
 .lastg{margin-top:6px}.lgh{display:flex;justify-content:space-between;align-items:center;margin:0 2px 8px}
 .link.habandon{margin:6px auto 0;color:var(--mut);font-weight:600;font-size:.9rem}
 .lgh h3{margin:0;font-size:.95rem;color:var(--mut)}.lgh .link{margin:0;padding:4px 0}

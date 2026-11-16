@@ -83,7 +83,7 @@ export function sheetBody(m) {
 export function emSheet() {
   const m = curG();
   if (!m || !m.em) return '<div class="card"><p class="help">Pas de feuille e-Marque pour ce match.</p></div>';
-  return back('Fiche du match', 'view', 'game') + `<style>${SHEET_CSS}</style><div class="card">${withMatch(m, () => sheetBody(m))}
+  return back('Fiche du match', 'view', 'game', 'Feuille de marque') + `<style>${SHEET_CSS}</style><div class="card">${withMatch(m, () => sheetBody(m))}
     <div class="crow" style="margin-top:14px"><button class="btn" data-x="emsfile">Télécharger (HTML)</button><button class="btn alt" data-x="emsprint">Imprimer / PDF</button></div></div>`;
 }
 

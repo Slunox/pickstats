@@ -19,7 +19,7 @@ export function hist() {
       </div>`).join('')
     : '<p class="help">Aucune action enregistrée.</p>';
 
-  return back('Saisie', 'view', 'play')
+  return back('Saisie', 'view', 'play', 'Historique')
     + periodChips(ui.hq, 'hq', 'Tout')
     + `<div class="card">
       <h2>Historique (${list.length} action${list.length > 1 ? 's' : ''})</h2>

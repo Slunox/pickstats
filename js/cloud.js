@@ -176,8 +176,10 @@ function onSnap(kind, snap) {
   afterSnap(changed);
 }
 
-// Champs du document du club partagés avec l'appareil : [champ Firestore, clé dans S]
-const CLUB_FIELDS = [['name', 'clubName'], ['logo', 'clubLogo']];
+// Champs du document du club partagés avec l'appareil : [champ Firestore, clé dans S, le vide est-il une valeur ?]
+// Un club a toujours un nom : s'il est vide ici, c'est un ennui sur l'appareil (champ effacé, vieille
+// sauvegarde restaurée), jamais une intention. On ne l'envoie pas. Le logo, lui, peut être retiré.
+const CLUB_FIELDS = [['name', 'clubName', false], ['logo', 'clubLogo', true]];
 
 // Oublie les repères du nom et du logo du club c. À appeler chaque fois que les données du club
 // sont retirées de l'appareil (déconnexion, changement de club) ou remplacées en bloc (restauration) :
@@ -267,8 +269,9 @@ function flush() {
   });
   if (ready.club) {
     const up = {};
-    CLUB_FIELDS.forEach(([f, k]) => {
+    CLUB_FIELDS.forEach(([f, k, blank]) => {
       const key = c + '/' + f, v = S[k] || '';
+      if (!v && !blank) return;
       if (seen[key] !== v) { seen[key] = v; up[f] = v; }
     });
     if (Object.keys(up).length) F.updateDoc(F.doc(db, 'clubs', c), up).catch(fail);
