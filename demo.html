@@ -202,22 +202,50 @@ function scrollIn(el, block) {
   (inner ? box : win).scrollBy({ top: off, behavior: fast ? 'instant' : 'smooth' });
 }
 
+// Attend que l'élément ait fini de bouger : la durée d'un défilement doux n'est pas la même d'un
+// navigateur ou d'un appareil à l'autre (et dépend de la distance), et l'appli peut encore se
+// redessiner. Sans ça, le doigt se poserait là où l'élément était, pas là où il s'arrête.
+async function still(el, ms = 1500) {
+  const me = run, t0 = Date.now();
+  let was = null, same = 0;
+  while (Date.now() - t0 < ms && me === run) {
+    const r = el.getBoundingClientRect();
+    same = was && Math.abs(r.top - was.top) < 0.5 && Math.abs(r.left - was.left) < 0.5 ? same + 1 : 0;
+    if (same >= 2) break;
+    was = r;
+    await new Promise(ok => requestAnimationFrame(ok));
+  }
+}
+
+// Place le doigt au centre de l'élément. Le doigt et l'iframe ont la même origine et la même
+// échelle : les coordonnées de l'appli s'utilisent telles quelles.
+// Renvoie vrai s'il a dû se déplacer de façon visible.
+function at(el) {
+  const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+  const far = Math.abs(parseFloat(finger.style.left) - x) > 4 || Math.abs(parseFloat(finger.style.top) - y) > 4;
+  finger.style.left = x + 'px';
+  finger.style.top = y + 'px';
+  fingerY = y;
+  place();
+  return far;
+}
+
 // Doigt : va sur l'élément, le touche (clic réel dans l'appli)
 async function point(sel, opts = {}) {
   const el = typeof sel === 'string' ? await find(sel) : sel;
   scrollIn(el, 'center');
-  await sleep(450);
-  const r = el.getBoundingClientRect();
+  await sleep(300);
+  await still(el);
   finger.classList.add('on');
-  finger.style.left = r.left + r.width / 2 + 'px';
-  finger.style.top = r.top + r.height / 2 + 'px';
-  fingerY = r.top + r.height / 2;
-  place();
+  at(el);
   await sleep(opts.slow ? 1100 : 800);
   return el;
 }
 async function tap(sel, after = 700) {
   const el = await point(sel);
+  // L'appli a pu bouger pendant l'attente : on recale le doigt avant de toucher, et on lui
+  // laisse le temps d'arriver, sinon l'onde partirait d'un endroit et le doigt d'un autre.
+  if (at(el)) await sleep(800);
   finger.classList.add('tap');
   const ring = document.createElement('div');
   ring.className = 'ring';
