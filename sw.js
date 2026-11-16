@@ -1,5 +1,8 @@
 // Réseau d'abord : si tu as du réseau, tu as toujours la dernière version.
 // Sans réseau (ou réseau très lent), l'appli s'ouvre avec la copie gardée en mémoire.
+// Exception, la démo animée : cache d'abord, pour qu'elle se déroule sans à-coups (voir fromDemo).
+// Une modification de l'appli n'y apparaît donc qu'à la lecture suivante ; pour la voir tout de
+// suite, ouvrir l'appli une fois (elle, reste en réseau d'abord) ou changer CACHE ci-dessous.
 // Ce fichier n'a pas besoin d'être modifié à chaque mise à jour,
 // sauf pour ajouter un nouveau fichier à FILES (indispensable pour le mode hors ligne).
 const CACHE = 'pickstats-3';
@@ -32,6 +35,26 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Garde la réponse, sauf si l'adresse a des paramètres : les lectures se font avec ignoreSearch,
+// et la démo recharge l'appli avec un « ?t= » différent à chaque chapitre — on accumulerait
+// sinon une copie de index.html par chapitre lu.
+function keep(cache, req, res) {
+  if (res && res.ok && !new URL(req.url).search) cache.put(req, res.clone());
+}
+
+// La démo pilote l'appli dans un cadre (index.html?demo) qu'elle recharge à chaque chapitre.
+// Ces fichiers-là sont servis depuis le cache sans attendre le réseau : sinon chaque changement
+// de chapitre attend le réseau, et le film est haché. La page de la démo (demo.html) reste en
+// réseau d'abord : c'est le scénario, c'est lui qu'on change le plus souvent.
+// L'appel vient de la démo si son adresse porte « ?demo », ou si la page qui le demande le porte.
+const isDemo = u => { try { return /[?&]demo(=|&|$)/.test(new URL(u).search); } catch (err) { return false; } };
+async function fromDemo(e) {
+  if (isDemo(e.request.url) || isDemo(e.request.referrer)) return true;
+  if (!e.clientId) return false;
+  const c = await self.clients.get(e.clientId);
+  return !!c && isDemo(c.url);
+}
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   // Autres sites : seul le SDK Firebase (gstatic) est gardé pour le hors ligne.
@@ -40,12 +63,24 @@ self.addEventListener('fetch', e => {
   if (url.origin !== location.origin && url.hostname !== 'www.gstatic.com') return;
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
+    if (await fromDemo(e)) {
+      const hit = await cache.match(e.request, { ignoreSearch: true });
+      if (hit) {
+        // La copie est rafraîchie en arrière-plan, sans retarder la démo : la lecture
+        // suivante aura la dernière version.
+        if (!url.search) {
+          const bg = fetch(e.request, { cache: 'no-cache' }).then(r => keep(cache, e.request, r)).catch(() => {});
+          try { e.waitUntil(bg); } catch (err) {}
+        }
+        return hit;
+      }
+    }
     try {
       const res = await Promise.race([
         fetch(e.request, { cache: 'no-cache' }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
       ]);
-      if (res && res.ok) cache.put(e.request, res.clone());
+      keep(cache, e.request, res);
       return res;
     } catch (err) {
       // La page d'accueil sert de secours uniquement pour la navigation,
