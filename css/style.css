@@ -171,19 +171,12 @@ nav .gear{flex:0 0 56px;font-size:1.4rem;padding:8px}
 html[data-theme="dark"]{color-scheme:dark;--bg:#0E181E;--ink:#E7EEF2;--card:#1A2831;--line:#2E404B;--mut:#9DABB3;--a:#2A7FA8;--b:#D2561A;--dk:#2F4C5E;--sel:#4A4423;--num:#7CC4E6}
 @media(max-width:560px){.top{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:420px){nav button{padding:12px 4px;font-size:.9rem}}
+/* Impression : sert à « Imprimer / PDF » de la feuille e-Marque recréée, qui ajoute son propre style. */
 #print{display:none}
 #print{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#print .phead{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-left:10px;border-left:6px solid var(--tc,#000)}
-#print .plogo{width:18mm;height:18mm;object-fit:contain}
-#print h1{font-size:20pt;margin:0;color:var(--tc,#000)}#print .date{margin:2px 0 0;color:#555}
-#print .pg{break-after:page}#print .pg:last-child{break-after:auto}
-#print h2{font-size:13pt;margin:0 0 6px;grid-column:1/-1;border-bottom:2px solid var(--tc,#000);padding-bottom:2px}
-/* Tableau joueurs en pleine largeur, rebonds et ballons gagnés côte à côte en dessous. */
-#print section{break-inside:avoid;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;column-gap:16px;align-items:start}
-#print section>table:first-of-type{grid-column:1/-1}#print table.mt{margin-top:10px}
+#print h2{font-size:13pt;margin:0 0 6px;border-bottom:2px solid var(--tc,#000);padding-bottom:2px}
 #print table{font-size:9.5pt}#print th,#print td{border-bottom:1px solid #999;padding:3.5px 5px}#print p{margin:6px 0 0}
 #print th{font-size:8.5pt}
-#print .evo td:first-child,#print .evo th:first-child{text-align:left}
 @media print{html,body{background:#fff;color:#000}html[data-theme]{--mut:#555;--line:#999}#app{display:none}#print{display:block}@page{margin:12mm;size:A4 portrait}}
 @media(max-width:700px){.nm{font-size:1.05rem}.ob button{padding:12px 10px}.acts{grid-template-columns:repeat(3,1fr)}.acts.t4{grid-template-columns:repeat(2,1fr)}.acts.t6{grid-template-columns:repeat(3,1fr)}}
 

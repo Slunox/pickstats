@@ -46,6 +46,6 @@ export function settings() {
     + (DEMO ? '' : card('Découvrir l’appli',
       '<a class="btn" href="demo.html">Voir la démo animée</a>',
       'Trois minutes pour tout comprendre, à partager avec les bénévoles et les coachs. La démo utilise des données inventées : elle ne touche pas aux tiennes.'))
-    + '<p class="help">Tout est enregistré automatiquement sur cet appareil. Exporte le CSV après chaque match.</p>'
+    + '<p class="help">Tout est enregistré automatiquement sur cet appareil. Fais une sauvegarde de temps en temps.</p>'
     + `<p class="help">Version ${APP_VERSION}</p>`;
 }

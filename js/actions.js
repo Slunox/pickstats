@@ -7,7 +7,7 @@ import { $, uid, cmpN } from './util.js';
 import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, curTeamColor, oppColor, isLight, colorVars } from './model.js';
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP, DEMO } from './constants.js';
-import { inCtx, pdf, backup, restoreFile, download } from './export.js';
+import { backup, restoreFile, download, shareFile } from './export.js';
 import { reportFile, swipeNav } from './views/report.js';
 import { oppOf } from './views/emarque.js';
 import { sheetBody, sheetFile, SHEET_CSS } from './views/emsheet.js';
@@ -201,7 +201,6 @@ const ACTIONS = {
     save();
   },
   share: () => { shareImage(); return false; },
-  pdf: () => { inCtx(pdf); return false; },
 
   // Fin de match
   archive: () => {
@@ -240,6 +239,14 @@ const ACTIONS = {
   },
   rpopen: () => { ui.view = 'report'; ui.rp = 'resume'; window.scrollTo(0, 0); },
   rp: el => { ui.rp = el.dataset.v; window.scrollTo(0, 0); },
+  // Dossier du match : partagé par la feuille de partage du système, ou gardé en fichier.
+  // Le dossier est fabriqué d'un bloc, sans attente, pour rester dans le geste (voir shareFile).
+  rpshare: () => {
+    const m = curG();
+    if (!m || !m.em) return false;
+    shareFile(`stats-${fileName(m)}.html`, withMatch(m, () => reportFile(m)), 'text/html', `${m.me} contre ${m.opp}`);
+    return false;
+  },
   rpfile: () => {
     const m = curG();
     if (!m || !m.em) return false;

@@ -451,7 +451,7 @@ const CHAPTERS = [
     ['Chaque joueur : ses points, son temps de jeu, ses fautes, et tout ce qu’il a fait d’autre.', 600, async () => { await tap('[data-x="rp"][data-v="joueurs"]'); hide(); }],
     ['L’adversaire : qui a marqué, et comment. À connaître pour le match retour.', 300, async () => { await tap('[data-x="rp"][data-v="adv"]'); hide(); }],
     ['Et comment chaque chiffre est calculé.', 0, async () => { await tap('[data-x="rp"][data-v="methode"]'); hide(); }],
-    ['Pour le partager : dans « Gérer le match », « Télécharger le dossier » donne le rapport en fichier, à envoyer aux joueurs ou aux parents.', 300, async () => { await tap('[data-x="view"][data-v="game"]', 500); await tap('details.gman summary', 500); await point('[data-x="rpfile"]', { slow: true }); }],
+    ['Dans « Gérer le match », « Partager le dossier » l’envoie aux joueurs ou aux parents, et « Télécharger » le garde en fichier.', 300, async () => { await tap('[data-x="view"][data-v="game"]', 500); await tap('details.gman summary', 500); await point('[data-x="rpshare"]', { slow: true }); }],
     ['Pick&Stats : une saisie simple pour les bénévoles, une analyse poussée pour les coachs. Bon match !', 800, async () => { hide(); }],
   ] },
 ];
