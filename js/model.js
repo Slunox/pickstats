@@ -2,7 +2,7 @@
 
 import { S, ui } from './state.js';
 import { LBL, PK, CATS } from './constants.js';
-import { cmpN } from './util.js';
+import { cmpN, esc } from './util.js';
 
 const inQ = (e, q) => q == null || e.q === q;
 
@@ -138,14 +138,11 @@ export const curG = () => (S.arch || []).find(m => String(m.id) === String(ui.gi
 
 export const inTeam = (m, t) => (m.teamId ? m.teamId === t.id : m.me === t.name);
 
-// Couleurs proposées pour les équipes (assez foncées pour un texte blanc).
-export const TEAM_COLORS = ['#2563EB', '#1E3A8A', '#0891B2', '#0F766E', '#059669', '#4D7C0F',
-  '#D97706', '#DC2626', '#9F1239', '#DB2777', '#7C3AED', '#334155'];
-
-// Couleur d'une équipe : celle choisie dans sa fiche, sinon une couleur fixe tirée de son identifiant.
+// Couleur de repère d'une équipe, tirée de son identifiant : elle sert à la distinguer des autres
+// d'un coup d'œil (pastille de la liste, cartes de match, filtres des archives). Ce n'est pas la
+// couleur du maillot : dans un club, toutes les équipes jouent dans la même tenue (voir myColor).
 // t : l'équipe, ou une simple clé (nom d'une équipe supprimée).
 export function teamColor(t) {
-  if (t && typeof t === 'object' && t.color) return t.color;
   const s = String(t && typeof t === 'object' ? t.id : t || '');
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
@@ -153,20 +150,37 @@ export function teamColor(t) {
   return s ? auto[h % auto.length] : '#667279';
 }
 
-// Couleur de l'équipe du match en cours (ou du match archivé affiché).
-export function curTeamColor() {
-  const t = S.teams.find(z => z.id === S.teamId) || S.teams.find(z => z.name === S.me);
-  return teamColor(t || S.me);
-}
+// --- Couleurs de maillot ---
 
-// --- Couleur de maillot de l'adversaire ---
-
-// Couleurs de maillot proposées pour l'adversaire : [couleur, nom].
-export const OPP_COLORS = [['#FFFFFF', 'Blanc'], ['#9CA3AF', 'Gris'], ['#111827', 'Noir'], ['#FACC15', 'Jaune'],
-  ['#C2410C', 'Orange'], ['#DC2626', 'Rouge'], ['#881337', 'Bordeaux'], ['#EC4899', 'Rose'], ['#7C3AED', 'Violet'],
-  ['#38BDF8', 'Bleu ciel'], ['#2563EB', 'Bleu'], ['#1E3A8A', 'Bleu marine'], ['#16A34A', 'Vert'], ['#14532D', 'Vert foncé']];
+// Maillots par famille : [clé, nom, couleur du repère, [[couleur, nom], …]].
+// En deux temps — la famille, puis la nuance — on couvre 41 couleurs sans jamais en afficher
+// plus de huit à la fois, et sans qu'il reste une teinte impossible à approcher.
+const FAMILIES = [
+  ['n', 'Neutres', '#9CA3AF', [['#FFFFFF', 'Blanc'], ['#F5F0E1', 'Crème'], ['#D1D5DB', 'Gris clair'],
+    ['#9CA3AF', 'Gris'], ['#374151', 'Anthracite'], ['#111827', 'Noir']]],
+  ['r', 'Rouges', '#DC2626', [['#EF4444', 'Rouge vif'], ['#DC2626', 'Rouge'], ['#B91C1C', 'Brique'],
+    ['#881337', 'Bordeaux'], ['#5B0E22', 'Grenat']]],
+  ['p', 'Roses', '#EC4899', [['#F9A8D4', 'Rose pâle'], ['#EC4899', 'Rose'], ['#D1197E', 'Fuchsia'],
+    ['#9D174D', 'Framboise']]],
+  ['o', 'Oranges', '#F97316', [['#FDBA74', 'Pêche'], ['#F97316', 'Orange'], ['#C2410C', 'Orange foncé'],
+    ['#9A3412', 'Cuivre'], ['#78350F', 'Brun']]],
+  ['j', 'Jaunes', '#FACC15', [['#FDE68A', 'Jaune pâle'], ['#FACC15', 'Jaune'], ['#EAB308', 'Or'],
+    ['#A16207', 'Moutarde']]],
+  ['v', 'Verts', '#16A34A', [['#A3E635', 'Citron'], ['#4ADE80', 'Vert clair'], ['#16A34A', 'Vert'],
+    ['#059669', 'Émeraude'], ['#4D7C0F', 'Olive'], ['#14532D', 'Vert foncé']]],
+  ['b', 'Bleus', '#2563EB', [['#7DD3FC', 'Ciel'], ['#38BDF8', 'Bleu ciel'], ['#0891B2', 'Cyan'],
+    ['#0D9488', 'Turquoise'], ['#2563EB', 'Bleu'], ['#1E3A8A', 'Bleu marine']]],
+  ['u', 'Violets', '#7C3AED', [['#C4B5FD', 'Lavande'], ['#7C3AED', 'Violet'], ['#6B21A8', 'Pourpre'],
+    ['#4338CA', 'Indigo'], ['#581C87', 'Prune']]],
+];
 
 export const OPP_DEFAULT = '#C2410C';
+
+// Les codes sont comparés en majuscules.
+const up = c => String(c || '').toUpperCase();
+const SHADES = FAMILIES.flatMap(f => f[3]);
+// Nom d'une couleur quand elle est dans la liste, sinon son code.
+const colorName = c => (SHADES.find(([x]) => x === up(c)) || [])[1] || up(c);
 
 // Couleur claire (texte foncé nécessaire) ?
 export function isLight(c) {
@@ -179,11 +193,22 @@ export function isLight(c) {
   return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2] > 0.4;
 }
 
-// Couleur de maillot de l'adversaire du match en cours (ou du match archivé affiché).
+// Notre maillot pour ce match (en cours, ou archivé affiché) : celui choisi pour la rencontre
+// quand l'adversaire joue dans la même couleur, sinon celui du club.
+// Repli pour les matchs d'avant la couleur de club : la couleur choisie à l'époque sur l'équipe,
+// pour qu'un ancien rapport garde exactement l'aspect qu'il avait.
+export function myColor() {
+  const t = matchTeam();
+  return S.myColor || S.clubColor || (t && t.color) || teamColor(t || S.me);
+}
+
+// Maillot de l'adversaire pour ce match.
 export const oppColor = () => S.oppColor || OPP_DEFAULT;
 
-// Couleur lisible sur fond blanc (texte, barres) : les maillots clairs passent en gris.
-export const oppInk = (c = oppColor()) => (isLight(c) ? '#667279' : c);
+// Couleur lisible sur fond blanc (texte, barres, dégradés) : les maillots clairs passent en gris.
+export const ink = c => (isLight(c) ? '#667279' : c);
+export const myInk = () => ink(myColor());
+export const oppInk = (c = oppColor()) => ink(c);
 
 // Variables CSS d'un bloc coloré : --c (fond), --ct (texte), --cx (texte sur bouton blanc).
 export function colorVars(c) {
@@ -191,6 +216,60 @@ export function colorVars(c) {
   return `--c:${c};--ct:${lt ? '#16242C' : '#fff'};--cx:${lt ? '#16242C' : c}`;
 }
 
-// Choix de la couleur de maillot adverse (écran de composition).
-export const oppSwatches = cur => `<label>Couleur du maillot adverse</label>
-  <div class="swatches">${OPP_COLORS.map(([c, n]) => `<button class="sw${(cur || OPP_DEFAULT) === c ? ' on' : ''}" style="background:${c}" data-x="ocol" data-v="${c}" aria-label="Maillot ${n}" title="${n}"></button>`).join('')}</div>`;
+// Maillot dessiné à la couleur voulue. Le contour gris le détache aussi bien sur fond clair
+// que sur fond sombre, maillot blanc ou noir compris.
+const tee = c => `<svg class="jtee" viewBox="0 0 24 24" width="38" height="38" aria-hidden="true">`
+  + `<path d="M9 2.5 4.5 5v4.8l3-1V21.5h9V8.8l3 1V5L15 2.5a3 3 0 0 1-6 0z"`
+  + ` fill="${c || '#667279'}" stroke="#9CA3AF" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
+
+// Pastilles de maillot, en deux temps. D'abord les huit familles : celle qui contient la couleur
+// en cours la montre, cochée. Puis les nuances de la famille ouverte, précédées d'un retour.
+// Jamais plus de huit pastilles à l'écran ; sur un écran étroit, la ligne défile (voir le fondu).
+// which : 'my' | 'opp' | 'club' ; cur : valeur posée ; def : valeur suivie à défaut.
+const ACT = { my: 'mcol', opp: 'ocol', club: 'ccol' };
+const tint = c => `background:${c};color:${isLight(c) ? '#16242C' : '#fff'}`;
+const chip = (c, label, x, v, on) => `<button class="sw${on ? ' on' : ''}" style="${tint(c)}" data-x="${x}" data-v="${v}" aria-label="${esc(label)}" title="${esc(label)}"></button>`;
+
+function swatches(cur, def, which) {
+  const sel = up(cur || def);
+  const fam = FAMILIES.find(f => f[0] === ui.jerseyFam);
+  if (!fam) {
+    return '<div class="swatches scroll">'
+      + FAMILIES.map(([k, n, rep, list]) => {
+        const here = list.some(([c]) => c === sel);
+        return chip(here ? sel : rep, n, 'jfam', k, here);
+      }).join('')
+      + '</div><p class="help jhint">Touche une famille pour voir ses nuances.</p>';
+  }
+  return '<div class="swatches scroll">'
+    + '<button class="sw back" data-x="jfam" data-v="" aria-label="Retour aux familles">‹</button>'
+    + fam[3].map(([c, n]) => chip(c, n, ACT[which], c, sel === c)).join('')
+    + `</div><p class="help jhint">${esc(fam[1])} · ${esc(colorName(sel) || 'aucune choisie')}</p>`;
+}
+
+// Maillot du club, dans son bloc d'en-tête (responsable).
+export const clubSwatches = () => `<label>Couleur du maillot</label><div class="jpick">${tee(up(S.clubColor))}`
+  + `<b>${esc(S.clubColor ? colorName(S.clubColor) : 'À choisir')}</b></div>`
+  + swatches(S.clubColor, '', 'club')
+  + '<p class="help">Celle de toutes les équipes du club. On peut en changer pour une rencontre, '
+  + 'si l’adversaire joue dans la même couleur.</p>';
+
+// Les maillots d'un match : une carte par équipe, et la palette de celle qui est sélectionnée.
+// Une seule palette à l'écran, jamais deux. myCur / oppCur : valeurs en cours (null = le maillot
+// du club / l'orange par défaut) ; meName / oppName : noms affichés sur les cartes.
+export function jerseys(myCur, oppCur, meName, oppName) {
+  const club = up(S.clubColor), mine = up(myCur || club), opp = up(oppCur || OPP_DEFAULT);
+  const side = ui.jerseySide === 'my' ? 'my' : 'opp';
+  const clash = !!mine && mine === opp;
+  const card = (k, name, c, sub) => `<button class="jside${side === k ? ' on' : ''}" data-x="jside" data-v="${k}">`
+    + `${tee(c)}<span class="jtx"><b>${esc(name)}</b><span>${esc(colorName(c) || 'À choisir')}${sub}</span></span></button>`;
+  return `<label>Maillots</label><div class="jsides">`
+    + card('my', meName || 'Mon équipe', mine, myCur ? ' · pour ce match' : '')
+    + card('opp', oppName || 'Adversaire', opp, '')
+    + '</div>'
+    + (clash ? '<p class="emwarn">Les deux équipes ont la même couleur : c’est à l’équipe qui reçoit de changer de maillot.</p>' : '')
+    + `<div class="jpal"><label>Couleur du maillot · ${esc(side === 'my' ? (meName || 'Mon équipe') : (oppName || 'Adversaire'))}</label>`
+    + swatches(side === 'my' ? myCur : oppCur, side === 'my' ? club : OPP_DEFAULT, side)
+    + (side === 'my' && myCur ? '<button class="link jback" data-x="mclub">Reprendre la couleur du club</button>' : '')
+    + '</div>';
+}

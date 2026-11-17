@@ -4,7 +4,7 @@
 
 import { S, ui, save, withMatch } from './state.js';
 import { $, uid, cmpN } from './util.js';
-import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, curTeamColor, oppColor, isLight, colorVars } from './model.js';
+import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, myColor, oppColor, isLight, colorVars } from './model.js';
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP, DEMO } from './constants.js';
 import { backup, restoreFile, download, shareFile } from './export.js';
@@ -46,7 +46,7 @@ function emRead(m, reading) {
 }
 
 function endMatch() {
-  S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.oppColor = null; S.roster = []; S.active = false; S.matchId = null;
+  S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.myColor = null; S.oppColor = null; S.roster = []; S.active = false; S.matchId = null;
   ui.sel = null; ui.sq = 'all';
 }
 
@@ -54,7 +54,8 @@ function endMatch() {
 function archiveMatch() {
   const m = {
     st: 'local',
-    id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp, oppColor: S.oppColor || null, teamId: S.teamId, q: S.q,
+    id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp,
+    myColor: S.myColor || null, oppColor: S.oppColor || null, teamId: S.teamId, q: S.q,
     ev: S.ev.slice(), roster: roster().map(p => ({ n: p.n, name: p.name, in: true })),
     ...(cloud.name ? { by: cloud.name } : {}), // pseudo de celui qui a fait les stats
   };
@@ -92,6 +93,7 @@ function startMatch() {
   const go = () => {
     S.me = t.name;
     S.opp = (P.opp || '').trim() || 'Adversaire';
+    S.myColor = P.myColor || null;
     S.oppColor = P.oppColor || null;
     S.teamId = t.id;
     S.roster = ch.map(r => ({ n: String(r.num).trim(), name: r.name, in: true, pid: r.id })).sort(cmpN);
@@ -113,10 +115,27 @@ function addEvent(ev) {
   save();
 }
 
+// Pose une couleur de maillot. which : 'my' (notre équipe), 'opp' (adversaire), 'club' (le club).
+// Les codes sont rangés en majuscules : le sélecteur du système renvoie des minuscules, et la
+// pastille sélectionnée se reconnaît par comparaison exacte.
+// Notre maillot n'est enregistré que s'il diffère de celui du club : sinon il le suit, même
+// si le club en change plus tard. Avant le match, tout va dans le brouillon ui.P.
+function setJersey(which, v) {
+  v = String(v || '').toUpperCase();
+  if (which === 'club') { S.clubColor = v; save(); return; }
+  const draft = ui.view === 'pick' && ui.P;
+  if (which === 'opp') {
+    if (draft) ui.P.oppColor = v; else { S.oppColor = v; save(); }
+    return;
+  }
+  const val = v === String(S.clubColor || '').toUpperCase() ? null : v;
+  if (draft) ui.P.myColor = val; else { S.myColor = val; save(); }
+}
+
 // Après un tir raté : qui a pris le rebond ?
 function askRebound() {
   choose('Qui a pris le rebond ?', [
-    { label: (cloud.club && cloud.club.name) || S.clubName || S.me, sub: 'Rebond offensif', cls: 'tc', style: colorVars(curTeamColor()), fn: () => addEvent({ a: 'ro', q: S.q, p: '__team' }) },
+    { label: (cloud.club && cloud.club.name) || S.clubName || S.me, sub: 'Rebond offensif', cls: 'tc' + (isLight(myColor()) ? ' lt' : ''), style: colorVars(myColor()), fn: () => addEvent({ a: 'ro', q: S.q, p: '__team' }) },
     { label: S.opp, sub: 'Rebond défensif', cls: 'tc' + (isLight(oppColor()) ? ' lt' : ''), style: colorVars(oppColor()), fn: () => addEvent({ a: 'odr', q: S.q }) },
     { label: 'Personne', sub: 'Ballon dehors, faute…' },
   ]);
@@ -159,6 +178,8 @@ const ACTIONS = {
     ui.sheet = null;
     ui.sel = null;
     ui.cnEdit = false;
+    ui.jerseySide = 'opp';
+    ui.jerseyFam = '';
   },
   resume: () => { ui.view = 'play'; },
 
@@ -342,16 +363,19 @@ const ACTIONS = {
   // Démarrage d'un match
   startpick: () => {
     if (S.active) return false;
-    ui.P = { teamId: null, opp: '', oppColor: null, rows: [] };
+    ui.P = { teamId: null, opp: '', myColor: null, oppColor: null, rows: [] };
     ui.view = 'pick';
     if (S.teams.length === 1) selTeam(S.teams[0].id);
   },
   pickteam: el => { selTeam(el.dataset.id); },
-  // Couleur de maillot adverse : à la composition avant le match, ou pendant le match
-  ocol: el => {
-    if (ui.view === 'pick' && ui.P) ui.P.oppColor = el.dataset.v;
-    else { S.oppColor = el.dataset.v; save(); }
-  },
+  mcol: el => setJersey('my', el.dataset.v),
+  ocol: el => setJersey('opp', el.dataset.v),
+  ccol: el => setJersey('club', el.dataset.v),
+  // Carte d'équipe choisie : la palette affichée est celle de ce maillot-là, familles en premier.
+  jside: el => { ui.jerseySide = el.dataset.v; ui.jerseyFam = ''; },
+  // Famille de couleurs ouverte ('' = retour aux familles).
+  jfam: el => { ui.jerseyFam = el.dataset.v; },
+  mclub: () => { setJersey('my', S.clubColor || ''); },
   pickback: () => { ui.P.teamId = null; ui.P.rows = []; },
   pallin: el => { ui.P.rows.forEach(r => { r.in = el.dataset.v === '1'; }); },
   pstart: startMatch,
@@ -424,7 +448,6 @@ const ACTIONS = {
     ask(`Retirer le logo du club ?${inClub() ? ' Il disparaîtra pour tous les membres.' : ''}`, 'Retirer', () => { S.clubLogo = ''; save(); }, true);
     return false;
   },
-  tcolor: el => { tm().color = el.dataset.v; save(); },
   addpl: () => { tm().players.push({ id: uid(), name: '', num: '' }); save(); },
   delpl: el => { tm().players.splice(+el.dataset.i, 1); save(); },
   delteam: () => {
@@ -543,7 +566,7 @@ document.addEventListener('keydown', e => {
 // Actions interdites aux bénévoles.
 // Actions sur un match, permises aussi à un bénévole sur son match pas encore validé (voir canEditMatch)
 const MATCH_EDIT = ['gnames', 'empick', 'emdel', 'emsave'];
-const EDIT_ONLY = ['tedit', 'addteam', 'tempick', 'gnames', 'delteam', 'addpl', 'delpl', 'tcolor', 'gval', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
+const EDIT_ONLY = ['tedit', 'addteam', 'tempick', 'gnames', 'delteam', 'addpl', 'delpl', 'gval', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'ccol', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
 
 document.addEventListener('click', e => {
   // Toucher le fond sombre ferme la fenêtre comme « Annuler ».

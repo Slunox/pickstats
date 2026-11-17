@@ -7,14 +7,14 @@ Avec Firebase, chacun peut créer son compte dans l'appli, puis :
 
 | Rôle | Peut faire |
 |---|---|
-| Responsable | tout, plus le code d'invitation, le logo, les membres, et supprimer le club |
+| Responsable | tout, plus le code d'invitation, le logo, la couleur du maillot, les membres, et supprimer le club |
 | Coach | modifier les équipes, les joueurs, les matchs et le nom du club ; valider et supprimer les matchs publiés |
 | Bénévole | saisir les stats, publier ses matchs (à valider) et les corriger tant qu'ils ne sont pas validés, consulter les équipes et les matchs |
 
 Ces limites sont imposées par les règles Firestore, pas seulement par l'appli.
 
-Les **équipes**, leur **composition**, les **matchs archivés** et le nom du club sont partagés
-entre les membres du club, sur chaque tablette ou téléphone. Un membre ne voit **que son club**.
+Les **équipes**, leur **composition**, les **matchs archivés** et l'identité du club (nom, logo,
+couleur du maillot) sont partagés entre les membres du club, sur chaque tablette ou téléphone. Un membre ne voit **que son club**.
 Le match en cours reste sur l'appareil qui le saisit. « Sauvegarder » le garde sur cet appareil ;
 il n'est partagé qu'une fois **publié** (bouton « Publier » sur sa fiche). Publié par un bénévole, il reste
 « à valider » jusqu'à ce qu'un coach ou un responsable le valide. Un match validé ne peut être

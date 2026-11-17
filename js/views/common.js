@@ -3,7 +3,7 @@
 import { S, withMatch } from '../state.js';
 import { WON } from '../constants.js';
 import { esc, qLabel } from '../util.js';
-import { periods, tally, cnt, miss, curTeamColor, oppInk, allP, shortNames, seasonGames } from '../model.js';
+import { periods, tally, cnt, miss, myInk, oppInk, allP, shortNames, seasonGames } from '../model.js';
 import { emStats, emTable, emMade } from './emstats.js';
 
 // En-tête d'écran : le bouton de retour (où l'on revient) et le titre (où l'on est).
@@ -126,7 +126,7 @@ export function statsView(q, part = 'all') {
   const max = k => Math.max(0, ...T.map(r => r[k]));
   const won = WON.map(w => cnt(w[0], q)), wonT = won.reduce((a, b) => a + b, 0);
   const ro = cnt('ro', q), rd = cnt('rd', q), orb = cnt('orb', q), odr = cnt('odr', q);
-  const col = curTeamColor();
+  const col = myInk();
 
   // Tuiles d'équipe, comparées à la moyenne de la saison sur le match entier
   const V = teamVals(q), A = q == null ? seasonAvg() : null;

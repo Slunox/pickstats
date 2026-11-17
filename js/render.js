@@ -47,9 +47,9 @@ export function render() {
   const sh = $('#app .sheet'), shTop = sh ? sh.scrollTop : 0;
   $('#app').innerHTML = (inMatch ? nav() : '') + (VIEWS[ui.view] || home)();
   if (shTop) { const n = $('#app .sheet'); if (n) n.scrollTop = shTop; }
-  // Les filtres défilants sont recréés à chaque rendu : on garde le filtre choisi visible.
-  document.querySelectorAll('.chips.scroll').forEach(c => {
-    const on = c.querySelector('.chip.on');
+  // Filtres et palettes défilants sont recréés à chaque rendu : on garde le choix visible.
+  document.querySelectorAll('.chips.scroll, .swatches.scroll').forEach(c => {
+    const on = c.querySelector('.on');
     if (on) c.scrollLeft = on.offsetLeft - c.offsetLeft - (c.clientWidth - on.offsetWidth) / 2;
   });
 }

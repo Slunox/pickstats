@@ -2,7 +2,7 @@
 
 import { S } from '../state.js';
 import { esc } from '../util.js';
-import { dupN, matchTeam, oppSwatches } from '../model.js';
+import { dupN, matchTeam, jerseys } from '../model.js';
 
 const key = v => String(v || '').trim().toLowerCase();
 
@@ -30,7 +30,7 @@ export function comp() {
     <h2>Composition${t ? ' : ' + esc(t.name) : ''}</h2>
     <label>Équipe adverse</label>
     <input data-f="opp" value="${esc(S.opp)}" placeholder="Nom de l’adversaire" maxlength="30" aria-label="Équipe adverse">
-    ${oppSwatches(S.oppColor)}
+    ${jerseys(S.myColor, S.oppColor, t ? t.name : S.me, S.opp)}
     <p class="help" style="margin:10px 0">Décoche un joueur pour le retirer de l’écran de saisie : ses stats déjà saisies restent dans les statistiques. Changer un numéro déplace aussi ses actions déjà saisies. Les noms des joueurs de l’équipe se modifient dans la fiche de l’équipe.</p>
     <div class="prow4 head"><span></span><span>Joueur</span><span>N° du match</span><span></span></div>
     ${rows}

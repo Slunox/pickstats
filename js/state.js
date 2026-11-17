@@ -71,7 +71,7 @@ export function save() {
 export function withMatch(m, f) {
   if (!m) return f();
   const b = S;
-  S = { ...b, me: m.me, opp: m.opp, oppColor: m.oppColor || null, em: m.em || null, ev: m.ev, q: m.q, roster: m.roster, teamId: m.teamId };
+  S = { ...b, me: m.me, opp: m.opp, myColor: m.myColor || null, oppColor: m.oppColor || null, em: m.em || null, ev: m.ev, q: m.q, roster: m.roster, teamId: m.teamId };
   try { return f(); } finally { S = b; }
 }
 
@@ -93,6 +93,8 @@ export const ui = {
   ccode: '',      // code d'invitation saisi
   cclub: '',      // nom du club à créer
   cpseudo: '',    // pseudo saisi (inscription ou modification)
+  jerseySide: 'opp', // maillot dont la palette est affichée ('my' ou 'opp') : l'adversaire change à chaque match
+  jerseyFam: '',  // famille de couleurs ouverte dans la palette ('' = on voit les familles)
   sheet: null,    // fenêtre ouverte sur l'accueil ('account')
   sheetFlow: false, // fenêtre ouverte pour se connecter : elle se ferme une fois le club rejoint
 };

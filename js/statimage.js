@@ -4,7 +4,7 @@
 import { S, ui, withMatch } from './state.js';
 import { WON } from './constants.js';
 import { qLabel } from './util.js';
-import { tally, cnt, miss, curG, curTeamColor, oppInk } from './model.js';
+import { tally, cnt, miss, curG, myInk, oppInk } from './model.js';
 import { toast, ask } from './dom.js';
 
 const W = 1080, PAD = 40;
@@ -51,7 +51,8 @@ export function drawStats(q, date, logo) {
   const max = k => Math.max(0, ...T.map(r => r[k]));
   const won = WON.map(w => cnt(w[0], q)), wonT = won.reduce((a, b) => a + b, 0);
   const ro = cnt('ro', q), rd = cnt('rd', q), orb = cnt('orb', q), odr = cnt('odr', q);
-  const tc = curTeamColor(), oc = oppInk();
+  // Le dégradé de l_en-tête porte du texte blanc : un maillot clair passe en gris (myInk).
+  const tc = myInk(), oc = oppInk();
 
   const ROW = 58, HEAD = 190, TILE = 110, TILES = TILE * 2 + 14, TH = 96;
   const tableH = TH + Math.max(1, T.length) * ROW + ROW + 20;

@@ -5,7 +5,7 @@
 
 import { S, ui } from '../state.js';
 import { esc, fdate } from '../util.js';
-import { roster1, curTeamColor, oppColor, isLight, seasonGames } from '../model.js';
+import { roster1, myInk, oppInk, seasonGames } from '../model.js';
 import { playerName, matchInfo } from '../emarque.js';
 import { WON } from '../constants.js';
 
@@ -417,7 +417,7 @@ function pages(D) {
   const { em, us, th, s, b, players, quarters } = D;
   // Noms courts dans les phrases et les tableaux : le club plutôt que l'équipe
   const U = S.clubName ? shortName(S.clubName) : S.me, T = shortName(S.opp), names = [U, T];
-  const cU = curTeamColor(), cT = isLight(oppColor()) ? '#b5b9b6' : oppColor();
+  const cU = myInk(), cT = oppInk();
   const cLF = '#d9a441', c2 = '#7fb89a', c3 = '#3b6ea8';
   const d = us.total.pts - th.total.pts;
   const kpi = (l, v, sub) => `<div class="rp-kpi"><span class="l">${l}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
@@ -572,7 +572,7 @@ export function reportView(m) {
   const D = build(), P = pages(D);
   const cur = PAGES.find(p => p[0] === ui.rp) ? ui.rp : 'resume';
   const i = PAGES.findIndex(p => p[0] === cur);
-  return `<style>${RP_CSS}</style><div class="rp" style="--rp-accent:${curTeamColor()}">${head(m)}`
+  return `<style>${RP_CSS}</style><div class="rp" style="--rp-accent:${myInk()}">${head(m)}`
     + `<div class="chips scroll rp-tabs">${PAGES.map(([id, l]) => `<button class="chip${id === cur ? ' on' : ''}" data-x="rp" data-v="${id}">${l}</button>`).join('')}</div>`
     + `<section class="rp-page"><div class="rp-ptitle"><span>Page ${i + 1} sur ${PAGES.length}</span><h2>${PAGES[i][1]}</h2></div>${P[cur]}</section>`
     + `<div class="rp-pager">${i > 0 ? `<button class="btn alt" data-x="rp" data-go="-1" data-v="${PAGES[i - 1][0]}">‹ ${PAGES[i - 1][1]}</button>` : '<span></span>'}`
@@ -609,7 +609,7 @@ export function reportFile(m) {
     + `.rp-pg label{font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px;color:var(--ink);cursor:pointer}.rp-pg label:hover{border-color:var(--rp-accent)}`
     + `@media print{body{background:#fff}.rp{padding:0}nav.rp-nav,.rp-pg,.rp-r{display:none!important}.rp .rp-page{display:flex!important;break-before:page}.rp .rp-page:first-of-type{break-before:auto}}`
     + `${RP_CSS}.dark .rp{--rp-good:#5cc28f;--rp-low:#f08a7e}</style></head><body>`
-    + `<div class="rp" style="--rp-accent:${curTeamColor()}">${head(m).replace('</header>', THEME_BTN + '</header>')}`
+    + `<div class="rp" style="--rp-accent:${myInk()}">${head(m).replace('</header>', THEME_BTN + '</header>')}`
     + PAGES.map(([id, l], i) => `<input type="radio" class="rp-r" name="rp-page" id="p-${id}" aria-label="${l}"${i ? '' : ' checked'}>`).join('')
     + `<nav class="rp-nav" aria-label="Pages du dossier">${PAGES.map(([id, l]) => `<label for="p-${id}">${l}</label>`).join('')}</nav>`
     + PAGES.map(([id, l], i) => `<section class="rp-page" id="${id}"><div class="rp-ptitle"><span>Page ${i + 1} sur ${PAGES.length}</span><h2>${l}</h2></div>${P[id]}`

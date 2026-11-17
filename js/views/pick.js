@@ -2,7 +2,7 @@
 
 import { S, ui } from '../state.js';
 import { esc, plural } from '../util.js';
-import { sortedTeams, oppSwatches } from '../model.js';
+import { sortedTeams, jerseys } from '../model.js';
 import { back } from './common.js';
 
 function chooseTeam() {
@@ -31,7 +31,7 @@ export function pick() {
     <h2>${esc(t ? t.name : '')} : composition</h2>
     <label>Équipe adverse</label>
     <input data-po="1" value="${esc(P.opp)}" placeholder="Nom de l’adversaire" maxlength="30" aria-label="Équipe adverse">
-    ${oppSwatches(P.oppColor)}
+    ${jerseys(P.myColor, P.oppColor, t ? t.name : 'Mon équipe', (P.opp || '').trim())}
     <p class="help">Coche les joueurs présents et donne à chacun son numéro pour ce match.</p>
     <div class="chips" style="margin-top:10px">
       <button class="chip" data-x="pallin" data-v="1">Tout présent</button>

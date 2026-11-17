@@ -179,7 +179,7 @@ function onSnap(kind, snap) {
 // Champs du document du club partagés avec l'appareil : [champ Firestore, clé dans S, le vide est-il une valeur ?]
 // Un club a toujours un nom : s'il est vide ici, c'est un ennui sur l'appareil (champ effacé, vieille
 // sauvegarde restaurée), jamais une intention. On ne l'envoie pas. Le logo, lui, peut être retiré.
-const CLUB_FIELDS = [['name', 'clubName', false], ['logo', 'clubLogo', true]];
+const CLUB_FIELDS = [['name', 'clubName', false], ['logo', 'clubLogo', true], ['color', 'clubColor', true]];
 
 // Oublie les repères du nom et du logo du club c. À appeler chaque fois que les données du club
 // sont retirées de l'appareil (déconnexion, changement de club) ou remplacées en bloc (restauration) :
@@ -326,6 +326,7 @@ function attach(c) {
     S.arch = [];
     S.clubName = '';
     S.clubLogo = '';
+    S.clubColor = '';
     forgetClubFields(S.cloudClub);
     S.cloudClub = c;
     save();
@@ -552,7 +553,7 @@ export async function logout(force) {
   return true;
 }
 
-// Retire de l'appareil ce qui vient du club : équipes, matchs publiés, nom et logo.
+// Retire de l'appareil ce qui vient du club : équipes, matchs publiés, nom, logo et couleur.
 // Restent : les matchs sauvegardés mais pas publiés (ils n'existent qu'ici) et le match en cours.
 // S.cloudClub est gardé : en se reconnectant au même club, tout revient sans question.
 function clearClubData() {
@@ -561,6 +562,7 @@ function clearClubData() {
   S.arch = (S.arch || []).filter(m => m.st === 'local');
   S.clubName = '';
   S.clubLogo = '';
+  S.clubColor = '';
   forgetClubFields(S.cloudClub); // retiré d'ici, mais gardé en ligne : le club le redonnera
   save();
 }
@@ -580,8 +582,8 @@ export const createClub = name => DEMO ? demo.createClub(name) : run(async () =>
   if (!name) { cloud.err = 'Donne un nom à ton club.'; return; }
   const c = F.doc(F.collection(db, 'clubs')).id, code = newCodeValue(), now = new Date().toISOString();
   const b = F.writeBatch(db);
-  // Le logo déjà choisi sur l'appareil devient celui du club.
-  b.set(F.doc(db, 'clubs', c), { name, owner: cloud.uid, code, created: now, logo: S.clubLogo || '' });
+  // Le logo et la couleur déjà choisis sur l'appareil deviennent ceux du club.
+  b.set(F.doc(db, 'clubs', c), { name, owner: cloud.uid, code, created: now, logo: S.clubLogo || '', color: S.clubColor || '' });
   b.set(F.doc(db, 'clubs', c, 'members', cloud.uid), { email: cloud.email, name: cloud.name, role: 'admin', joined: now });
   b.set(F.doc(db, 'invites', code), { clubId: c });
   b.set(F.doc(db, 'users', cloud.uid), { clubId: c });

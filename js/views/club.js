@@ -3,7 +3,7 @@
 import { S, ui } from '../state.js';
 import { CATS, SEXES } from '../constants.js';
 import { esc, plural } from '../util.js';
-import { sortedTeams, tm, teamColor, TEAM_COLORS } from '../model.js';
+import { sortedTeams, tm, teamColor } from '../model.js';
 import { back } from './common.js';
 import { cloud, canEdit } from '../cloud.js';
 import { clubHead } from './account.js';
@@ -58,9 +58,6 @@ export function tedit() {
     <select data-tc="1" aria-label="Catégorie">${CATS.map(c => `<option${c === t.cat ? ' selected' : ''}>${c}</option>`).join('')}</select>
     <label>Sexe</label>
     <select data-ts="1" aria-label="Sexe">${SEXES.map(o => `<option value="${o[0]}"${o[0] === (t.sex || '') ? ' selected' : ''}>${o[1]}</option>`).join('')}</select>
-    <label>Couleur</label>
-    <div class="swatches">${TEAM_COLORS.map(c => `<button class="sw${teamColor(t) === c ? ' on' : ''}" style="background:${c}" data-x="tcolor" data-v="${c}" aria-label="Couleur ${c}"></button>`).join('')}</div>
-    <p class="help">Reprise sur l’écran de saisie, les matchs archivés et les exports PDF.</p>
     <label>${sufLabel}</label>
     <input data-tn="1" value="${esc(t.suf || '')}" maxlength="${autre ? 20 : 3}"${autre ? '' : ' inputmode="numeric"'} placeholder="${autre ? 'Nom de l’équipe' : '1, 2…'}" aria-label="${autre ? 'Nom de l’équipe' : 'Numéro d’équipe'}">
     <p class="help">${sufHelp}</p>

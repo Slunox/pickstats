@@ -3,6 +3,7 @@
 import { S, ui } from '../state.js';
 import { esc } from '../util.js';
 import { cloud, showCode, memberName, ROLES } from '../cloud.js';
+import { clubSwatches } from '../model.js';
 import { back } from './common.js';
 import { ICON } from './icons.js';
 
@@ -215,5 +216,6 @@ export function clubHead(canName, canLogo, sub) {
     .filter(Boolean).join('<br>')
     + (canLogo && S.clubLogo ? ' · <button class="link" data-x="logodel">Retirer</button>' : '');
   return `<div class="card clubhead">${shield}<div class="chname">${row}
-    <p class="help">${tips}</p></div></div>`;
+    <p class="help">${tips}</p></div>
+    ${canLogo ? `<div class="chcol">${clubSwatches()}</div>` : ''}</div>`;
 }
