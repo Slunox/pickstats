@@ -7,7 +7,7 @@ import { club, tedit } from './views/club.js';
 import { pick } from './views/pick.js';
 import { games, game, report } from './views/archives.js';
 import { play } from './views/play.js';
-import { play2, play3 } from './views/play2.js';
+import { playLock } from './views/playlock.js';
 import { hist } from './views/history.js';
 import { stats } from './views/stats.js';
 import { comp } from './views/composition.js';
@@ -17,8 +17,8 @@ import { members } from './views/account.js';
 import { emCheck } from './views/emarque.js';
 import { emSheet } from './views/emsheet.js';
 
-// Écran de saisie : la v1 est celle de la démo, les deux autres sont à l'essai (Réglages).
-const playView = () => (S.entry === '2' ? play2() : S.entry === '3' ? play3() : play());
+// Écran de saisie : le classique est celui de la démo, l'autre est à l'essai (Réglages).
+const playView = () => (S.entry === 'lock' ? playLock() : play());
 
 const VIEWS = { home, club, tedit, pick, games, game, play: playView, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, emsheet: emSheet, report };
 
@@ -53,6 +53,10 @@ export function render() {
   const inMatch = S.active && MATCH_VIEWS.includes(ui.view);
   const moved = ui.view !== shown;
   shown = ui.view;
+  // Essai « action verrouillée » : la barre du bas est toujours affichée. Elle passe donc dans le
+  // flux de la page (collante) au lieu d'être posée par-dessus, sinon elle masque la dernière
+  // rangée de joueurs. Le classique garde sa barre flottante, qui n'apparaît qu'à la sélection.
+  document.documentElement.dataset.bar = ui.view === 'play' && S.entry === 'lock' ? 'flow' : '';
   // La fenêtre du compte est recréée elle aussi : on garde l'endroit où elle était défilée.
   const sh = $('#app .sheet'), shTop = sh ? sh.scrollTop : 0;
   $('#app').innerHTML = (inMatch ? nav() : '') + (VIEWS[ui.view] || home)();

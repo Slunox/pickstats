@@ -43,25 +43,38 @@ nav button.on{background:var(--dk);color:#fff}
 .bar .in{max-width:1100px;margin:0 auto}
 .who{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:1.1rem}
 .who button{padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff}
-/* --- Écrans de saisie à l'essai (play2.js) --- */
-/* La barre reste en place sans joueur choisi : les boutons ne se déplacent jamais. */
-.bar.idle .acts button[disabled]{opacity:.35}
-.who .dim{font-weight:600;font-size:.95rem;opacity:.75}
-/* Après un tir raté : les deux rebonds appellent, sans fenêtre qui bloque. */
-@keyframes askpulse{50%{box-shadow:0 3px 0 rgba(0,0,0,.28),0 0 0 4px rgba(255,255,255,.85)}}
-.tb.ask{animation:askpulse 1s ease-in-out 4}
-.qnote.reb{color:var(--ink);font-weight:700}
-/* Actions captées sans leur auteur (essai 3) */
-.pend{background:var(--card);border-radius:12px;padding:8px 10px;margin:0 0 10px;border:2px solid var(--a)}
-.pend>small{display:block;color:var(--mut);font-weight:700;margin-bottom:6px}
-.pchs{display:flex;flex-wrap:wrap;gap:8px}
-.pch{display:flex;align-items:stretch;border-radius:10px;overflow:hidden;background:var(--bg);box-shadow:inset 0 0 0 2px var(--line)}
-.pch.on{box-shadow:inset 0 0 0 3px var(--a);background:var(--sel)}
-.pch button{padding:10px 12px;font-weight:700;text-align:left;line-height:1.15}
-.pch small{display:block;color:var(--mut);font-weight:600;font-size:.8rem}
-.pch .px{padding:10px;color:var(--mut);font-size:1.1rem;box-shadow:inset 1px 0 0 var(--line)}
-/* Un joueur attend d'être désigné : la grille se met en avant */
-.grid.arm .pl{box-shadow:0 2px 0 rgba(0,0,0,.08),0 3px 8px rgba(0,0,0,.06),0 0 0 2px var(--a)}
+/* --- Écran de saisie à l'essai : action verrouillée (playlock.js) --- */
+/* Le bloc d'actions reste affiché en permanence. Il reprend donc le langage des groupes d'équipe
+   du haut — légende puis rangée de boutons, sur fond clair — et garde sa place dans la page plutôt
+   que d'être posé par-dessus : un panneau sombre arrondi se lit comme une modale qui ne se ferme
+   jamais, et il masquerait la dernière rangée de joueurs. */
+/* Une carte posée, arrondie de partout et détachée des bords : c'est un menu qui accompagne la
+   page, pas un bandeau collé en bas ni une feuille surgie par-dessus. La zone sûre est prise par
+   la marge de #app, pour que la carte garde le même écart partout. */
+html[data-bar="flow"] #app{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.actbar{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));margin:14px 0 0;
+  background:var(--card);border-radius:16px;padding:10px 12px 12px;
+  box-shadow:0 0 0 1px var(--line),0 4px 14px rgba(0,0,0,.14)}
+.actbar .in{max-width:1100px;margin:0 auto}
+.actbar>.in>small{display:flex;align-items:center;gap:10px;font-size:.78rem;font-weight:700;color:var(--mut);margin:0 0 6px 2px}
+.actbar .lk{margin-left:auto;padding:4px 10px;border-radius:8px;background:var(--bg);color:var(--ink);font-weight:700;font-size:.8rem}
+/* Les libellés sont longs ; à quatre ou cinq colonnes ils doivent pouvoir se couper. */
+.actbar .acts button{color:#16242C;font-size:1rem;padding:4px 6px;overflow-wrap:anywhere;hyphens:auto}
+.actbar .acts .more{background:var(--bg);color:var(--mut);font-size:1.8rem;font-weight:700}
+@media(max-width:700px){.actbar .acts button{font-size:.88rem}}
+/* Le rebond se répond ici, sous le doigt, au lieu d'une fenêtre au centre de l'écran. */
+.acts.t3{grid-template-columns:repeat(3,1fr)}
+.actbar.reb .acts button{min-height:72px;line-height:1.15}
+.actbar.reb .acts small{display:block;font-weight:600;font-size:.78rem;opacity:.75;margin-top:2px}
+.actbar.reb .acts button:not(.n):not(.f){background:var(--bg)}
+/* Verrouillé : il faut que ça saute aux yeux, sinon on enregistre de faux événements. */
+.actbar.lock{background:var(--a);box-shadow:0 0 0 1px var(--a),0 4px 14px rgba(0,0,0,.2)}
+.lockrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#fff;min-height:52px}
+.lockrow b{font-size:1.15rem}
+.lockrow span{opacity:.85}
+.lockrow .btn{margin:0 0 0 auto;background:#fff;color:var(--a);border-color:#fff}
+.grid.lock .pl{border-color:var(--a)}
+.grid.lock .pl b{color:var(--a)}
 .acts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.acts.t4{grid-template-columns:repeat(4,1fr)}.acts.t2{grid-template-columns:repeat(2,1fr)}.acts.t6{grid-template-columns:repeat(6,1fr)}
 .acts button{min-height:64px;border-radius:10px;font-weight:800;font-size:1.05rem;color:#16242C}
 .acts .n{background:#BDE7C9}.acts .r{background:#F5C6C0}.acts .f{background:#F6D98B}

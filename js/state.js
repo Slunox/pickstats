@@ -79,8 +79,9 @@ export function withMatch(m, f) {
 export const ui = {
   view: 'home',   // écran affiché
   sel: null,      // numéro du joueur sélectionné sur la saisie
-  rebAsk: false,  // tir raté qui vient d'être saisi : les boutons rebond appellent (essais 2 et 3)
-  pendSel: null,  // indice de l'action en attente d'auteur qui est armée (essai 3)
+  lock: null,     // action verrouillée : chaque joueur touché l'enregistre (essai, voir Réglages)
+  actAll: false,  // bloc d'actions déplié sur les actions les moins courantes
+  rebBar: false,  // la barre du bas demande qui a pris le rebond du tir qu'on vient de saisir
   tid: null,      // équipe en cours de modification
   tnew: null,     // équipe tout juste créée
   gid: null,      // match archivé affiché

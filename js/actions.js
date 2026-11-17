@@ -46,20 +46,12 @@ function emRead(m, reading) {
 
 function endMatch() {
   S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.myColor = null; S.oppColor = null; S.roster = []; S.active = false; S.matchId = null;
-  S.pend = [];
-  ui.sel = null; ui.sq = 'all'; ui.pendSel = null; ui.rebAsk = false;
-}
-
-// v3 : des actions attendent encore leur auteur — elles ne partiraient pas dans le match, on prévient.
-function archiveMatch() {
-  const n = (S.pend || []).length;
-  if (!n) return saveMatch();
-  ask(`${n} action${n > 1 ? 's' : ''} attend${n > 1 ? 'ent' : ''} encore son auteur et ser${n > 1 ? 'ont' : 'a'} perdue${n > 1 ? 's' : ''}. Tu peux revenir en arrière pour ${n > 1 ? 'les' : 'l’'}attribuer.`,
-    'Sauvegarder quand même', () => { S.pend = []; saveMatch(); render(); }, true);
+  ui.sq = 'all';
+  dropLock();
 }
 
 // Sauvegarde du match terminé, sur l'appareil seulement (st : 'local') : il part au club quand on le publie.
-function saveMatch() {
+function archiveMatch() {
   const m = {
     st: 'local',
     id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp,
@@ -119,13 +111,35 @@ function startMatch() {
 
 function addEvent(ev) {
   S.ev.push(ev);
-  ui.rebAsk = false; // tout événement éteint l'appel au rebond (v2/v3)
+  ui.rebBar = false; // tout événement referme la demande de rebond
   toast(evText(ev) + ' ✓');
   save();
 }
 
-// Écran de saisie choisi dans les Réglages : '1' (classique, celui de la démo), '2' ou '3' à l'essai.
-const entry = () => (S.entry === '2' || S.entry === '3' ? S.entry : '1');
+// Écran de saisie choisi dans les Réglages : 'lock' (essai), sinon le classique de la démo.
+const entry = () => (S.entry === 'lock' ? 'lock' : '1');
+
+// Une action verrouillée relâchée toute seule après un long silence. C'est le repli sûr :
+// oublier le mode allumé enregistrerait de faux événements, alors qu'un relâchement manqué
+// n'en perd qu'un — et le toast le dit.
+let lockTimer = null;
+const LOCK_IDLE = 30000;
+function holdLock() {
+  clearTimeout(lockTimer);
+  if (!ui.lock) return;
+  lockTimer = setTimeout(() => {
+    if (!ui.lock) return;
+    toast('Mode « ' + LBL[ui.lock] + ' » terminé');
+    ui.lock = null;
+    render();
+  }, LOCK_IDLE);
+}
+function dropLock() {
+  clearTimeout(lockTimer);
+  ui.lock = null;
+  ui.rebBar = false;
+  ui.sel = null;
+}
 
 // Pose une couleur de maillot. which : 'my' (notre équipe), 'opp' (adversaire), 'club' (le club).
 // Les codes sont rangés en majuscules : le sélecteur du système renvoie des minuscules, et la
@@ -192,50 +206,62 @@ const ACTIONS = {
     ui.cnEdit = false;
     ui.jerseySide = 'opp';
     ui.jerseyFam = '';
-    ui.pendSel = null;
-    ui.rebAsk = false;
+    dropLock();
   },
   resume: () => { ui.view = 'play'; },
 
   // Saisie
   pl: el => {
     const n = el.dataset.p;
-    // v3 : une action attend son auteur — ce joueur le devient
-    if (entry() === '3' && ui.pendSel != null) {
-      const e = (S.pend || [])[ui.pendSel];
-      ui.pendSel = null;
-      if (e) { S.pend.splice(S.pend.indexOf(e), 1); addEvent({ a: e.a, q: e.q, p: n }); return; }
+    // Action verrouillée : le joueur touché l'enregistre, la grille devient la surface de saisie
+    if (ui.lock) {
+      const a = ui.lock;
+      addEvent({ a, q: S.q, p: n });
+      holdLock();
+      if (MISS.includes(a)) ui.rebBar = true;
+      return;
     }
     ui.sel = ui.sel === n ? null : n;
   },
   desel: () => { ui.sel = null; },
   act: el => {
-    const a = el.dataset.a, mode = entry();
+    const a = el.dataset.a;
+    // Essai : une action touchée sans joueur se verrouille, au lieu de ne rien faire
     if (!ui.sel) {
-      // v3 : on capte l'action maintenant, on dira qui plus tard
-      if (mode !== '3') return false;
-      (S.pend = S.pend || []).push({ a, q: S.q });
-      save();
-      ui.rebAsk = MISS.includes(a);
-      toast(LBL[a] + ' · à attribuer');
+      if (entry() !== 'lock') return false;
+      ui.lock = a;
+      ui.sel = null;
+      holdLock();
+      toast(LBL[a] + ' · touche les joueurs');
       return;
     }
     addEvent({ a, q: S.q, p: ui.sel });
-    // v1 : le joueur est relâché et une fenêtre demande le rebond.
-    // v2/v3 : le joueur reste, et ce sont les boutons rebond qui appellent.
-    if (mode === '1') { ui.sel = null; if (MISS.includes(a)) askRebound(); }
-    else ui.rebAsk = MISS.includes(a);
+    ui.sel = null;
+    ui.actAll = false; // on revient aux actions courantes après chaque saisie
+    if (!MISS.includes(a)) return;
+    // Le rebond se demande dans la barre du bas, là où le doigt vient de se poser
+    if (entry() === 'lock') ui.rebBar = true; else askRebound();
   },
-  // v3 : action en attente armée, ou relâchée
-  psel: el => { const i = +el.dataset.i; ui.pendSel = ui.pendSel === i ? null : i; },
-  pdel: el => { (S.pend || []).splice(+el.dataset.i, 1); ui.pendSel = null; save(); },
+  // Réponse au rebond depuis la barre : nous, eux, ou personne (sans action)
+  rbar: el => {
+    const a = el.dataset.a;
+    ui.rebBar = false;
+    if (!a) return;
+    const ev = { a, q: S.q };
+    if (a === 'ro') ev.p = '__team';
+    addEvent(ev);
+    holdLock();
+  },
+  lockoff: () => { dropLock(); },
+  // Bascule entre les actions courantes et les autres, sans changer la hauteur du bloc
+  actmore: el => { ui.actAll = !!el.dataset.v; },
   // Boutons directs des équipes (rebonds, ballons gagnés)
   tact: el => {
     const a = el.dataset.a, ev = { a, q: S.q };
     if (a !== 'orb' && a !== 'odr') ev.p = '__team';
-    if (entry() === '1') ui.sel = null;
-    ui.pendSel = null; // on désarme : sinon le prochain joueur touché hériterait d'une action oubliée
+    ui.sel = null;
     addEvent(ev);
+    holdLock(); // un rebond saisi à la main compte comme une activité : le verrou ne s'éteint pas
   },
   mopt: el => { const f = chosen(+el.dataset.i); if (f) f(); },
   undo: () => {
@@ -503,7 +529,7 @@ const ACTIONS = {
   theme: el => { S.theme = el.dataset.t; save(); },
   lay: el => { S.layout = el.dataset.l; save(); },
   pst: el => { S.pstats = el.dataset.v; save(); },
-  entry: el => { S.entry = el.dataset.v; ui.sel = null; ui.pendSel = null; ui.rebAsk = false; save(); },
+  entry: el => { S.entry = el.dataset.v; dropLock(); save(); },
   awake: el => {
     S.awake = el.dataset.v === '1';
     save();

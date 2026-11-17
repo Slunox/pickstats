@@ -31,11 +31,10 @@ export function settings() {
       <p class="help">Toutes : les stats non nulles du quart en cours. La dernière : seulement la dernière action saisie pour le joueur dans le quart en cours, avec son total sur le quart. Int : interceptions, FP : fautes provoquées, BP : balles perdues, Mar : marchers, ✗ : tirs ratés.</p>
     </div>`
     + `<div class="card"><h2>Écran de saisie</h2>
-      ${choice('entry', 'v', [['1', 'Classique'], ['2', 'Essai 2'], ['3', 'Essai 3']], S.entry === '2' || S.entry === '3' ? S.entry : '1')}
-      <p class="help"><b>Classique</b> : l’écran habituel. Après un tir raté, une fenêtre demande qui a pris le rebond.</p>
-      <p class="help"><b>Essai 2</b> : les boutons d’action restent toujours en place, le joueur reste sélectionné après une action, et le rebond se demande en faisant clignoter les boutons au lieu d’ouvrir une fenêtre.</p>
-      <p class="help"><b>Essai 3</b> : l’essai 2, plus la possibilité de toucher une action <b>sans choisir de joueur</b> : elle est mise de côté et tu dis qui c’était à la balle morte suivante. Fait pour les mêlées, quand tout s’enchaîne trop vite.</p>
-      <p class="help">Les deux essais cherchent à accélérer la saisie. Dis-nous celui qui marche le mieux : à terme il n’en restera qu’un.</p>
+      ${choice('entry', 'v', [['1', 'Classique'], ['lock', 'Action verrouillée']], S.entry === 'lock' ? 'lock' : '1')}
+      <p class="help"><b>Classique</b> : l’écran habituel. On touche le joueur, puis son action ; après un tir raté, une fenêtre demande qui a pris le rebond.</p>
+      <p class="help"><b>Action verrouillée</b> : à l’essai, pour les mêlées. Touche une action <b>sans choisir de joueur</b> et elle se verrouille : chaque joueur touché ensuite enregistre cette action, soit <b>un seul appui par tir</b>, avec son auteur. « Terminer » déverrouille, et le mode s’éteint tout seul après un long silence. Le rebond, lui, se demande en bas de l’écran, sous le doigt, au lieu d’une fenêtre au centre.</p>
+      <p class="help">Dis-nous ce que ça donne en match : à terme il n’en restera qu’un.</p>
     </div>`
     + match
     + card('Écran',
