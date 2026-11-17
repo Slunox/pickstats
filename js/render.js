@@ -7,6 +7,7 @@ import { club, tedit } from './views/club.js';
 import { pick } from './views/pick.js';
 import { games, game, report } from './views/archives.js';
 import { play } from './views/play.js';
+import { play2, play3 } from './views/play2.js';
 import { hist } from './views/history.js';
 import { stats } from './views/stats.js';
 import { comp } from './views/composition.js';
@@ -16,7 +17,10 @@ import { members } from './views/account.js';
 import { emCheck } from './views/emarque.js';
 import { emSheet } from './views/emsheet.js';
 
-const VIEWS = { home, club, tedit, pick, games, game, play, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, emsheet: emSheet, report };
+// Écran de saisie : la v1 est celle de la démo, les deux autres sont à l'essai (Réglages).
+const playView = () => (S.entry === '2' ? play2() : S.entry === '3' ? play3() : play());
+
+const VIEWS = { home, club, tedit, pick, games, game, play: playView, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, emsheet: emSheet, report };
 
 // Écrans qui affichent la barre d'onglets du match en cours
 const MATCH_VIEWS = ['play', 'hist', 'stats', 'comp', 'set'];

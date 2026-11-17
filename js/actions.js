@@ -6,7 +6,7 @@ import { S, ui, save, withMatch } from './state.js';
 import { $, uid, cmpN } from './util.js';
 import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, myColor, oppColor, isLight, colorVars } from './model.js';
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
-import { MISS, SWAP, DEMO } from './constants.js';
+import { MISS, SWAP, DEMO, LBL } from './constants.js';
 import { backup, restoreFile, download, shareFile } from './export.js';
 import { reportFile, swipeNav } from './views/report.js';
 import { oppOf } from './views/emarque.js';
@@ -46,11 +46,20 @@ function emRead(m, reading) {
 
 function endMatch() {
   S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.myColor = null; S.oppColor = null; S.roster = []; S.active = false; S.matchId = null;
-  ui.sel = null; ui.sq = 'all';
+  S.pend = [];
+  ui.sel = null; ui.sq = 'all'; ui.pendSel = null; ui.rebAsk = false;
+}
+
+// v3 : des actions attendent encore leur auteur — elles ne partiraient pas dans le match, on prévient.
+function archiveMatch() {
+  const n = (S.pend || []).length;
+  if (!n) return saveMatch();
+  ask(`${n} action${n > 1 ? 's' : ''} attend${n > 1 ? 'ent' : ''} encore son auteur et ser${n > 1 ? 'ont' : 'a'} perdue${n > 1 ? 's' : ''}. Tu peux revenir en arrière pour ${n > 1 ? 'les' : 'l’'}attribuer.`,
+    'Sauvegarder quand même', () => { S.pend = []; saveMatch(); render(); }, true);
 }
 
 // Sauvegarde du match terminé, sur l'appareil seulement (st : 'local') : il part au club quand on le publie.
-function archiveMatch() {
+function saveMatch() {
   const m = {
     st: 'local',
     id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp,
@@ -110,9 +119,13 @@ function startMatch() {
 
 function addEvent(ev) {
   S.ev.push(ev);
+  ui.rebAsk = false; // tout événement éteint l'appel au rebond (v2/v3)
   toast(evText(ev) + ' ✓');
   save();
 }
+
+// Écran de saisie choisi dans les Réglages : '1' (classique, celui de la démo), '2' ou '3' à l'essai.
+const entry = () => (S.entry === '2' || S.entry === '3' ? S.entry : '1');
 
 // Pose une couleur de maillot. which : 'my' (notre équipe), 'opp' (adversaire), 'club' (le club).
 // Les codes sont rangés en majuscules : le sélecteur du système renvoie des minuscules, et la
@@ -179,24 +192,49 @@ const ACTIONS = {
     ui.cnEdit = false;
     ui.jerseySide = 'opp';
     ui.jerseyFam = '';
+    ui.pendSel = null;
+    ui.rebAsk = false;
   },
   resume: () => { ui.view = 'play'; },
 
   // Saisie
-  pl: el => { ui.sel = ui.sel === el.dataset.p ? null : el.dataset.p; },
+  pl: el => {
+    const n = el.dataset.p;
+    // v3 : une action attend son auteur — ce joueur le devient
+    if (entry() === '3' && ui.pendSel != null) {
+      const e = (S.pend || [])[ui.pendSel];
+      ui.pendSel = null;
+      if (e) { S.pend.splice(S.pend.indexOf(e), 1); addEvent({ a: e.a, q: e.q, p: n }); return; }
+    }
+    ui.sel = ui.sel === n ? null : n;
+  },
   desel: () => { ui.sel = null; },
   act: el => {
-    if (!ui.sel) return false;
-    const ev = { a: el.dataset.a, q: S.q, p: ui.sel };
-    addEvent(ev);
-    ui.sel = null;
-    if (MISS.includes(ev.a) && S.askReb !== false) askRebound();
+    const a = el.dataset.a, mode = entry();
+    if (!ui.sel) {
+      // v3 : on capte l'action maintenant, on dira qui plus tard
+      if (mode !== '3') return false;
+      (S.pend = S.pend || []).push({ a, q: S.q });
+      save();
+      ui.rebAsk = MISS.includes(a);
+      toast(LBL[a] + ' · à attribuer');
+      return;
+    }
+    addEvent({ a, q: S.q, p: ui.sel });
+    // v1 : le joueur est relâché et une fenêtre demande le rebond.
+    // v2/v3 : le joueur reste, et ce sont les boutons rebond qui appellent.
+    if (mode === '1') { ui.sel = null; if (MISS.includes(a)) askRebound(); }
+    else ui.rebAsk = MISS.includes(a);
   },
+  // v3 : action en attente armée, ou relâchée
+  psel: el => { const i = +el.dataset.i; ui.pendSel = ui.pendSel === i ? null : i; },
+  pdel: el => { (S.pend || []).splice(+el.dataset.i, 1); ui.pendSel = null; save(); },
   // Boutons directs des équipes (rebonds, ballons gagnés)
   tact: el => {
     const a = el.dataset.a, ev = { a, q: S.q };
     if (a !== 'orb' && a !== 'odr') ev.p = '__team';
-    ui.sel = null;
+    if (entry() === '1') ui.sel = null;
+    ui.pendSel = null; // on désarme : sinon le prochain joueur touché hériterait d'une action oubliée
     addEvent(ev);
   },
   mopt: el => { const f = chosen(+el.dataset.i); if (f) f(); },
@@ -465,7 +503,7 @@ const ACTIONS = {
   theme: el => { S.theme = el.dataset.t; save(); },
   lay: el => { S.layout = el.dataset.l; save(); },
   pst: el => { S.pstats = el.dataset.v; save(); },
-  askreb: el => { S.askReb = el.dataset.v === '1'; save(); },
+  entry: el => { S.entry = el.dataset.v; ui.sel = null; ui.pendSel = null; ui.rebAsk = false; save(); },
   awake: el => {
     S.awake = el.dataset.v === '1';
     save();

@@ -30,9 +30,13 @@ export function settings() {
       ${choice('pst', 'v', [['all', 'Toutes'], ['last', 'La dernière'], ['off', 'Masquées']], statsMode())}
       <p class="help">Toutes : les stats non nulles du quart en cours. La dernière : seulement la dernière action saisie pour le joueur dans le quart en cours, avec son total sur le quart. Int : interceptions, FP : fautes provoquées, BP : balles perdues, Mar : marchers, ✗ : tirs ratés.</p>
     </div>`
-    + card('Tirs ratés',
-      choice('askreb', 'v', [['1', 'Demander qui a le rebond'], ['0', 'Ne pas demander']], onOff(S.askReb)),
-      'Après un tir raté, une fenêtre propose : nous (rebond offensif), eux (rebond défensif adverse) ou personne.')
+    + `<div class="card"><h2>Écran de saisie</h2>
+      ${choice('entry', 'v', [['1', 'Classique'], ['2', 'Essai 2'], ['3', 'Essai 3']], S.entry === '2' || S.entry === '3' ? S.entry : '1')}
+      <p class="help"><b>Classique</b> : l’écran habituel. Après un tir raté, une fenêtre demande qui a pris le rebond.</p>
+      <p class="help"><b>Essai 2</b> : les boutons d’action restent toujours en place, le joueur reste sélectionné après une action, et le rebond se demande en faisant clignoter les boutons au lieu d’ouvrir une fenêtre.</p>
+      <p class="help"><b>Essai 3</b> : l’essai 2, plus la possibilité de toucher une action <b>sans choisir de joueur</b> : elle est mise de côté et tu dis qui c’était à la balle morte suivante. Fait pour les mêlées, quand tout s’enchaîne trop vite.</p>
+      <p class="help">Les deux essais cherchent à accélérer la saisie. Dis-nous celui qui marche le mieux : à terme il n’en restera qu’un.</p>
+    </div>`
     + match
     + card('Écran',
       choice('awake', 'v', [['1', 'Toujours allumé'], ['0', 'Veille normale']], onOff(S.awake)),

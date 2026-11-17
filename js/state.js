@@ -79,6 +79,8 @@ export function withMatch(m, f) {
 export const ui = {
   view: 'home',   // écran affiché
   sel: null,      // numéro du joueur sélectionné sur la saisie
+  rebAsk: false,  // tir raté qui vient d'être saisi : les boutons rebond appellent (essais 2 et 3)
+  pendSel: null,  // indice de l'action en attente d'auteur qui est armée (essai 3)
   tid: null,      // équipe en cours de modification
   tnew: null,     // équipe tout juste créée
   gid: null,      // match archivé affiché
