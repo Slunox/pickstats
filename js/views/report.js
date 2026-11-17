@@ -596,7 +596,7 @@ export function reportFile(m) {
     + `html:not(.js) .rp-theme{display:none}@media (prefers-color-scheme:dark){html:not(.js) .rp{--rp-good:#5cc28f;--rp-low:#f08a7e}}`
     + `.dark .rp-eyebrow,.dark .rp-ptitle span{color:color-mix(in srgb,var(--rp-accent) 55%,#fff)}`
     + `@media print{:root,:root[data-theme="dark"]{--card:#fff;--ink:#000;--mut:#555;--line:#ccc;--bg:#fff;color-scheme:light}.rp-theme{display:none}}`
-    + `.rp{position:relative;max-width:1100px;margin:0 auto;padding:24px 16px 48px}.rp-page{margin-top:22px}`
+    + `.rp{position:relative;max-width:1100px;margin:0 auto;padding:24px 16px 24px}.rp-page{margin-top:22px}`
     // Onglets collés en haut, une page à la fois. Ils marchent sans JavaScript : chaque onglet est l'étiquette
     // d'un bouton radio caché, et le CSS affiche la page dont le bouton est coché. À l'impression, toutes les pages à la suite.
     + `.rp-r{position:absolute;top:0;left:0;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}.rp .rp-page{display:none}`
@@ -745,5 +745,5 @@ html[data-theme="dark"] .rp{--rp-good:#5cc28f;--rp-low:#f08a7e}
 .rp svg .lbl{fill:var(--ink);font-size:12px;font-variant-numeric:tabular-nums}
 .rp svg .ax{fill:var(--mut);font-size:12px;font-variant-numeric:tabular-nums}
 .rp-pager{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:18px}.rp-pager .btn{margin:0}
-.rp-foot{margin-top:32px;font-size:12px;color:var(--mut);border-top:1px solid var(--line);padding-top:12px}
+.rp-foot{margin-top:20px;font-size:12px;color:var(--mut);border-top:1px solid var(--line);padding-top:12px}
 `;

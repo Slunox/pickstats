@@ -53,10 +53,11 @@ export function render() {
   const inMatch = S.active && MATCH_VIEWS.includes(ui.view);
   const moved = ui.view !== shown;
   shown = ui.view;
-  // Essai « action verrouillée » : la barre du bas est toujours affichée. Elle passe donc dans le
-  // flux de la page (collante) au lieu d'être posée par-dessus, sinon elle masque la dernière
-  // rangée de joueurs. Le classique garde sa barre flottante, qui n'apparaît qu'à la sélection.
-  document.documentElement.dataset.bar = ui.view === 'play' && S.entry === 'lock' ? 'flow' : '';
+  // Place à réserver en bas de page selon la barre d'actions de l'écran :
+  // 'fixed' = la barre flottante du classique, posée par-dessus, qui a besoin qu'on lui garde
+  // la place ; 'flow' = celle de l'essai, collante mais dans le flux, qui prend la sienne ;
+  // '' = pas de barre du tout, donc rien à réserver.
+  document.documentElement.dataset.bar = ui.view !== 'play' ? '' : S.entry === 'lock' ? 'flow' : 'fixed';
   // La fenêtre du compte est recréée elle aussi : on garde l'endroit où elle était défilée.
   const sh = $('#app .sheet'), shTop = sh ? sh.scrollTop : 0;
   $('#app').innerHTML = (inMatch ? nav() : '') + (VIEWS[ui.view] || home)();
