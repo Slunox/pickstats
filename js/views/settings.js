@@ -42,7 +42,10 @@ export function settings() {
       'Évite que la tablette se mette en veille pendant la saisie (selon les appareils et les navigateurs).')
     + card('Vibration',
       choice('vibe', 'v', [['1', 'Activée'], ['0', 'Désactivée']], onOff(S.vibe)),
-      'Une courte vibration à chaque action enregistrée. Elle fonctionne surtout sur Android : les iPhone et iPad ne la prennent pas en charge.')
+      'Une courte vibration à chaque action enregistrée. Elle fonctionne surtout sur Android : les iPhone et iPad ne la prennent pas en charge, le son ci-dessous les remplace.')
+    + card('Son',
+      choice('sound', 'v', [['1', 'Activé'], ['0', 'Désactivé']], S.sound ? '1' : '0'),
+      'Un petit « tic » à chaque action enregistrée, utile sur iPad et iPhone où la vibration ne marche pas. Il suit le volume de l’appareil et se tait en mode silencieux.')
     + card('Sauvegarde',
       '<button class="btn" data-x="backup">Sauvegarder (fichier)</button><button class="btn" data-x="restore">Restaurer une sauvegarde</button><input type="file" id="restore" accept=".json,application/json" hidden>',
       'Le fichier contient le match en cours, les archives, les équipes et les réglages. Garde-le en lieu sûr : si les données du navigateur sont effacées, tu pourras tout récupérer.')

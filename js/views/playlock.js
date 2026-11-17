@@ -21,10 +21,9 @@ import { esc, qLabel } from '../util.js';
 import { allP, tally, cnt, roster1, evText, statsMode, lastAction, shortNames, myColor, oppColor, isLight, colorVars } from '../model.js';
 
 const BY = Object.fromEntries(ACTS.map(a => [a[0], a]));
-// Les actions du joueur sélectionné, sur deux rangées de quatre ; la dernière case est pour
-// les ballons gagnés, qui sont à l'équipe et n'ont pas besoin de joueur.
-const ROW1 = [BY.m2, BY.m3, ['lf', 'LF', 'r'], BY.stl];
-const ROW2 = [BY.fd, BY.to, BY.trav];
+// Les actions du joueur sélectionné : les tirs sur une rangée de trois, le reste sur quatre.
+const ROW1 = [BY.m2, BY.m3, ['lf', 'LF', 'b']]; // LF en bleu : marqués et ratés, pas que des ratés
+const ROW2 = [BY.stl, BY.fd, BY.to, BY.trav];
 // Points de césure pour les libellés longs, qui doivent tenir sur quatre colonnes de téléphone.
 const SOFT = { stl: 'Inter&shy;ception', fd: 'Faute pro&shy;voquée' };
 
@@ -45,14 +44,14 @@ const rebButtons = () => `<div class="acts t3">
     <button class="no" data-x="rbar" data-a="">Personne<small>Dehors, faute…</small></button>
   </div>`;
 
-// Le bloc du bas. États : mode dynamique, rebond après un LF, lancers francs, ballons gagnés, actions.
+// Le bloc du bas. États : mode dynamique, rebond après un LF, lancers francs, actions.
 function actbar() {
   if (ui.dyn) {
     return `<div class="actbar fix dyn"><div class="in">
-      <div class="dynrow"><span><b>Tir raté</b> · touche le joueur qui retente</span>
+      <div class="dynrow"><span><em class="dyntag">Action dynamique</em> <b>${ui.dynP ? playerName(ui.dynP) : ''}</b>${ui.dynN > 1 ? ` <em class="dynn">${ui.dynN} d’affilée</em>` : ''}</span>
         <div class="shot" role="group" aria-label="Type de tir">${[['m2', '2 pts'], ['m3', '3 pts']].map(([a, l]) =>
           `<button class="${ui.dyn === a ? 'on' : ''}" data-x="dynsw" data-a="${a}" aria-pressed="${ui.dyn === a}">${l}</button>`).join('')}</div></div>
-      <small>Qui a pris le rebond ?</small>
+      <small class="dynhelp"><b>Touche le joueur</b> qui retente, ou le rebond :</small>
       ${rebButtons()}
     </div></div>`;
   }
@@ -64,7 +63,7 @@ function actbar() {
     if (!F.k) {
       return `<div class="actbar fix"><div class="in">
         <small><span>Lancers francs de <b>${playerName(F.n)}</b></span><button class="lk" data-x="ftx">Annuler</button></small>
-        <div class="acts t3">${[1, 2, 3].map(k => `<button class="r ftk" data-x="ftn" data-v="${k}">${k}<small>lancer${k > 1 ? 's' : ''}</small></button>`).join('')}</div>
+        <div class="acts t3">${[1, 2, 3].map(k => `<button class="b ftk" data-x="ftn" data-v="${k}">${k}<small>lancer${k > 1 ? 's' : ''}</small></button>`).join('')}</div>
       </div></div>`;
     }
     return `<div class="actbar fix"><div class="in">
@@ -74,27 +73,33 @@ function actbar() {
         + `<button class="r${v === false ? ' on' : ''}" data-x="ftr" data-i="${i}" data-v="0" aria-label="Lancer ${i + 1} raté">✗</button></div></div>`).join('')}</div>
     </div></div>`;
   }
-  if (ui.won) {
-    return `<div class="actbar fix"><div class="in">
-      <small>Ballon gagné par l’équipe<button class="lk" data-x="wonx">Annuler</button></small>
-      <div class="acts t2">${WON.map(w => `<button class="n" data-x="tact" data-a="${w[0]}">${w[1]}</button>`).join('')}</div>
-    </div></div>`;
-  }
-  const btn = a => `<button class="${a[2]}" data-x="act" data-a="${a[0]}"${ui.sel ? '' : ' aria-disabled="true"'}>${SOFT[a[0]] || a[1]}</button>`;
+  const btn = (a, w) => `<button class="${a[2]} ${w}" data-x="act" data-a="${a[0]}"${ui.sel ? '' : ' aria-disabled="true"'}>${SOFT[a[0]] || a[1]}</button>`;
   return `<div class="actbar fix"><div class="in">
     <small>${ui.sel ? `<span>Actions de <b>${playerName(ui.sel)}</b></span><button class="lk" data-x="desel">Fermer</button>` : 'Touche un joueur, puis son action'}</small>
-    <div class="acts t4 two${ui.sel ? '' : ' idle'}">
-      ${ROW1.map(btn).join('')}${ROW2.map(btn).join('')}
-      <button class="team" data-x="wonopen">Ballon gagné<small>Équipe</small></button>
+    <div class="acts two${ui.sel ? '' : ' idle'}">
+      ${ROW1.map(a => btn(a, 'c3')).join('')}${ROW2.map(a => btn(a, 'c4')).join('')}
     </div>
   </div></div>`;
 }
 
-// Bloc d'équipe compact : « Rebonds » à gauche et le nom centré sur la même ligne, puis les deux boutons.
-const teamBlock = (cls, name, color, list, label) => `<div class="${cls}${isLight(color) ? ' lt' : ''}" style="${colorVars(color)}">
+// Ballons gagnés : un bouton de notre bloc, à côté des rebonds (c'est une stat d'équipe, le joueur
+// sélectionné n'y est pour rien). Il ouvre ses quatre choix juste dessous, sous le doigt, au lieu
+// de les envoyer dans la barre du bas.
+function wonButton() {
+  const total = WON.reduce((s, w) => s + cnt(w[0], S.q), 0);
+  const pop = ui.won ? `<div class="wonpop" role="menu" aria-label="Ballon gagné">
+      <div class="wph"><b>Ballon gagné</b><button class="wpx" data-x="wonx" aria-label="Fermer">✕</button></div>
+      <div class="wpb">${WON.map(w => `<button role="menuitem" data-x="tact" data-a="${w[0]}">${w[1]}<b>${cnt(w[0], S.q)}</b></button>`).join('')}</div>
+    </div>` : '';
+  return `<div class="wonw${ui.won ? ' open' : ''}"><button class="tb won" data-x="wonopen" aria-expanded="${!!ui.won}" aria-label="Ballon gagné : choisir le type">`
+    + `<small>Ballon gagné</small><b>${total}</b></button>${pop}</div>`;
+}
+
+// Bloc d'équipe compact : « Rebonds » à gauche et le nom centré sur la même ligne, puis les boutons.
+const teamBlock = (cls, name, color, list, label, extra = '') => `<div class="${cls}${isLight(color) ? ' lt' : ''}" style="${colorVars(color)}">
     <div class="tbg"><div class="tbh"><small>Rebonds</small><div class="nm">${esc(name)}</div></div><div class="tbs">`
   + list.map(w => `<button class="tb" data-x="tact" data-a="${w[0]}" aria-label="Ajouter : ${label} ${w[1]}"><small><span class="tbp">+</span> ${w[1]}</small><b>${cnt(w[0], S.q)}</b></button>`).join('')
-  + '</div></div></div>';
+  + extra + '</div></div></div>';
 
 function playerButton(p, r, stk, mode, nm) {
   let c = [];
@@ -114,7 +119,7 @@ export function playLock() {
   const last = S.ev[S.ev.length - 1], names = shortNames(allP());
 
   return `<div class="top slim">
-    ${teamBlock('me', S.me, myColor(), TEAM_REB, 'Rebond')}
+    ${teamBlock('me', S.me, myColor(), TEAM_REB, 'Rebond', wonButton())}
     <div class="mid">
       <div class="q">
         <button data-x="q-" aria-label="Période précédente">‹</button>

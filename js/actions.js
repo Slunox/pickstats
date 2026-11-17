@@ -5,7 +5,7 @@
 import { S, ui, save, withMatch } from './state.js';
 import { $, uid, cmpN } from './util.js';
 import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, myColor, oppColor, isLight, colorVars } from './model.js';
-import { toast, ask, note, answer, choose, chosen } from './dom.js';
+import { toast, tick, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP, DEMO } from './constants.js';
 import { backup, restoreFile, download, shareFile } from './export.js';
 import { reportFile, swipeNav } from './views/report.js';
@@ -211,6 +211,8 @@ const ACTIONS = {
     // Mode dynamique : le joueur touché a repris le rebond offensif et retenté, sans marquer
     if (ui.dyn) {
       addGroup([{ a: 'ro', q: S.q, p: '__team' }, { a: ui.dyn, q: S.q, p: n }], 'Rebond offensif + ' + evText({ a: ui.dyn, p: n }));
+      ui.dynP = n;
+      ui.dynN = (ui.dynN || 1) + 1;
       return;
     }
     ui.ft = null;
@@ -226,12 +228,15 @@ const ACTIONS = {
     }
     // Essai : les lancers francs se disent un par un
     if (a === 'lf') { ui.ft = { n: ui.sel, k: 0, r: [] }; return; }
-    addEvent({ a, q: S.q, p: ui.sel });
+    const p = ui.sel;
+    addEvent({ a, q: S.q, p });
     ui.sel = null;
     if (!MISS.includes(a)) return;
     if (entry() !== 'lock') { askRebound(); return; }
     // Essai : mode dynamique, le rebond se demande dans la barre du bas
     ui.dyn = a;
+    ui.dynP = p; // dernier tireur et nombre de tirs enchaînés, affichés dans la barre
+    ui.dynN = 1;
   },
   // Mode dynamique : tir à 2 ou 3 points pour les joueurs touchés ensuite
   dynsw: el => { ui.dyn = el.dataset.a; },
@@ -251,7 +256,7 @@ const ACTIONS = {
   },
   ftx: () => { ui.ft = null; },
   // Ballons gagnés : à l'équipe, le joueur sélectionné n'y est pour rien
-  wonopen: () => { ui.won = true; ui.ft = null; },
+  wonopen: () => { ui.won = !ui.won; ui.ft = null; ui.sel = null; },
   wonx: () => { ui.won = false; },
   // Réponse au rebond depuis la barre : nous, eux, ou personne (sans action). Fin du mode dynamique.
   rbar: el => {
@@ -552,6 +557,12 @@ const ACTIONS = {
     save();
     if (S.vibe) try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
   },
+  // Son : on en joue un tout de suite quand on l’active, pour régler le volume.
+  sound: el => {
+    S.sound = el.dataset.v === '1';
+    save();
+    if (S.sound) tick();
+  },
   backup: () => { backup(); return false; },
   restore: () => { $('#restore').click(); return false; },
 
@@ -653,14 +664,17 @@ document.addEventListener('click', e => {
   }
   const el = e.target.closest('[data-x]');
   if (!el) {
-    // Toucher en dehors du menu d'actions le ferme.
+    // Toucher en dehors du menu d'actions (ou du choix du ballon gagné) le ferme.
+    if (ui.won && !e.target.closest('.wonpop')) { ui.won = false; render(); return; }
     if (ui.sel && !e.target.closest('.bar, .actbar')) { ui.sel = null; render(); }
     return;
   }
   const x = el.dataset.x, f = ACTIONS[x];
+  // Choix du ballon gagné ouvert (écran à l'essai) : toucher ailleurs ne fait que le fermer.
+  if (ui.won && x !== 'wonopen' && !el.closest('.wonpop')) { ui.won = false; render(); return; }
   // Menu d'actions ouvert : toucher un bouton en dehors (équipe, période, annuler…) ne fait que fermer le menu,
   // pour ne pas ajouter une action par erreur. Toucher un autre joueur change de joueur.
-  if (ui.sel && x !== 'pl' && !el.closest('.bar, .actbar') && !el.closest('#modal')) { ui.sel = null; render(); return; }
+  if (ui.sel && x !== 'pl' && x !== 'wonopen' && !el.closest('.bar, .actbar') && !el.closest('#modal')) { ui.sel = null; render(); return; }
   // Bénévole d'un club : saisie seulement (les règles Firestore l'imposent aussi).
   if (!canEdit() && EDIT_ONLY.includes(x) && !(MATCH_EDIT.includes(x) && canEditMatch(curG()))) { note('Réservé aux coachs et responsables du club.'); return; }
   if (!f || f(el) === false) return;

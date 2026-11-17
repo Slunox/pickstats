@@ -3,6 +3,30 @@
 import { S } from './state.js';
 import { $, esc } from './util.js';
 
+// Petit son à chaque action enregistrée (Réglages › Son, désactivé par défaut) : le retour
+// pour les iPad, qui n'ont pas de vibreur, et les iPhone, dont Safari ignore navigator.vibrate.
+// Un « tic » synthétisé, sans fichier à charger. Le contexte audio naît au premier appui (iOS
+// ne joue de son qu'après un geste) ; le bouton sourdine de l'appareil le coupe, comme il se doit.
+let actx = null;
+export function tick() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    actx = actx || new AC();
+    if (actx.state === 'suspended') actx.resume();
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(1320, t);
+    o.frequency.exponentialRampToValueAtTime(880, t + 0.07);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    o.connect(g).connect(actx.destination);
+    o.start(t);
+    o.stop(t + 0.1);
+  } catch (e) {}
+}
+
 let toastTimer;
 export function toast(msg) {
   const t = $('#toast');
@@ -12,6 +36,7 @@ export function toast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('on'), 1400);
   try { if (S.vibe !== false && navigator.vibrate) navigator.vibrate(25); } catch (e) {}
+  if (S.sound) tick();
 }
 
 // Fenêtre intégrée (les confirm()/alert() natifs peuvent être bloqués).

@@ -60,9 +60,9 @@ html[data-bar="flow"] #app{padding-bottom:calc(10px + env(safe-area-inset-bottom
 .actbar .acts button{color:#16242C;font-size:1rem;padding:4px 6px;overflow-wrap:anywhere;hyphens:auto}
 @media(max-width:700px){.actbar .acts button{font-size:.88rem}}
 .actbar .acts small{display:block;font-weight:600;font-size:.78rem;opacity:.75;margin-top:2px}
-/* Toutes les actions visibles : deux rangées de quatre, à toutes les largeurs. Sans joueur
-   choisi, celles du joueur sont estompées ; « Ballon gagné » (à l'équipe) reste vif. */
-.actbar .acts.two{grid-template-columns:repeat(4,1fr)}
+/* Les actions du joueur : les tirs sur une rangée de trois, le reste sur quatre (grille de 12). Sans joueur
+   choisi, elles sont estompées. */
+.actbar .acts.two{grid-template-columns:repeat(12,1fr)}.actbar .acts.two .c3{grid-column:span 4}.actbar .acts.two .c4{grid-column:span 3}
 .actbar .acts.two button{min-height:56px;line-height:1.15;overflow-wrap:normal}
 .actbar .acts.idle button:not(.team){opacity:.45}
 .actbar .acts .team{background:var(--bg);color:var(--ink);box-shadow:inset 0 0 0 2px #7BC795}
@@ -108,7 +108,7 @@ html[data-theme="dark"] .grid.lock .pl b{color:#F09A8E}
 .top.slim .tb{min-height:52px}.top.slim .tb small{font-size:.9rem}.top.slim .tb b{font-size:1.5rem}
 .acts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.acts.t4{grid-template-columns:repeat(4,1fr)}.acts.t2{grid-template-columns:repeat(2,1fr)}.acts.t6{grid-template-columns:repeat(6,1fr)}
 .acts button{min-height:64px;border-radius:10px;font-weight:800;font-size:1.05rem;color:#16242C}
-.acts .n{background:#BDE7C9}.acts .r{background:#F5C6C0}.acts .f{background:#F6D98B}
+.acts .n{background:#BDE7C9}.acts .r{background:#F5C6C0}.acts .f{background:#F6D98B}.acts .b{background:#C7DCF0}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chip{padding:12px 18px;border-radius:999px;background:var(--card);border:2px solid var(--line);font-weight:700}
 .chip.on{background:var(--dk);border-color:var(--dk);color:#fff}
@@ -518,3 +518,27 @@ html[data-theme="dark"] .gtoval{background:#4A3A14;color:#FFE1A3}
 .actbar.fix .ftb button{width:44px;height:44px}
 .actbar.fix .ftball{width:46px;height:46px}
 .actbar.fix.dyn .dynrow{flex-wrap:nowrap}.actbar.fix.dyn .dynrow>span{flex:1;min-width:0;line-height:1.2}
+/* Ballon gagné (écran à l'essai) : bouton de notre bloc ; ses quatre choix s'ouvrent juste
+   dessous, dans une bulle qui pointe vers lui, aux couleurs de l'équipe. */
+.wonw{position:relative;flex:1;min-width:0;display:flex}
+.top.slim .me{position:relative;z-index:2}
+.wonw .tb{width:100%}
+.wonw.open .tb{transform:translateY(3px);box-shadow:inset 0 0 0 3px var(--cx,var(--a))}
+.wonw.open::after{content:'';position:absolute;left:50%;top:calc(100% + 4px);width:16px;height:16px;background:var(--card);transform:translateX(-50%) rotate(45deg);border-radius:3px 0 0 0;z-index:31}
+.wonpop{position:absolute;top:calc(100% + 10px);right:-6px;z-index:30;width:min(360px,calc(100vw - 32px));background:var(--card);color:var(--ink);border-radius:16px;padding:10px;text-align:left;
+  box-shadow:0 0 0 1px var(--line),0 14px 34px rgba(0,0,0,.3);animation:wpop .16s ease-out}
+@keyframes wpop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.wph{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+.wph b{font-size:.95rem}
+.wpx{width:34px;height:34px;border-radius:9px;background:var(--bg);color:var(--ink);font-weight:800}
+.wpb{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.wpb button{min-height:66px;border-radius:12px;background:var(--c);color:var(--ct,#fff);font-weight:800;font-size:1.1rem;line-height:1.1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:0 3px 0 rgba(0,0,0,.28);transition:transform .08s,box-shadow .08s}
+.wpb button b{font-size:.78rem;font-weight:700;opacity:.8}
+.wpb button:active{transform:translateY(3px);box-shadow:none}
+.me.lt .wpb button{box-shadow:inset 0 0 0 1px var(--line),0 3px 0 rgba(0,0,0,.15)}
+@media (prefers-reduced-motion:reduce){.wonpop{animation:none}}
+/* Mode dynamique : l'en-tête dit ce qui se passe (qui a raté, combien d'affilée) et quoi faire. */
+.dyntag{font-style:normal;display:inline-block;background:#C4473A;color:#fff;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:999px;margin-right:4px;vertical-align:2px}
+.dynn{font-style:normal;display:inline-block;background:#F5C6C0;color:#5A140C;font-size:.75rem;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:2px;vertical-align:1px;white-space:nowrap}
+.actbar>.in>small.dynhelp{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:26px}.actbar .dynhelp b{color:var(--ink)}

@@ -80,8 +80,10 @@ export const ui = {
   view: 'home',   // écran affiché
   sel: null,      // numéro du joueur sélectionné sur la saisie
   dyn: null,      // mode dynamique (essai) : 'm2' ou 'm3', chaque joueur touché retente ce tir après un rebond offensif
+  dynP: null,     // mode dynamique : dernier tireur (numéro)
+  dynN: 0,        // mode dynamique : nombre de tirs ratés enchaînés
   ft: null,       // lancers francs en cours de saisie (essai) : { n: joueur, k: nombre, r: [marqué ?] }
-  won: false,     // la barre du bas propose les ballons gagnés (essai)
+  won: false,     // la bulle des ballons gagnés est ouverte (essai)
   rebBar: false,  // la barre du bas demande qui a pris le rebond du tir qu'on vient de saisir
   tid: null,      // équipe en cours de modification
   tnew: null,     // équipe tout juste créée
