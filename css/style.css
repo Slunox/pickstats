@@ -66,9 +66,14 @@ html[data-bar="flow"] #app{padding-bottom:calc(10px + env(safe-area-inset-bottom
 .acts.t3{grid-template-columns:repeat(3,1fr)}
 .actbar.reb .acts button{min-height:72px;line-height:1.15}
 .actbar.reb .acts small{display:block;font-weight:600;font-size:.78rem;opacity:.75;margin-top:2px}
-.actbar.reb .acts button:not(.n):not(.f){background:var(--bg)}
+/* « Personne » est le seul bouton d'action sans fond pastel : son fond suit le thème, donc son
+   texte aussi. Les autres gardent l'encre foncée, leurs pastels étant clairs dans les deux thèmes. */
+.actbar.reb .acts button:not(.n):not(.f){background:var(--bg);color:var(--ink)}
 /* Verrouillé : il faut que ça saute aux yeux, sinon on enregistre de faux événements. */
-.actbar.lock{background:var(--a);box-shadow:0 0 0 1px var(--a),0 4px 14px rgba(0,0,0,.2)}
+.actbar.lock{background:var(--lk,var(--a));box-shadow:0 0 0 1px var(--lk,var(--a)),0 4px 14px rgba(0,0,0,.2)}
+/* En sombre, le bleu du thème laisse le texte blanc à 4,47 — juste sous le seuil lisible.
+   Ce bandeau porte le seul moyen de quitter le mode : on l'assombrit un peu, ici seulement. */
+html[data-theme="dark"] .actbar.lock{--lk:#246E92}
 .lockrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#fff;min-height:52px}
 .lockrow b{font-size:1.15rem}
 .lockrow span{opacity:.85}
