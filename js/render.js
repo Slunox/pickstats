@@ -53,11 +53,9 @@ export function render() {
   const inMatch = S.active && MATCH_VIEWS.includes(ui.view);
   const moved = ui.view !== shown;
   shown = ui.view;
-  // Place à réserver en bas de page selon la barre d'actions de l'écran :
-  // 'fixed' = la barre flottante du classique, posée par-dessus, qui a besoin qu'on lui garde
-  // la place ; 'flow' = celle de l'essai, collante mais dans le flux, qui prend la sienne ;
-  // '' = pas de barre du tout, donc rien à réserver.
-  document.documentElement.dataset.bar = ui.view !== 'play' ? '' : S.entry === 'lock' ? 'flow' : 'fixed';
+  // Marge du bas : la barre d'actions de la saisie (classique ou essai) est une carte collante
+  // mais dans le flux, qui prend sa place elle-même ; ailleurs, pas de barre du tout.
+  document.documentElement.dataset.bar = ui.view === 'play' ? 'flow' : '';
   // La fenêtre du compte est recréée elle aussi : on garde l'endroit où elle était défilée.
   const sh = $('#app .sheet'), shTop = sh ? sh.scrollTop : 0;
   $('#app').innerHTML = (inMatch ? nav() : '') + (VIEWS[ui.view] || home)();

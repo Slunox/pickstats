@@ -6,7 +6,7 @@ import { S, ui, save, withMatch } from './state.js';
 import { $, uid, cmpN } from './util.js';
 import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, myColor, oppColor, isLight, colorVars } from './model.js';
 import { toast, ask, note, answer, choose, chosen } from './dom.js';
-import { MISS, SWAP, DEMO, LBL } from './constants.js';
+import { MISS, SWAP, DEMO } from './constants.js';
 import { backup, restoreFile, download, shareFile } from './export.js';
 import { reportFile, swipeNav } from './views/report.js';
 import { oppOf } from './views/emarque.js';
@@ -119,26 +119,21 @@ function addEvent(ev) {
 // Écran de saisie choisi dans les Réglages : 'lock' (essai), sinon le classique de la démo.
 const entry = () => (S.entry === 'lock' ? 'lock' : '1');
 
-// Une action verrouillée relâchée toute seule après un long silence. C'est le repli sûr :
-// oublier le mode allumé enregistrerait de faux événements, alors qu'un relâchement manqué
-// n'en perd qu'un — et le toast le dit.
-let lockTimer = null;
-const LOCK_IDLE = 30000;
-function holdLock() {
-  clearTimeout(lockTimer);
-  if (!ui.lock) return;
-  lockTimer = setTimeout(() => {
-    if (!ui.lock) return;
-    toast('Mode « ' + LBL[ui.lock] + ' » terminé');
-    ui.lock = null;
-    render();
-  }, LOCK_IDLE);
-}
 function dropLock() {
-  clearTimeout(lockTimer);
-  ui.lock = null;
+  ui.dyn = null;
+  ui.ft = null;
+  ui.won = false;
   ui.rebBar = false;
   ui.sel = null;
+}
+
+// Enregistre plusieurs événements d'un coup (rebond + tir, lancers francs) : ils partagent
+// un même g, et « Annuler la dernière » les retire ensemble.
+function addGroup(evs, msg) {
+  const g = Date.now();
+  evs.forEach(e => S.ev.push({ ...e, g }));
+  toast(msg + ' ✓');
+  save();
 }
 
 // Pose une couleur de maillot. which : 'my' (notre équipe), 'opp' (adversaire), 'club' (le club).
@@ -213,61 +208,78 @@ const ACTIONS = {
   // Saisie
   pl: el => {
     const n = el.dataset.p;
-    // Action verrouillée : le joueur touché l'enregistre, la grille devient la surface de saisie
-    if (ui.lock) {
-      const a = ui.lock;
-      addEvent({ a, q: S.q, p: n });
-      holdLock();
-      if (MISS.includes(a)) ui.rebBar = true;
+    // Mode dynamique : le joueur touché a repris le rebond offensif et retenté, sans marquer
+    if (ui.dyn) {
+      addGroup([{ a: 'ro', q: S.q, p: '__team' }, { a: ui.dyn, q: S.q, p: n }], 'Rebond offensif + ' + evText({ a: ui.dyn, p: n }));
       return;
     }
+    ui.ft = null;
+    ui.won = false;
     ui.sel = ui.sel === n ? null : n;
   },
   desel: () => { ui.sel = null; },
   act: el => {
     const a = el.dataset.a;
-    // Essai : une action touchée sans joueur se verrouille, au lieu de ne rien faire
     if (!ui.sel) {
-      if (entry() !== 'lock') return false;
-      ui.lock = a;
-      ui.sel = null;
-      holdLock();
-      toast(LBL[a] + ' · touche les joueurs');
-      return;
+      if (entry() === 'lock') toast('Touche d’abord le joueur');
+      return false;
     }
+    // Essai : les lancers francs se disent un par un
+    if (a === 'lf') { ui.ft = { n: ui.sel, k: 0, r: [] }; return; }
     addEvent({ a, q: S.q, p: ui.sel });
     ui.sel = null;
-    ui.actAll = false; // on revient aux actions courantes après chaque saisie
     if (!MISS.includes(a)) return;
-    // Le rebond se demande dans la barre du bas, là où le doigt vient de se poser
-    if (entry() === 'lock') ui.rebBar = true; else askRebound();
+    if (entry() !== 'lock') { askRebound(); return; }
+    // Essai : mode dynamique, le rebond se demande dans la barre du bas
+    ui.dyn = a;
   },
-  // Réponse au rebond depuis la barre : nous, eux, ou personne (sans action)
+  // Mode dynamique : tir à 2 ou 3 points pour les joueurs touchés ensuite
+  dynsw: el => { ui.dyn = el.dataset.a; },
+  // Lancers francs : combien, puis marqué ou raté pour chacun ; enregistrés quand tous sont dits
+  ftn: el => { const k = +el.dataset.v; ui.ft.k = k; ui.ft.r = Array(k).fill(null); },
+  ftr: el => {
+    const F = ui.ft;
+    F.r[+el.dataset.i] = el.dataset.v === '1';
+    if (F.r.includes(null)) return;
+    const miss = F.r.filter(v => !v).length, n = F.n;
+    if (miss) addGroup(F.r.map(v => v ? null : { a: 'm1', q: S.q, p: n }).filter(Boolean), `LF #${n} : ${F.k - miss}/${F.k}`);
+    else toast(`LF #${n} : ${F.k}/${F.k} ✓`);
+    ui.ft = null;
+    ui.sel = null;
+    // Dernier lancer raté : il y a un rebond
+    if (F.r[F.k - 1] === false) ui.rebBar = true;
+  },
+  ftx: () => { ui.ft = null; },
+  // Ballons gagnés : à l'équipe, le joueur sélectionné n'y est pour rien
+  wonopen: () => { ui.won = true; ui.ft = null; },
+  wonx: () => { ui.won = false; },
+  // Réponse au rebond depuis la barre : nous, eux, ou personne (sans action). Fin du mode dynamique.
   rbar: el => {
     const a = el.dataset.a;
     ui.rebBar = false;
+    ui.dyn = null;
     if (!a) return;
     const ev = { a, q: S.q };
     if (a === 'ro') ev.p = '__team';
     addEvent(ev);
-    holdLock();
   },
-  lockoff: () => { dropLock(); },
-  // Bascule entre les actions courantes et les autres, sans changer la hauteur du bloc
-  actmore: el => { ui.actAll = !!el.dataset.v; },
   // Boutons directs des équipes (rebonds, ballons gagnés)
   tact: el => {
     const a = el.dataset.a, ev = { a, q: S.q };
     if (a !== 'orb' && a !== 'odr') ev.p = '__team';
     ui.sel = null;
+    ui.won = false;
+    ui.dyn = null; // un rebond saisi en haut répond aussi au mode dynamique
     addEvent(ev);
-    holdLock(); // un rebond saisi à la main compte comme une activité : le verrou ne s'éteint pas
   },
   mopt: el => { const f = chosen(+el.dataset.i); if (f) f(); },
   undo: () => {
     if (!S.ev.length) return false;
     const u = S.ev.pop();
-    toast('Annulé : ' + evText(u));
+    // Les événements saisis ensemble (rebond + tir, lancers francs) s'annulent ensemble
+    let more = 0;
+    while (u.g && S.ev.length && S.ev[S.ev.length - 1].g === u.g) { S.ev.pop(); more++; }
+    toast('Annulé : ' + evText(u) + (more ? ` (+${more})` : ''));
     save();
   },
   'q+': () => { S.q++; save(); },
@@ -642,13 +654,13 @@ document.addEventListener('click', e => {
   const el = e.target.closest('[data-x]');
   if (!el) {
     // Toucher en dehors du menu d'actions le ferme.
-    if (ui.sel && !e.target.closest('.bar')) { ui.sel = null; render(); }
+    if (ui.sel && !e.target.closest('.bar, .actbar')) { ui.sel = null; render(); }
     return;
   }
   const x = el.dataset.x, f = ACTIONS[x];
   // Menu d'actions ouvert : toucher un bouton en dehors (équipe, période, annuler…) ne fait que fermer le menu,
   // pour ne pas ajouter une action par erreur. Toucher un autre joueur change de joueur.
-  if (ui.sel && x !== 'pl' && !el.closest('.bar') && !el.closest('#modal')) { ui.sel = null; render(); return; }
+  if (ui.sel && x !== 'pl' && !el.closest('.bar, .actbar') && !el.closest('#modal')) { ui.sel = null; render(); return; }
   // Bénévole d'un club : saisie seulement (les règles Firestore l'imposent aussi).
   if (!canEdit() && EDIT_ONLY.includes(x) && !(MATCH_EDIT.includes(x) && canEditMatch(curG()))) { note('Réservé aux coachs et responsables du club.'); return; }
   if (!f || f(el) === false) return;

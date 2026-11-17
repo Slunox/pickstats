@@ -1,70 +1,100 @@
-// Écran de saisie à l'essai : « action verrouillée » (Réglages › Écran de saisie).
+// Écran de saisie à l'essai : « mode dynamique » (Réglages › Écran de saisie).
 // play.js, le classique, ne bouge pas : c'est lui que pilote la démo.
 //
-// Le pari : dans une mêlée, ce qui se répète n'est pas le joueur, c'est l'action.
-// Trois tirs ratés d'affilée, ce sont trois joueurs différents et une seule action. On verrouille
-// donc l'action une fois, et la grille des joueurs devient la surface de saisie : un tir = un appui,
-// avec son auteur, donc les pourcentages individuels sont préservés.
+// On touche le joueur, puis son action, comme dans le classique. Mais après un tir raté à 2 ou
+// 3 points, l'écran passe en **mode dynamique** : la barre du bas demande qui a pris le rebond
+// (nous, eux, personne), et tant qu'on n'a pas répondu, chaque joueur touché enregistre un
+// rebond offensif pour l'équipe et un nouveau tir raté pour lui. Une mêlée sous le panier,
+// c'est donc un appui par tir, avec son auteur. Un sélecteur 2 pts / 3 pts change le type de
+// tir en cours de route. Répondre au rebond fait sortir du mode.
 //
-// Deuxième changement, aussi important : la question du rebond est posée **dans la barre du bas**,
-// là où le doigt vient de se poser. Dans le classique, les boutons rebond sont en haut de l'écran
-// et la fenêtre au centre : le doigt traverse la tablette à chaque événement.
+// Les lancers francs (« LF ») : combien, puis marqué ou raté pour chacun. Si le dernier est
+// raté, on demande le rebond. Seuls les ratés sont enregistrés, comme pour les autres tirs :
+// les paniers marqués viennent de la feuille e-Marque.
 //
-// Un mode verrouillé oublié enregistrerait de faux événements, ce qui est pire que d'en perdre.
-// D'où le traitement visuel appuyé, le bouton « Terminer » pleine largeur, et le relâchement
-// automatique après un long silence (voir holdLock dans actions.js).
+// Un mode dynamique oublié enregistrerait de faux tirs : il est donc très visible (contour des
+// joueurs qui pulse) et reste allumé jusqu'à la réponse au rebond, sans minuterie.
 
 import { S, ui } from '../state.js';
-import { ACTS, WON, SG, TEAM_REB, OPP_REB, LBL } from '../constants.js';
+import { ACTS, WON, SG, TEAM_REB, OPP_REB } from '../constants.js';
 import { esc, qLabel } from '../util.js';
 import { allP, tally, cnt, roster1, evText, statsMode, lastAction, shortNames, myColor, oppColor, isLight, colorVars } from '../model.js';
 
-// Les trois actions qui reviennent sans arrêt dans une mêlée, dans cet ordre.
-const HOT = ['m2', 'm3', 'stl'];
 const BY = Object.fromEntries(ACTS.map(a => [a[0], a]));
+// Les actions du joueur sélectionné, sur deux rangées de quatre ; la dernière case est pour
+// les ballons gagnés, qui sont à l'équipe et n'ont pas besoin de joueur.
+const ROW1 = [BY.m2, BY.m3, ['lf', 'LF', 'r'], BY.stl];
+const ROW2 = [BY.fd, BY.to, BY.trav];
+// Points de césure pour les libellés longs, qui doivent tenir sur quatre colonnes de téléphone.
+const SOFT = { stl: 'Inter&shy;ception', fd: 'Faute pro&shy;voquée' };
 
-// Le bloc d'actions, en bas. Il reprend le langage des groupes d'équipe du haut — une légende
-// puis une rangée de boutons, sur fond clair — au lieu du panneau sombre arrondi de la v1 :
-// celui-ci se lit comme une feuille modale, ce qui va quand il est fugace mais devient pesant
-// quand il reste ouvert en permanence. Trois états : rebond à répondre, action verrouillée, actions.
+// Ballon de basket pour les lancers francs : vide (à dire), vert (marqué) ou rouge (raté).
+const ball = (i, v) => `<svg class="ftball${v === true ? ' in' : v === false ? ' out' : ''}" viewBox="0 0 48 48" aria-hidden="true">
+  <circle cx="24" cy="24" r="21"/><path d="M3 24h42M24 3v42M9 9c8 7 8 23 0 30M39 9c-8 7-8 23 0 30"/>
+  <text x="24" y="25">${v === true ? '✓' : v === false ? '✗' : i + 1}</text></svg>`;
+
+function playerName(n) {
+  const p = roster1(n);
+  return `#${esc(p.n)} ${esc(shortNames(allP())[p.n] || p.name)}`;
+}
+
+// Les trois réponses au rebond, en couleurs d'équipe.
+const rebButtons = () => `<div class="acts t3">
+    <button class="tc${isLight(myColor()) ? ' lt' : ''}" style="${colorVars(myColor())}" data-x="rbar" data-a="ro">${esc(S.me)}<small>Rebond offensif</small></button>
+    <button class="tc${isLight(oppColor()) ? ' lt' : ''}" style="${colorVars(oppColor())}" data-x="rbar" data-a="odr">${esc(S.opp)}<small>Rebond défensif</small></button>
+    <button class="no" data-x="rbar" data-a="">Personne<small>Dehors, faute…</small></button>
+  </div>`;
+
+// Le bloc du bas. États : mode dynamique, rebond après un LF, lancers francs, ballons gagnés, actions.
 function actbar() {
-  if (ui.rebBar) {
-    return `<div class="actbar reb"><div class="in">
+  if (ui.dyn) {
+    return `<div class="actbar fix dyn"><div class="in">
+      <div class="dynrow"><span><b>Tir raté</b> · touche le joueur qui retente</span>
+        <div class="shot" role="group" aria-label="Type de tir">${[['m2', '2 pts'], ['m3', '3 pts']].map(([a, l]) =>
+          `<button class="${ui.dyn === a ? 'on' : ''}" data-x="dynsw" data-a="${a}" aria-pressed="${ui.dyn === a}">${l}</button>`).join('')}</div></div>
       <small>Qui a pris le rebond ?</small>
-      <div class="acts t3">
-        <button class="n" data-x="rbar" data-a="ro">${esc(S.me)}<small>Rebond offensif</small></button>
-        <button class="f" data-x="rbar" data-a="odr">${esc(S.opp)}<small>Rebond défensif</small></button>
-        <button data-x="rbar" data-a="">Personne<small>Dehors, faute…</small></button>
-      </div>
+      ${rebButtons()}
     </div></div>`;
   }
-  if (ui.lock) {
-    return `<div class="actbar lock"><div class="in">
-      <div class="lockrow"><b>${esc(LBL[ui.lock] || ui.lock)}</b><span>touche les joueurs</span>
-      <button class="btn alt" data-x="lockoff">Terminer</button></div>
+  if (ui.rebBar) {
+    return `<div class="actbar fix reb"><div class="in"><small>Qui a pris le rebond ?</small>${rebButtons()}</div></div>`;
+  }
+  if (ui.ft) {
+    const F = ui.ft;
+    if (!F.k) {
+      return `<div class="actbar fix"><div class="in">
+        <small><span>Lancers francs de <b>${playerName(F.n)}</b></span><button class="lk" data-x="ftx">Annuler</button></small>
+        <div class="acts t3">${[1, 2, 3].map(k => `<button class="r ftk" data-x="ftn" data-v="${k}">${k}<small>lancer${k > 1 ? 's' : ''}</small></button>`).join('')}</div>
+      </div></div>`;
+    }
+    return `<div class="actbar fix"><div class="in">
+      <small><span>Lancers francs de <b>${playerName(F.n)}</b> : marqué ou raté ?</span><button class="lk" data-x="ftx">Annuler</button></small>
+      <div class="fts">${F.r.map((v, i) => `<div class="ft">${ball(i, v)}
+        <div class="ftb"><button class="n${v === true ? ' on' : ''}" data-x="ftr" data-i="${i}" data-v="1" aria-label="Lancer ${i + 1} marqué">✓</button>`
+        + `<button class="r${v === false ? ' on' : ''}" data-x="ftr" data-i="${i}" data-v="0" aria-label="Lancer ${i + 1} raté">✗</button></div></div>`).join('')}</div>
     </div></div>`;
   }
-  const p = ui.sel ? roster1(ui.sel) : null;
-  const nm = p ? (shortNames(allP())[p.n] || p.name) : '';
-  // Les trois actions qui reviennent sans arrêt passent devant ; les quatre autres sont derrière
-  // « + », qui les met à leur place au lieu d'ajouter une rangée. Le bloc garde donc la même
-  // hauteur dans les deux cas — une seule rangée, même sur un écran étroit.
-  const list = (ui.actAll ? ['fd', 'to', 'trav', 'm1'] : HOT).map(c => BY[c]);
-  const swap = ui.actAll
-    ? '<button class="more" data-x="actmore" data-v="" aria-label="Revenir aux actions courantes">‹</button>'
-    : '<button class="more" data-x="actmore" data-v="1" aria-label="Les autres actions">+</button>';
-  return `<div class="actbar"><div class="in">
-    <small>${p ? `Actions de <b>#${esc(p.n)} ${esc(nm)}</b>` : 'Touche un joueur, ou une action pour la verrouiller'}`
-    + `${p ? '<button class="lk" data-x="desel">Fermer</button>' : ''}</small>
-    <div class="acts" style="grid-template-columns:repeat(${list.length + 1},1fr)">
-      ${list.map(a => `<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')}${swap}
+  if (ui.won) {
+    return `<div class="actbar fix"><div class="in">
+      <small>Ballon gagné par l’équipe<button class="lk" data-x="wonx">Annuler</button></small>
+      <div class="acts t2">${WON.map(w => `<button class="n" data-x="tact" data-a="${w[0]}">${w[1]}</button>`).join('')}</div>
+    </div></div>`;
+  }
+  const btn = a => `<button class="${a[2]}" data-x="act" data-a="${a[0]}"${ui.sel ? '' : ' aria-disabled="true"'}>${SOFT[a[0]] || a[1]}</button>`;
+  return `<div class="actbar fix"><div class="in">
+    <small>${ui.sel ? `<span>Actions de <b>${playerName(ui.sel)}</b></span><button class="lk" data-x="desel">Fermer</button>` : 'Touche un joueur, puis son action'}</small>
+    <div class="acts t4 two${ui.sel ? '' : ' idle'}">
+      ${ROW1.map(btn).join('')}${ROW2.map(btn).join('')}
+      <button class="team" data-x="wonopen">Ballon gagné<small>Équipe</small></button>
     </div>
   </div></div>`;
 }
 
-const teamGroup = (title, list, label) => `<div class="tbg"><small>${title}</small><div class="tbs">`
+// Bloc d'équipe compact : « Rebonds » à gauche et le nom centré sur la même ligne, puis les deux boutons.
+const teamBlock = (cls, name, color, list, label) => `<div class="${cls}${isLight(color) ? ' lt' : ''}" style="${colorVars(color)}">
+    <div class="tbg"><div class="tbh"><small>Rebonds</small><div class="nm">${esc(name)}</div></div><div class="tbs">`
   + list.map(w => `<button class="tb" data-x="tact" data-a="${w[0]}" aria-label="Ajouter : ${label} ${w[1]}"><small><span class="tbp">+</span> ${w[1]}</small><b>${cnt(w[0], S.q)}</b></button>`).join('')
-  + '</div></div>';
+  + '</div></div></div>';
 
 function playerButton(p, r, stk, mode, nm) {
   let c = [];
@@ -74,7 +104,7 @@ function playerButton(p, r, stk, mode, nm) {
     if (e) c = SG.filter(k => k[0] === e.a);
   }
   const chips = c.length ? `<div class="sg">${c.map(k => `<span class="${k[2]}">${k[1]} ${r[k[0]]}</span>`).join('')}</div>` : '';
-  return `<button class="pl${stk ? ' st' : ''}${c.length ? '' : ' ns'}${ui.sel === p.n ? ' on' : ''}" data-x="pl" data-p="${esc(p.n)}">`
+  return `<button class="pl${stk ? ' st' : ''}${c.length ? '' : ' ns'}${ui.sel === p.n && !ui.dyn ? ' on' : ''}" data-x="pl" data-p="${esc(p.n)}">`
     + `<b>${esc(p.n)}</b><span>${esc(nm) || '&nbsp;'}</span>${chips}</button>`;
 }
 
@@ -83,12 +113,8 @@ export function playLock() {
   const stk = S.layout === 'stack', mode = statsMode(), shw = mode !== 'off';
   const last = S.ev[S.ev.length - 1], names = shortNames(allP());
 
-  return `<div class="top">
-    <div class="me${isLight(myColor()) ? ' lt' : ''}" style="${colorVars(myColor())}">
-      <div class="nm">${esc(S.me)}</div>
-      ${teamGroup('Rebonds', TEAM_REB, 'Rebond')}
-      ${teamGroup('Ballons gagnés', WON, 'Ballon gagné')}
-    </div>
+  return `<div class="top slim">
+    ${teamBlock('me', S.me, myColor(), TEAM_REB, 'Rebond')}
     <div class="mid">
       <div class="q">
         <button data-x="q-" aria-label="Période précédente">‹</button>
@@ -100,13 +126,10 @@ export function playLock() {
         <button class="undo hb" data-x="view" data-v="hist">Historique</button>
       </div>
     </div>
-    <div class="opp${isLight(oppColor()) ? ' lt' : ''}" style="${colorVars(oppColor())}">
-      <div class="nm">${esc(S.opp)}</div>
-      ${teamGroup('Rebonds', OPP_REB, 'Rebond adverse')}
-    </div>
+    ${teamBlock('opp', S.opp, oppColor(), OPP_REB, 'Rebond adverse')}
   </div>
   ${shw ? `<div class="qnote">Stats du quart en cours : ${qLabel(S.q)}</div>` : ''}
-  <div class="grid${stk ? ' stk' : ''}${ui.lock ? ' lock' : ''}">
+  <div class="grid${stk ? ' stk' : ''}${ui.dyn ? ' lock' : ''}">
     ${allP().filter(p => p.in).map(p => playerButton(p, T[p.n], stk, mode, names[p.n])).join('')}
   </div>
   ${actbar()}`;

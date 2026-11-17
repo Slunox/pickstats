@@ -2,11 +2,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;-webkit-user-select:none;user-select:none}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
-/* La réserve du bas ne sert qu'à la barre d'actions flottante de la saisie : elle n'est posée
-   que sur cet écran-là (data-bar, voir render.js). Ailleurs, c'était 220 px de vide sur chaque
-   écran — très visible au bout d'un long document comme le dossier de match. */
 #app{max-width:1100px;margin:0 auto;padding:10px 12px 14px}
-html[data-bar="fixed"] #app{padding-bottom:220px}
 nav{display:flex;gap:6px;margin-bottom:10px}
 nav button{flex:1;padding:12px;border-radius:10px;background:var(--card);font-weight:700}
 nav button.on{background:var(--dk);color:#fff}
@@ -43,10 +39,8 @@ nav button.on{background:var(--dk);color:#fff}
 .pl i{font-style:normal;font-size:.85rem;color:var(--mut)}
 .pl.on{border-color:var(--ink);background:var(--sel)}
 .last{margin-top:12px;color:var(--mut);text-align:center}
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--dk);color:#fff;border-radius:24px 24px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.25);padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
-.bar .in{max-width:1100px;margin:0 auto}
-.who{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:1.1rem}
-.who button{padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff}
+.who{display:flex;justify-content:space-between;align-items:center;min-height:26px;margin:0 0 6px 2px;font-weight:700;font-size:1.1rem;color:var(--ink)}
+.who button{padding:6px 12px;border-radius:8px;background:var(--bg);color:var(--ink);font-weight:700;font-size:.9rem}
 /* --- Écran de saisie à l'essai : action verrouillée (playlock.js) --- */
 /* Le bloc d'actions reste affiché en permanence. Il reprend donc le langage des groupes d'équipe
    du haut — légende puis rangée de boutons, sur fond clair — et garde sa place dans la page plutôt
@@ -60,30 +54,58 @@ html[data-bar="flow"] #app{padding-bottom:calc(10px + env(safe-area-inset-bottom
   background:var(--card);border-radius:16px;padding:10px 12px 12px;
   box-shadow:0 0 0 1px var(--line),0 4px 14px rgba(0,0,0,.14)}
 .actbar .in{max-width:1100px;margin:0 auto}
-.actbar>.in>small{display:flex;align-items:center;gap:10px;font-size:.78rem;font-weight:700;color:var(--mut);margin:0 0 6px 2px}
+.actbar>.in>small{display:flex;align-items:center;min-height:26px;gap:10px;font-size:.78rem;font-weight:700;color:var(--mut);margin:0 0 6px 2px}
 .actbar .lk{margin-left:auto;padding:4px 10px;border-radius:8px;background:var(--bg);color:var(--ink);font-weight:700;font-size:.8rem}
 /* Les libellés sont longs ; à quatre ou cinq colonnes ils doivent pouvoir se couper. */
 .actbar .acts button{color:#16242C;font-size:1rem;padding:4px 6px;overflow-wrap:anywhere;hyphens:auto}
-.actbar .acts .more{background:var(--bg);color:var(--mut);font-size:1.8rem;font-weight:700}
 @media(max-width:700px){.actbar .acts button{font-size:.88rem}}
-/* Le rebond se répond ici, sous le doigt, au lieu d'une fenêtre au centre de l'écran. */
+.actbar .acts small{display:block;font-weight:600;font-size:.78rem;opacity:.75;margin-top:2px}
+/* Toutes les actions visibles : deux rangées de quatre, à toutes les largeurs. Sans joueur
+   choisi, celles du joueur sont estompées ; « Ballon gagné » (à l'équipe) reste vif. */
+.actbar .acts.two{grid-template-columns:repeat(4,1fr)}
+.actbar .acts.two button{min-height:56px;line-height:1.15;overflow-wrap:normal}
+.actbar .acts.idle button:not(.team){opacity:.45}
+.actbar .acts .team{background:var(--bg);color:var(--ink);box-shadow:inset 0 0 0 2px #7BC795}
+/* Le rebond se répond ici, sous le doigt, au lieu d'une fenêtre au centre de l'écran,
+   avec les couleurs des maillots. « Personne » prend le fond du thème, donc son texte aussi. */
 .acts.t3{grid-template-columns:repeat(3,1fr)}
-.actbar.reb .acts button{min-height:72px;line-height:1.15}
-.actbar.reb .acts small{display:block;font-weight:600;font-size:.78rem;opacity:.75;margin-top:2px}
-/* « Personne » est le seul bouton d'action sans fond pastel : son fond suit le thème, donc son
-   texte aussi. Les autres gardent l'encre foncée, leurs pastels étant clairs dans les deux thèmes. */
-.actbar.reb .acts button:not(.n):not(.f){background:var(--bg);color:var(--ink)}
-/* Verrouillé : il faut que ça saute aux yeux, sinon on enregistre de faux événements. */
-.actbar.lock{background:var(--lk,var(--a));box-shadow:0 0 0 1px var(--lk,var(--a)),0 4px 14px rgba(0,0,0,.2)}
-/* En sombre, le bleu du thème laisse le texte blanc à 4,47 — juste sous le seuil lisible.
-   Ce bandeau porte le seul moyen de quitter le mode : on l'assombrit un peu, ici seulement. */
-html[data-theme="dark"] .actbar.lock{--lk:#246E92}
-.lockrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#fff;min-height:52px}
-.lockrow b{font-size:1.15rem}
-.lockrow span{opacity:.85}
-.lockrow .btn{margin:0 0 0 auto;background:#fff;color:var(--a);border-color:#fff}
-.grid.lock .pl{border-color:var(--a)}
-.grid.lock .pl b{color:var(--a)}
+.actbar.reb .acts button,.actbar.dyn .acts button{min-height:68px;line-height:1.15}
+.actbar .acts .tc{background:var(--c);color:var(--ct,#fff)}.actbar .acts .tc.lt{box-shadow:inset 0 0 0 1px var(--line)}
+.actbar .acts .tc{overflow:hidden;text-overflow:ellipsis}
+.actbar .acts .no{background:var(--bg);color:var(--ink)}
+/* Mode dynamique : il faut que ça saute aux yeux, sinon on enregistre de faux tirs. */
+.actbar.dyn{box-shadow:0 0 0 3px #E0796B,0 4px 14px rgba(0,0,0,.2)}
+.dynrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 8px}
+.dynrow>span{font-size:.95rem}.dynrow b{font-size:1.1rem}
+.shot{display:inline-flex;flex:none;margin-left:auto;border-radius:10px;background:var(--bg);padding:3px;gap:3px}
+.shot button{flex:none;white-space:nowrap;width:auto;padding:8px 16px;border-radius:8px;font-weight:800;color:var(--mut);min-height:40px}
+.shot button.on{background:#F5C6C0;color:#16242C}
+/* Mode dynamique : le contour des joueurs pulse, pour qu’on ne l’oublie pas allumé. */
+.grid.lock .pl{border-color:#E0796B;animation:lockpulse 1.3s ease-in-out infinite}
+@keyframes lockpulse{0%,100%{border-color:#E0796B;box-shadow:0 2px 0 rgba(0,0,0,.08),0 0 0 0 rgba(224,121,107,0)}50%{border-color:#C4473A;box-shadow:0 2px 0 rgba(0,0,0,.08),0 0 0 5px rgba(224,121,107,.45)}}
+@media (prefers-reduced-motion:reduce){.grid.lock .pl{animation:none}}
+.grid.lock .pl b{color:#C4473A}
+html[data-theme="dark"] .grid.lock .pl b{color:#F09A8E}
+/* Lancers francs : un ballon par lancer, marqué (vert) ou raté (rouge) à dire en dessous. */
+.actbar .acts .ftk{font-size:1.6rem;min-height:64px;line-height:1}
+.fts{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.ft{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ftball{width:52px;height:52px}
+.ftball circle{fill:#F2A65A;stroke:#7A3E12;stroke-width:2}
+.ftball path{fill:none;stroke:#7A3E12;stroke-width:1.6;opacity:.55}
+.ftball text{font:900 17px system-ui,sans-serif;fill:#3B1D07;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#F2A65A;stroke-width:5px}
+.ftball.in circle{fill:#7BC795;stroke:#1F6B3A}.ftball.in path{stroke:#1F6B3A}.ftball.in text{fill:#0F3D20;stroke:#7BC795}
+.ftball.out circle{fill:#F09A8E;stroke:#8A2A1F}.ftball.out path{stroke:#8A2A1F}.ftball.out text{fill:#5A140C;stroke:#F09A8E}
+.ftb{display:flex;gap:6px}
+.ftb button{width:52px;height:46px;border-radius:10px;font-size:1.3rem;font-weight:900;color:#16242C;opacity:.8}
+.ftb .n{background:#BDE7C9}.ftb .r{background:#F5C6C0}
+.ftb button.on{opacity:1;box-shadow:inset 0 0 0 3px #16242C}
+/* Haut de l'écran à l'essai : « Rebonds » et le nom de l'équipe sur une ligne, les boutons dessous. */
+.top.slim .me,.top.slim .opp{padding:6px 10px 10px}
+.top.slim .tbh{display:grid;grid-template-columns:1fr minmax(0,auto) 1fr;align-items:center;gap:8px;margin-bottom:4px}.top.slim .tbh>small{font-size:.75rem;font-weight:700;opacity:.9;text-align:left}
+.top.slim .nm{text-align:center;font-size:1.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.top.slim .tbg{margin:0}
+.top.slim .tb{min-height:52px}.top.slim .tb small{font-size:.9rem}.top.slim .tb b{font-size:1.5rem}
 .acts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.acts.t4{grid-template-columns:repeat(4,1fr)}.acts.t2{grid-template-columns:repeat(2,1fr)}.acts.t6{grid-template-columns:repeat(6,1fr)}
 .acts button{min-height:64px;border-radius:10px;font-weight:800;font-size:1.05rem;color:#16242C}
 .acts .n{background:#BDE7C9}.acts .r{background:#F5C6C0}.acts .f{background:#F6D98B}
@@ -485,3 +507,14 @@ details.cdanger summary{cursor:pointer;color:#B42318;font-weight:700;padding:6px
 html[data-theme="dark"] details.cdanger summary,html[data-theme="dark"] .cdanger h2{color:#FF8A80}
 .gtoval{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#FDECC8;color:#7A4B00;font-weight:700}
 html[data-theme="dark"] .gtoval{background:#4A3A14;color:#FFE1A3}
+/* Écran à l'essai : la barre du bas garde la même hauteur quel que soit son état (actions,
+   rebond, lancers francs, ballons gagnés), pour que rien ne saute sous le doigt. Chaque état
+   remplit la hauteur de la barre d'actions : deux rangées de boutons sous l'en-tête. */
+.actbar.fix>.in{min-height:152px;display:flex;flex-direction:column}
+.actbar.fix>.in>.acts{flex:1}
+.actbar.fix .acts button,.actbar.fix.reb .acts button,.actbar.fix.dyn .acts button{min-height:52px}
+.actbar.fix.dyn .dynrow{margin-bottom:2px}
+.actbar.fix .fts{flex:1;align-items:center;gap:12px;flex-wrap:nowrap}
+.actbar.fix .ftb button{width:44px;height:44px}
+.actbar.fix .ftball{width:46px;height:46px}
+.actbar.fix.dyn .dynrow{flex-wrap:nowrap}.actbar.fix.dyn .dynrow>span{flex:1;min-width:0;line-height:1.2}

@@ -9,7 +9,7 @@ import { allP, tally, cnt, roster1, evText, statsMode, lastAction, shortNames, m
 function actionBar() {
   if (!ui.sel) return '';
   const p = roster1(ui.sel), nm = shortNames(allP())[p.n] || p.name;
-  return `<div class="bar"><div class="in">
+  return `<div class="bar actbar"><div class="in">
     <div class="who"><span>#${esc(p.n)} ${esc(nm)}</span><button data-x="desel">Fermer</button></div>
     <div class="acts t4">
       ${ACTS.map(a => `<button class="${a[2]}" data-x="act" data-a="${a[0]}">${a[1]}</button>`).join('')}

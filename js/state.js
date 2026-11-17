@@ -79,8 +79,9 @@ export function withMatch(m, f) {
 export const ui = {
   view: 'home',   // écran affiché
   sel: null,      // numéro du joueur sélectionné sur la saisie
-  lock: null,     // action verrouillée : chaque joueur touché l'enregistre (essai, voir Réglages)
-  actAll: false,  // bloc d'actions déplié sur les actions les moins courantes
+  dyn: null,      // mode dynamique (essai) : 'm2' ou 'm3', chaque joueur touché retente ce tir après un rebond offensif
+  ft: null,       // lancers francs en cours de saisie (essai) : { n: joueur, k: nombre, r: [marqué ?] }
+  won: false,     // la barre du bas propose les ballons gagnés (essai)
   rebBar: false,  // la barre du bas demande qui a pris le rebond du tir qu'on vient de saisir
   tid: null,      // équipe en cours de modification
   tnew: null,     // équipe tout juste créée

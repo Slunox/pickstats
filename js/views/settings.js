@@ -31,9 +31,9 @@ export function settings() {
       <p class="help">Toutes : les stats non nulles du quart en cours. La dernière : seulement la dernière action saisie pour le joueur dans le quart en cours, avec son total sur le quart. Int : interceptions, FP : fautes provoquées, BP : balles perdues, Mar : marchers, ✗ : tirs ratés.</p>
     </div>`
     + `<div class="card"><h2>Écran de saisie</h2>
-      ${choice('entry', 'v', [['1', 'Classique'], ['lock', 'Action verrouillée']], S.entry === 'lock' ? 'lock' : '1')}
+      ${choice('entry', 'v', [['1', 'Classique'], ['lock', 'Mode dynamique']], S.entry === 'lock' ? 'lock' : '1')}
       <p class="help"><b>Classique</b> : l’écran habituel. On touche le joueur, puis son action ; après un tir raté, une fenêtre demande qui a pris le rebond.</p>
-      <p class="help"><b>Action verrouillée</b> : à l’essai, pour les mêlées. Touche une action <b>sans choisir de joueur</b> et elle se verrouille : chaque joueur touché ensuite enregistre cette action, soit <b>un seul appui par tir</b>, avec son auteur. « Terminer » déverrouille, et le mode s’éteint tout seul après un long silence. Le rebond, lui, se demande en bas de l’écran, sous le doigt, au lieu d’une fenêtre au centre.</p>
+      <p class="help"><b>Mode dynamique</b> : à l’essai, pour les mêlées. Après un tir raté à 2 ou 3 points, le bas de l’écran demande qui a pris le rebond ; en attendant, chaque joueur touché enregistre un <b>rebond offensif et un nouveau tir raté</b> pour lui, en un seul appui (2 pts ou 3 pts au choix). Répondre au rebond fait sortir du mode. « LF » : choisis le nombre de lancers, puis dis pour chacun s’il est marqué ou raté. Les ballons gagnés sont dans la barre du bas.</p>
       <p class="help">Dis-nous ce que ça donne en match : à terme il n’en restera qu’un.</p>
     </div>`
     + match
