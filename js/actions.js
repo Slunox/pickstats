@@ -39,7 +39,6 @@ function emRead(m, reading) {
     const ours = [cloud.club && cloud.club.name, S.clubName, m.me].filter(Boolean);
     ui.em = { gid: m.id, data: d, side: guessSide(d, { ours, opp: m.opp, nums: (m.roster || []).map(p => p.n) }) };
     ui.view = 'emcheck';
-    window.scrollTo(0, 0);
   }).catch(e => {
     note(e && e.message && /e-Marque|PDF/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
   }).finally(() => { ui.emBusy = false; render(); });
@@ -258,7 +257,8 @@ const ACTIONS = {
     ask('Retirer la feuille e-Marque de ce match ? Les stats saisies restent.', 'Retirer', () => { delete m.em; save(); }, true);
     return false;
   },
-  rpopen: () => { ui.view = 'report'; ui.rp = 'resume'; window.scrollTo(0, 0); },
+  rpopen: () => { ui.view = 'report'; ui.rp = 'resume'; },
+  // Page du dossier : l'écran ne change pas, c'est donc ici qu'on remonte en haut.
   rp: el => { ui.rp = el.dataset.v; window.scrollTo(0, 0); },
   // Dossier du match : partagé par la feuille de partage du système, ou gardé en fichier.
   // Le dossier est fabriqué d'un bloc, sans attente, pour rester dans le geste (voir shareFile).
@@ -275,7 +275,7 @@ const ACTIONS = {
     return false;
   },
   // Feuille e-Marque recr\u00e9\u00e9e : \u00e9cran, fichier HTML, impression (PDF)
-  emsopen: () => { ui.view = 'emsheet'; window.scrollTo(0, 0); },
+  emsopen: () => { ui.view = 'emsheet'; },
   emsfile: () => {
     const m = curG();
     if (!m || !m.em) return false;

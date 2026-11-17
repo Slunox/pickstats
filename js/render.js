@@ -40,12 +40,19 @@ function nav() {
     + '</nav>';
 }
 
+// Dernier écran affiché : on remonte en haut quand on en change, et seulement là. Remonter à
+// chaque rendu ferait sauter la page à chaque action saisie pendant un match.
+let shown = null;
+
 export function render() {
   applyTheme();
   const inMatch = S.active && MATCH_VIEWS.includes(ui.view);
+  const moved = ui.view !== shown;
+  shown = ui.view;
   // La fenêtre du compte est recréée elle aussi : on garde l'endroit où elle était défilée.
   const sh = $('#app .sheet'), shTop = sh ? sh.scrollTop : 0;
   $('#app').innerHTML = (inMatch ? nav() : '') + (VIEWS[ui.view] || home)();
+  if (moved) window.scrollTo(0, 0);
   if (shTop) { const n = $('#app .sheet'); if (n) n.scrollTop = shTop; }
   // Filtres et palettes défilants sont recréés à chaque rendu : on garde le choix visible.
   document.querySelectorAll('.chips.scroll, .swatches.scroll').forEach(c => {
