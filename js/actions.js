@@ -45,7 +45,7 @@ function emRead(m, reading) {
 }
 
 function endMatch() {
-  S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.myColor = null; S.oppColor = null; S.roster = []; S.active = false; S.matchId = null;
+  S.ev = []; S.q = 1; S.opp = 'Adversaire'; S.myColor = null; S.oppColor = null; S.roster = []; S.active = false; S.matchId = null; S.court = [];
   ui.sq = 'all';
   dropLock();
 }
@@ -97,7 +97,7 @@ function startMatch() {
     S.oppColor = P.oppColor || null;
     S.teamId = t.id;
     S.roster = ch.map(r => ({ n: String(r.num).trim(), name: r.name, in: true, pid: r.id })).sort(cmpN);
-    S.ev = []; S.q = 1; S.active = true;
+    S.ev = []; S.q = 1; S.active = true; S.court = []; // court : joueurs sur le terrain (écran à l’essai)
     S.matchId = Date.now() * 1000 + Math.floor(Math.random() * 1000); // identifiant partagé avec les autres appareils
     ui.sel = null; ui.sq = 'all'; ui.P = null; ui.view = 'play';
     save();
@@ -258,6 +258,21 @@ const ACTIONS = {
   // Ballons gagnés : à l'équipe, le joueur sélectionné n'y est pour rien
   wonopen: () => { ui.won = !ui.won; ui.ft = null; ui.sel = null; },
   wonx: () => { ui.won = false; },
+  // Joueurs sur le terrain (essai) : le mode changements, où chaque joueur touché entre ou sort.
+  // Rien n'est enregistré dans le match pour l'instant : ça ne sert qu'à l'affichage de la grille.
+  subs: () => {
+    if (ui.dyn) { toast('Réponds d’abord au rebond'); return false; }
+    ui.subs = !ui.subs; ui.sel = null; ui.won = false; ui.ft = null; ui.rebBar = false;
+  },
+  sub: el => {
+    const n = el.dataset.p, c = S.court || (S.court = []), i = c.indexOf(n);
+    if (i >= 0) c.splice(i, 1);
+    else if (c.length >= 5) { toast('Déjà 5 sur le terrain : fais d’abord sortir un joueur'); return false; }
+    else c.push(n);
+    save();
+  },
+  subclr: () => { S.court = []; save(); },
+  subsx: () => { ui.subs = false; },
   // Réponse au rebond depuis la barre : nous, eux, ou personne (sans action). Fin du mode dynamique.
   rbar: el => {
     const a = el.dataset.a;

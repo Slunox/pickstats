@@ -84,6 +84,7 @@ export const ui = {
   dynN: 0,        // mode dynamique : nombre de tirs ratés enchaînés
   ft: null,       // lancers francs en cours de saisie (essai) : { n: joueur, k: nombre, r: [marqué ?] }
   won: false,     // la bulle des ballons gagnés est ouverte (essai)
+  subs: false,    // mode changements : on touche les joueurs qui entrent ou sortent (essai)
   rebBar: false,  // la barre du bas demande qui a pris le rebond du tir qu'on vient de saisir
   tid: null,      // équipe en cours de modification
   tnew: null,     // équipe tout juste créée

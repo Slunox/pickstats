@@ -569,3 +569,39 @@ html[data-theme="dark"] .gtoval{background:#4A3A14;color:#FFE1A3}
   .top.slim .wonpop{left:0;right:auto;width:calc(100vw - 24px)}
   .top.slim .wonw.open::after{left:calc(100% - 6px - (100% - 22px) / 6)}
 }
+/* Joueurs sur le terrain (écran à l'essai). La ligne au-dessus de la grille porte le bouton. */
+.qnote.crow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px}
+.subsbtn{flex:none;padding:7px 12px;border-radius:999px;background:var(--card);color:var(--ink);font-weight:700;font-size:.85rem;box-shadow:0 0 0 1px var(--line)}
+.subsbtn.on{background:var(--dk);color:#fff;box-shadow:none}
+/* Sur le terrain : cinq en grand, sur une ligne à partir de la tablette. */
+@media(min-width:561px){.grid.court,.grid.court.stk{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.grid.court .pl{min-height:84px}
+/* Le banc : en petit, toujours touchable. */
+.bench{margin-top:12px}
+.bench>small{display:block;color:var(--mut);font-size:.78rem;font-weight:700;margin:0 0 6px 2px}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.pl.bn{min-height:44px;padding:4px 10px;border-width:2px;grid-template-columns:auto minmax(0,1fr);column-gap:8px;box-shadow:none;opacity:.85}
+.pl.bn b{grid-row:1;grid-column:1;font-size:1.35rem}.pl.bn>span{grid-row:1;grid-column:2}
+.pl.bn span{font-size:.85rem}
+.pl.bn.on{opacity:1}
+.bench.lock .pl{border-color:#E0796B;animation:lockpulse 1.3s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.bench.lock .pl{animation:none}}
+/* Mode changements : les joueurs sur le terrain cochés, les autres estompés. */
+.grid.subs .pl{position:relative;opacity:.55}
+.grid.subs .pl.oncourt{opacity:1;border-color:var(--ink);background:var(--sel)}
+.grid.subs .pl.oncourt::after{content:'✓';position:absolute;top:6px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--card);font-size:.8rem;font-weight:900;display:flex;align-items:center;justify-content:center}
+.actbar.subsbar .subshelp{margin:0 2px 8px;font-size:.9rem;color:var(--ink);line-height:1.35}
+.actbar .subsok{grid-column:1/-1;font-size:1.1rem}
+.actbar.subsbar .acts{grid-template-columns:1fr}
+.actbar .lk[disabled]{opacity:.4}
+/* Téléphone : le terrain sur trois colonnes, numéro au-dessus du nom, pour que le banc reste
+   visible au-dessus de la barre d'actions. */
+@media(max-width:560px){
+  .grid.court,.grid.court.stk{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .grid.court .pl{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;min-height:70px;padding:6px 4px}
+  .grid.court .pl b{font-size:2rem;line-height:1}
+  .grid.court .pl>span{font-size:.8rem;max-width:100%}
+  .grid.court .pl .sg{justify-content:center}
+  .bgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .pl.bn{padding:4px 8px}
+}
