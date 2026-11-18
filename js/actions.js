@@ -97,7 +97,7 @@ function startMatch() {
     S.oppColor = P.oppColor || null;
     S.teamId = t.id;
     S.roster = ch.map(r => ({ n: String(r.num).trim(), name: r.name, in: true, pid: r.id })).sort(cmpN);
-    S.ev = []; S.q = 1; S.active = true; S.court = []; // court : joueurs sur le terrain (écran à l’essai)
+    S.ev = []; S.q = 1; S.active = true; S.court = []; // court : joueurs sur le terrain
     S.matchId = Date.now() * 1000 + Math.floor(Math.random() * 1000); // identifiant partagé avec les autres appareils
     ui.sel = null; ui.sq = 'all'; ui.P = null; ui.view = 'play';
     save();
@@ -258,7 +258,7 @@ const ACTIONS = {
   // Ballons gagnés : à l'équipe, le joueur sélectionné n'y est pour rien
   wonopen: () => { ui.won = !ui.won; ui.ft = null; ui.sel = null; },
   wonx: () => { ui.won = false; },
-  // Joueurs sur le terrain (essai) : le mode changements, où chaque joueur touché entre ou sort.
+  // Joueurs sur le terrain (les deux écrans de saisie) : le mode changements, où chaque joueur touché entre ou sort.
   // Rien n'est enregistré dans le match pour l'instant : ça ne sert qu'à l'affichage de la grille.
   subs: () => {
     if (ui.dyn) { toast('Réponds d’abord au rebond'); return false; }

@@ -569,7 +569,7 @@ html[data-theme="dark"] .gtoval{background:#4A3A14;color:#FFE1A3}
   .top.slim .wonpop{left:0;right:auto;width:calc(100vw - 24px)}
   .top.slim .wonw.open::after{left:calc(100% - 6px - (100% - 22px) / 6)}
 }
-/* Joueurs sur le terrain (écran à l'essai). La ligne au-dessus de la grille porte le bouton. */
+/* Joueurs sur le terrain (les deux écrans de saisie). La ligne au-dessus de la grille porte le bouton. */
 .qnote.crow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px}
 .subsbtn{flex:none;padding:7px 12px;border-radius:999px;background:var(--card);color:var(--ink);font-weight:700;font-size:.85rem;box-shadow:0 0 0 1px var(--line)}
 .subsbtn.on{background:var(--dk);color:#fff;box-shadow:none}

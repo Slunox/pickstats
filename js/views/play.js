@@ -4,9 +4,12 @@ import { S, ui } from '../state.js';
 import { ACTS, WON, SG, TEAM_REB, OPP_REB } from '../constants.js';
 import { esc, qLabel } from '../util.js';
 import { allP, tally, cnt, roster1, evText, statsMode, lastAction, shortNames, myColor, oppColor, isLight, colorVars } from '../model.js';
+import { playersBlock, subsBar } from './court.js';
 
 // Barre du bas avec les boutons d'action du joueur sélectionné.
 function actionBar() {
+  // Mode changements : la barre propose « Tout sortir » et « Terminé » (commun avec l'écran à l'essai)
+  if (ui.subs) return subsBar('bar actbar');
   if (!ui.sel) return '';
   const p = roster1(ui.sel), nm = shortNames(allP())[p.n] || p.name;
   return `<div class="bar actbar"><div class="in">
@@ -61,9 +64,6 @@ export function play() {
       ${teamGroup('Rebonds', OPP_REB, 'Rebond adverse')}
     </div>
   </div>
-  ${shw ? `<div class="qnote">Stats du quart en cours : ${qLabel(S.q)}</div>` : ''}
-  <div class="grid${stk ? ' stk' : ''}">
-    ${allP().filter(p => p.in).map(p => playerButton(p, T[p.n], stk, mode, names[p.n])).join('')}
-  </div>
+  ${playersBlock({ T, stk, mode, shw, names, button: playerButton })}
   ${actionBar()}`;
 }
