@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pick&amp;Stats – tests</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{--bg:#f6f7f5;--card:#fff;--ink:#1b2420;--mut:#5d6862;--line:#dfe3df;--ok:#15803D;--ko:#B91C1C;color-scheme:light}
+  @media (prefers-color-scheme:dark){:root{--bg:#121715;--card:#1a211e;--ink:#e7ece9;--mut:#9aa6a0;--line:#2c3531;--ok:#5cc28f;--ko:#f08a7e;color-scheme:dark}}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  main{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+  h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:0 0 10px}
+  .mut{color:var(--mut)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px}
+  .sum{font-size:18px;font-weight:700;margin:14px 0 0}.sum.ok{color:var(--ok)}.sum.ko{color:var(--ko)}
+  ul{list-style:none;margin:0;padding:0}
+  li{padding:5px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px}
+  li:first-child{border-top:0}
+  li b{font-weight:600}.ok>i{color:var(--ok)}.ko>i{color:var(--ko)}i{font-style:normal;font-weight:800}
+  pre{margin:4px 0 0;font-size:12px;white-space:pre-wrap;color:var(--ko)}
+  input[type=file]{margin:6px 0 10px}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}td,th{padding:4px 6px;border-top:1px solid var(--line);text-align:left}
+</style>
+</head>
+<body>
+<main>
+  <h1>Pick&amp;Stats – tests</h1>
+  <p class="mut">Page réservée au développement : elle vérifie la lecture des feuilles e-Marque et l’analyse du rapport.
+    À ouvrir après chaque modification de <code>js/emarque.js</code> ou de <code>js/views/report.js</code>. Elle ne modifie aucune donnée.</p>
+  <p class="sum" id="sum">Tests en cours…</p>
+
+  <div class="card"><h2>Tests automatiques</h2><p class="mut">Des données inventées qui imitent une feuille e-Marque, avec le résultat attendu.</p><ul id="auto"></ul></div>
+
+  <div class="card">
+    <h2>Vérifier une vraie feuille</h2>
+    <p class="mut">Choisis le résumé e-Marque (« resume_… .pdf »), et si tu veux la feuille de marque (« feuillematch_… .pdf »).
+      On ne connaît pas le bon résultat d’avance : la page vérifie que tout ce qui est lu est cohérent (points = paniers,
+      somme des joueurs = total de l’équipe, mi-temps et quarts-temps = score final). Rien n’est enregistré ni envoyé.</p>
+    <input type="file" id="pdf" accept=".pdf,application/pdf" multiple>
+    <div id="real"></div>
+  </div>
+</main>
+
+<script type="module">
+import * as E from './js/emarque.js';
+import { timeline } from './js/views/report.js';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+let pass = 0, fail = 0;
+function check(list, name, got, want) {
+  const ok = same(got, want);
+  ok ? pass++ : fail++;
+  list.insertAdjacentHTML('beforeend', `<li class="${ok ? 'ok' : 'ko'}"><i>${ok ? '✓' : '✗'}</i><span><b>${esc(name)}</b>`
+    + (ok ? '' : `<pre>attendu : ${esc(JSON.stringify(want))}\nobtenu  : ${esc(JSON.stringify(got))}</pre>`) + '</span></li>');
+}
+function crash(list, name, e) {
+  fail++;
+  list.insertAdjacentHTML('beforeend', `<li class="ko"><i>✗</i><span><b>${esc(name)}</b><pre>${esc(e && e.stack || e)}</pre></span></li>`);
+}
+
+// Lignes d'une page PDF telles que les renvoie lines() : [{ y, toks: [{ x, s, w }] }], de haut en bas.
+// rows : une liste de lignes, chaque ligne une liste de [x, texte] (ou de textes, espacés de 40).
+const L = rows => rows.map((r, i) => ({ y: 800 - 12 * i, toks: r.map((t, j) => {
+  const [x, w] = Array.isArray(t) ? t : [20 + 40 * j, t];
+  return { x, x1: x + 10, y: 800 - 12 * i, w: String(w), s: String(w).replace(/ /g, '') };
+}) }));
+
+const A = $('auto');
+const T = (name, f, want) => { try { check(A, name, f(), want); } catch (e) { crash(A, name, e); } };
+
+// --- Résumé : tableaux des joueurs ---
+const team = (lbl, players, total, extra) => [[lbl], ...players, total, ...extra];
+const resume = L([
+  ...team('LOCAUX', [
+    ['4', 'DUPONT, Jean', '32:10', 12, 4, 1, 2, 1, 3, 2],
+    ['7', 'MARTIN, Paul', '28:00', 8, 3, 0, 2, 1, 2, 1],
+  ], ['Total', '200:00', 20, 7, 1, 4, 2, 5, 3],
+  [['Banc', 8, 3, 0, 2, 1, 2, 1], ['5 de départ', 12, 4, 1, 2, 1, 3, 2], ['1re mi-temps', 9, 3, 1, 1, 1, 0, 1], ['2e mi-temps', 11, 4, 0, 3, 1, 1, 2]]),
+  ...team('VISITEURS', [
+    ['10', 'DURAND, Léo', '40:00', 15, 6, 1, 3, 2, 0, 4],
+  ], ['Total', '200:00', 15, 6, 1, 3, 2, 0, 4],
+  [['Banc', 0, 0, 0, 0, 0, 0, 0], ['5 de départ', 15, 6, 1, 3, 2, 0, 4], ['1re mi-temps', 7, 3, 1, 1, 1, 0, 2], ['2e mi-temps', 8, 3, 0, 2, 1, 0, 2]]),
+]);
+let R = null;
+T('Résumé : deux équipes lues', () => { R = E.parseResume(resume); return R.length; }, 2);
+T('Résumé : joueurs des locaux', () => R[0].players.map(p => [p.n, p.name, p.min, p.pts, p.p3, p.p2i, p.p2e, p.lf, p.f]),
+  [['4', 'DUPONT, Jean', '32:10', 12, 1, 2, 1, 3, 2], ['7', 'MARTIN, Paul', '28:00', 8, 0, 2, 1, 2, 1]]);
+T('Résumé : total et mi-temps', () => [R[0].total.pts, R[0].halves, R[1].total.pts, R[1].halves, R[0].ot], [20, [9, 11], 15, [7, 8], 0]);
+T('Contrôle points = paniers (bonne ligne)', () => E.checkRow(R[0].players[0]), true);
+T('Contrôle points = paniers (ligne fausse)', () => E.checkRow({ ...R[0].players[0], pts: 13 }), false);
+
+// --- En-tête du résumé ---
+const head = L([
+  [[20, 'Départementale'], [300, 'Rencontre N°']],
+  [[20, 'masculine seniors'], [305, '1234']],
+  [[20, '- Division 2'], [300, 'Heure'], [360, '14:00']],
+  [[20, 'DM2'], [300, 'Poule'], [360, 'B']],
+  [[150, 'Équipe A'], [220, 'ES BLANQUEFORT - 1']],
+  [[150, 'Équipe B'], [220, 'BC DES PINS - 3']],
+  [[300, 'Lieu'], [360, 'SALLE DES SPORTS']],
+  [[20, 'LOCAUX'], [60, 'N°']],
+]);
+T('En-tête : rencontre, équipes, heure, poule, lieu, compétition', () => E.namesFromPage(head),
+  { num: '1234', a: 'ES BLANQUEFORT-1', b: 'BC DES PINS-3', cat: 'DM2', poule: 'B', time: '14:00', place: 'Salle Des Sports' });
+T('En-tête : numéro de rencontre juste à droite', () => E.namesFromPage(L([[[300, 'Rencontre N°'], [340, '8818']]])).num, '8818');
+T('En-tête : sans code, la compétition en toutes lettres', () => E.namesFromPage(L([[[20, 'Départementale']], [[20, 'masculine seniors']], [[20, 'LOCAUX']]])).cat,
+  'Départementale masculine seniors');
+T('Catégorie et sexe', () => E.levelOf(head), { cat: 'Sénior', sex: 'M' });
+T('Catégorie U15 féminine', () => E.levelOf(L([['Régionale féminine U15']])), { cat: 'U15', sex: 'F' });
+
+// --- Nom du fichier, ratios, marque courante ---
+T('Nom du fichier', () => E.namesFromFile('resume_0033_DM2_C_8818_EQUIPE_A-1_EQUIPE_B-3.pdf'), { num: '8818', a: 'EQUIPE A-1', b: 'EQUIPE B-3' });
+T('Page « Données et ratios »', () => E.parseRatios(L([['Avantage maximum', 12, 5], ['Série maximum', 8, 10], ['Points du banc', 20, 15], ['Égalités', 3]])),
+  { adv: [12, 5], run: [8, 10], bench: [20, 15], ties: 3 });
+const ev = [{ s: 2, n: '4', c: 'r' }, { s: 5, n: '7', c: 'r' }, { s: 6, n: '4', c: 'k' }, { s: 8, n: '7', c: 'k' }, { s: 10, n: '4', c: 'r' }, { s: 12, n: '4', c: 'k' }];
+T('Quarts-temps : découpage par couleur', () => E.periods(ev, 12).map(p => p.pts), [5, 3, 2, 2]);
+T('Quarts-temps : points par joueur', () => E.periods(ev, 12)[0].pl, { 4: { pts: 2, lf: 0, p2: 1, p3: 0 }, 7: { pts: 3, lf: 0, p2: 0, p3: 1 } });
+T('Quarts-temps : score final différent du résumé', () => E.periods(ev, 14), null);
+T('Quarts-temps : saut de 4 points refusé', () => E.periods([{ s: 4, n: '4', c: 'r' }], 4), null);
+T('Quarts-temps : prolongation séparée', () => E.periods([...ev, { s: 15, n: '7', c: 'k' }], 15, 3).map(p => p.pts), [5, 3, 2, 2, 3]);
+
+// --- Noms et dates ---
+T('Nom de joueur remis à l’endroit', () => E.playerName('SARRABAYROUSE, Antoine'), 'Antoine Sarrabayrouse');
+T('Nom d’équipe adverse lisible', () => E.oppName('BC DES PINS-3'), 'BC des Pins-3');
+T('Numéro d’équipe', () => E.teamSuffix('ENTENTE PESSAC BASKET CLUB-3'), '3');
+T('Date courte : juin et juillet distincts', () => [E.shortDate(new Date(2026, 5, 15)).split(' ')[2], E.shortDate(new Date(2026, 6, 15)).split(' ')[2]], ['juin', 'juil']);
+T('Ligne d’infos du match', () => E.matchInfo({ num: '1234', time: '14:00', cat: 'DM2', poule: 'B', place: 'Salle Des Sports' }, new Date(2026, 10, 15)),
+  'Rencontre n° 1234 · dim 15 nov 2026 à 14h00 · DM2 · Poule B · Salle Des Sports');
+
+// --- Enregistrement avec le match, et retour ---
+T('Feuille enregistrée puis relue (toEm → fromEm)', () => {
+  const d = { num: '1234', a: 'A', b: 'B', teams: R, quarters: null, ratios: null, cat: 'DM2', poule: 'B', time: '14:00', place: 'Salle' };
+  const back = E.fromEm({ ...E.toEm(d, 0), side: 0 });
+  return [back.teams[0].total.pts, back.teams[1].total.pts, back.teams[0].players.length, back.cat, back.time];
+}, [20, 15, 2, 'DM2', '14:00']);
+
+// --- Rapport : frise et séries ---
+const t0 = new Date(2026, 10, 15, 14, 0).getTime(), m = n => t0 + n * 60000;
+const at = (a, q, min, p = '4') => ({ a, q, p, t: m(min) });
+T('Frise : pas assez d’actions horodatées → pas de frise', () => timeline([at('to', 1, 1), at('m2', 1, 2)]), null);
+T('Frise : les actions sans heure sont ignorées', () => timeline([{ a: 'm2', q: 1, p: '4' }, ...[1, 2, 3, 4, 5, 6].map(i => at('stl', 1, i))]).Q[0].list.length, 6);
+const runsOf = list => timeline(list).runs.map(r => [r.k, r.q, r.n]);
+T('Série : 3 pertes en 3 minutes', () => runsOf([at('to', 1, 1), at('trav', 1, 2), at('to', 1, 3.5), at('stl', 1, 5), at('stl', 1, 6), at('m2', 1, 7)]), [['loss', 1, 3]]);
+T('Pas de série : 3 pertes étalées sur 5 minutes', () => runsOf([at('to', 1, 0), at('to', 1, 2.5), at('to', 1, 5), at('stl', 1, 6), at('m2', 1, 7), at('m3', 1, 8)]), []);
+T('Série : 6 tirs ratés en 3 minutes', () => runsOf([0, 0.5, 1, 1.5, 2, 2.5].map(x => at('m2', 2, x))), [['miss', 2, 6]]);
+T('Séries qui se chevauchent : une seule', () => runsOf([0, 1, 2, 3, 4].map(x => at('to', 3, x)).concat([at('m2', 3, 10)])), [['loss', 3, 5]]);
+T('Bonne série : 6 actions positives sur 8', () => runsOf(['stl', 'fd', 'm2', 'stl', 'w5', 'm3', 'wr', 'fd'].map((a, i) => at(a, 4, i))), [['pos', 4, 6]]);
+T('Séries par quart-temps, pas à cheval', () => runsOf([at('to', 1, 0), at('to', 1, 1), at('to', 2, 1.5), at('m2', 2, 5), at('m2', 2, 6), at('m2', 2, 7)]), []);
+
+const done = () => {
+  const s = $('sum');
+  s.className = 'sum ' + (fail ? 'ko' : 'ok');
+  s.textContent = fail ? `${fail} test${fail > 1 ? 's' : ''} en échec sur ${pass + fail}` : `Tout est bon : ${pass} tests réussis`;
+};
+done();
+
+// --- Vraie feuille : cohérence de ce qui est lu ---
+$('pdf').addEventListener('change', async ev => {
+  const out = $('real');
+  out.innerHTML = '<p class="mut">Lecture…</p>';
+  let d;
+  try { d = await E.readEmarque(ev.target.files); } catch (e) { out.innerHTML = `<p class="ko"><i>✗</i> ${esc(e.message || e)}</p>`; return; }
+  const ul = document.createElement('ul');
+  const sumPts = t => t.players.reduce((a, p) => a + p.pts, 0);
+  const C = (name, ok, detail = '') => {
+    ul.insertAdjacentHTML('beforeend', `<li class="${ok ? 'ok' : 'ko'}"><i>${ok ? '✓' : '✗'}</i><span><b>${esc(name)}</b>${detail ? ` <span class="mut">${esc(detail)}</span>` : ''}</span></li>`);
+  };
+  d.teams.forEach((t, i) => {
+    const who = i ? 'Visiteurs' : 'Locaux';
+    const bad = t.players.filter(p => !E.checkRow(p));
+    C(`${who} : points = paniers, pour chaque joueur`, !bad.length, bad.length ? 'à revoir : ' + bad.map(p => '#' + p.n).join(', ') : `${t.players.length} joueurs`);
+    C(`${who} : points = paniers, pour le total`, E.checkRow(t.total), `${t.total.pts} pts`);
+    C(`${who} : somme des joueurs = total`, sumPts(t) === t.total.pts, `${sumPts(t)} / ${t.total.pts}`);
+    if (t.halves) C(`${who} : mi-temps + prolongation = total`, t.halves[0] + t.halves[1] + (t.ot || 0) === t.total.pts, `${t.halves.join(' + ')}${t.ot ? ' + ' + t.ot : ''}`);
+    if (d.quarters) { const q = d.quarters[i].map(p => p.pts); C(`${who} : quarts-temps = total`, q.reduce((a, b) => a + b, 0) === t.total.pts, q.join(' + ')); }
+  });
+  C('En-tête lu (rencontre, équipes)', !!(d.num && d.a && d.b), [d.num, d.a, d.b].filter(Boolean).join(' · '));
+  if (!d.quarters) C('Score par quart-temps', false, 'feuille de marque absente ou illisible');
+  d.warn.forEach(w => C('Avertissement', false, w));
+  out.innerHTML = `<table><tr><th>Rencontre</th><td>${esc(d.num)}</td></tr><tr><th>Infos</th><td>${esc(E.matchInfo(d, new Date()).split(' · ').slice(2).join(' · ') || '–')}</td></tr>`
+    + `<tr><th>Score</th><td>${esc(d.a)} ${d.teams[0].total.pts} – ${d.teams[1].total.pts} ${esc(d.b)}</td></tr>`
+    + `<tr><th>Catégorie</th><td>${esc([d.level.cat, d.level.sex].filter(Boolean).join(' ') || '–')}</td></tr></table>`;
+  out.appendChild(ul);
+});
+</script>
+</body>
+</html>

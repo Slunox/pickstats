@@ -7,7 +7,7 @@ import { S, ui } from '../state.js';
 import { esc, fdate } from '../util.js';
 import { roster1, myInk, oppInk, seasonGames } from '../model.js';
 import { playerName, matchInfo } from '../emarque.js';
-import { WON } from '../constants.js';
+import { WON, LBL } from '../constants.js';
 
 // --- Mise en forme ---
 
@@ -126,6 +126,89 @@ function stacked(rows, max, W = 620) {
 }
 
 const legend = items => `<div class="rp-legend">${items.map(([c, l]) => `<span><i style="background:${c}"></i>${esc(l)}</span>`).join('')}</div>`;
+
+// --- Frise du match : les actions à leur heure de saisie, quart par quart ---
+// Seules les actions saisies depuis l'enregistrement de l'heure (champ t) y figurent. L'heure est
+// celle de la saisie, arrêts de jeu compris : on parle de moments du match, pas de minutes de jeu.
+
+const T_MISS = ['m1', 'm2', 'm3'], T_LOSS = ['to', 'trav'], T_POS = ['stl', 'fd', ...WON.map(w => w[0])];
+const kindOf = a => (T_MISS.includes(a) ? 'miss' : T_LOSS.includes(a) ? 'loss' : T_POS.includes(a) ? 'pos' : null);
+const hhmm = t => { const d = new Date(t); return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0'); };
+const evWho = e => (!e.p || e.p === '__team' ? 'Équipe' : `#${e.p} ${first(roster1(e.p).name)}`.trim());
+// Joueurs d'une série, les plus présents d'abord : « Lucas 2, Louis, Hugo »
+const whoList = list => {
+  const n = {};
+  list.forEach(e => { const k = !e.p || e.p === '__team' ? 'l’équipe' : first(roster1(e.p).name) || '#' + e.p; n[k] = (n[k] || 0) + 1; });
+  return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([k, c]) => k + (c > 1 ? ' ' + c : '')).join(', ');
+};
+
+// Séries d'un quart (E : actions classées, triées par heure).
+//  – pertes : au moins 3 balles perdues ou marchers en 3 minutes ;
+//  – tirs ratés : au moins 6 en 3 minutes. Pas « d'affilée » : les paniers réussis ne sont pas
+//    saisis, il a pu y en avoir entre deux ratés ; seule la densité de ratés est sûre ;
+//  – bonne série : au moins 6 actions positives sur 8 actions consécutives.
+const WIN_MS = 3 * 60000, LOSS_N = 3, MISS_N = 6, POS_N = 6, POS_W = 8;
+function dense(E, k, N, q) {
+  const R = [], L = E.filter(e => e.k === k);
+  for (let i = 0; i < L.length; i++) {
+    let j = i;
+    while (j + 1 < L.length && L[j + 1].t - L[i].t <= WIN_MS) j++;
+    const prev = R[R.length - 1];
+    if (j - i + 1 < N) continue;
+    // Fenêtres qui se chevauchent : une seule série, de la première à la dernière action
+    if (prev && L[i].t <= prev.t1) { prev.list = L.slice(prev.i0, j + 1); prev.n = prev.list.length; prev.t1 = L[j].t; continue; }
+    R.push({ k, q, tone: -1, n: j - i + 1, i0: i, t0: L[i].t, t1: L[j].t, list: L.slice(i, j + 1) });
+  }
+  return R;
+}
+function runs(E, q) {
+  const R = [...dense(E, 'loss', LOSS_N, q), ...dense(E, 'miss', MISS_N, q)];
+  let best = null;
+  for (let i = 0; i + POS_W <= E.length; i++) {
+    const w = E.slice(i, i + POS_W), n = w.filter(e => e.k === 'pos').length;
+    if (n >= POS_N && (!best || n > best.n)) best = { k: 'pos', q, tone: 1, n, t0: w[0].t, t1: w[POS_W - 1].t, list: w.filter(e => e.k === 'pos') };
+  }
+  if (best) R.push(best);
+  return R.sort((a, b) => a.t0 - b.t0);
+}
+
+const runText = r => {
+  const min = Math.max(1, Math.round((r.t1 - r.t0) / 60000)), inMin = ` en ${min} minute${min > 1 ? 's' : ''}`;
+  return r.k === 'loss' ? `${r.n} balles perdues ou marchers${inMin}`
+    : r.k === 'miss' ? `${r.n} tirs ratés${inMin}`
+      : `${r.n} actions positives sur ${POS_W} d’affilée`;
+};
+
+// Toutes les données de la frise ; null s'il n'y a pas assez d'actions horodatées.
+export function timeline(ev) {
+  const E = ev.map(e => ({ ...e, k: kindOf(e.a) })).filter(e => e.t && e.k).sort((a, b) => a.t - b.t);
+  if (E.length < 6) return null;
+  const qs = [...new Set(E.map(e => e.q))].sort((a, b) => a - b);
+  const Q = qs.map(q => { const list = E.filter(e => e.q === q); return { q, list, t0: list[0].t, t1: list[list.length - 1].t, runs: runs(list, q) }; });
+  return { Q, runs: Q.flatMap(x => x.runs) };
+}
+
+const TL_LBL = { miss: 'Tir raté', loss: 'Balle perdue, marcher', pos: 'Interception, faute provoquée, ballon gagné' };
+
+// La frise, une ligne par quart. Chaque quart a sa propre échelle (du premier au dernier geste saisi).
+// En HTML plutôt qu'en SVG : les repères gardent leur taille, seule leur position suit la largeur
+// (un SVG réduit sur téléphone les rendait minuscules).
+function timelineHtml(TL) {
+  return `<div class="rp-tl">${TL.Q.map(x => {
+    const span = Math.max(x.t1 - x.t0, 60000), px = t => (100 * (t - x.t0) / span).toFixed(2);
+    const bands = x.runs.map(r => `<span class="rp-run ${r.tone > 0 ? 'up' : 'down'}" style="left:calc(${px(r.t0)}% - 10px);width:calc(${(px(r.t1) - px(r.t0)).toFixed(2)}% + 20px)" title="${esc(qName(x.q - 1) + ' : ' + runText(r))}"></span>`).join('');
+    const marks = x.list.map(e => `<i class="rp-mk ${e.k}" style="left:${px(e.t)}%" title="${esc(`${qName(e.q - 1)} · ${hhmm(e.t)} · ${evWho(e)} · ${LBL[e.a] || e.a}`)}"></i>`).join('');
+    return `<div class="rp-tlrow"><div class="rp-tlq"><b>${qName(x.q - 1)}</b><span>${hhmm(x.t0)}</span></div>`
+      + `<div class="rp-track" role="img" aria-label="Actions du ${qName(x.q - 1)}">${bands}${marks}</div></div>`;
+  }).join('')}</div>`
+    + `<div class="rp-legend">${Object.keys(TL_LBL).map(k => `<span><i class="rp-mk ${k} key"></i>${TL_LBL[k]}</span>`).join('')}<span><i class="rp-runkey"></i>Série repérée</span></div>`;
+}
+
+// « Moments à retenir » : une ligne par série, dans l'ordre du match.
+const momentsList = TL => (TL.runs.length
+  ? `<ul class="rp-finds rp-moments">${TL.runs.map(r => `<li class="${r.tone > 0 ? 'up' : 'down'}"><strong>${qName(r.q - 1)} : ${runText(r)}.</strong> `
+    + `<span class="rp-muted">${hhmm(r.t0)}${hhmm(r.t1) !== hhmm(r.t0) ? ' – ' + hhmm(r.t1) : ''} · ${esc(whoList(r.list))}</span></li>`).join('')}</ul>`
+  : '<p class="rp-muted" style="margin:0">Pas de série marquante : ni trou d’air, ni temps fort net.</p>');
 
 // --- Analyse : facteurs du match ---
 // Chaque facteur a un poids en points estimé, positif s'il est en notre faveur.
@@ -430,7 +513,16 @@ function pages(D) {
     ? `<div class="rp-qline">${quarters.map(q => `<span>${qName(q.i)} ${q.us}-${q.th}</span>${q.i === 1 ? `<span>Mi-temps ${q.cum[0]}-${q.cum[1]}</span>` : ''}`).join('')}</div>`
     : (us.halves && th.halves ? `<div class="rp-qline"><span>Mi-temps ${us.halves[0]}-${th.halves[0]}</span><span>2e mi-temps ${us.halves[1]}-${th.halves[1]}</span></div>` : '');
   const F = findings(D, names);
-  const col = (cls, title, list) => `<div class="${cls}"><h4>${title}</h4>${list.length
+  // Frise : la pire série et la meilleure remontent en tête de « Ce qu'il faut retenir »
+  const TL = timeline(S.ev || []);
+  if (TL) {
+    const pick = tone => TL.runs.filter(r => r.tone === tone).sort((a, b) => b.n - a.n)[0];
+    const moment = r => ({ t: `${qName(r.q - 1)} :`, x: `${runText(r)} (${hhmm(r.t0)}${hhmm(r.t1) !== hhmm(r.t0) ? '–' + hhmm(r.t1) : ''}).` });
+    const bad = pick(-1), good = pick(1);
+    if (bad) F.bad = [moment(bad), ...F.bad].slice(0, 5);
+    if (good) F.good = [moment(good), ...F.good].slice(0, 5);
+  }
+  const col =(cls, title, list) => `<div class="${cls}"><h4>${title}</h4>${list.length
     ? `<ul class="rp-finds">${list.map(f => `<li class="${cls}"><strong>${f.t}</strong> ${f.x}</li>`).join('')}</ul>`
     : '<p class="rp-muted" style="margin:0">Rien de marquant.</p>'}</div>`;
   P.resume = `<div class="rp-score"><div class="rp-team"><span>${esc(U)}</span><span class="big">${us.total.pts}</span></div><span class="sep">–</span>`
@@ -520,6 +612,11 @@ function pages(D) {
   } else {
     P.quarts = `<p class="rp-muted">Le score par quart-temps vient de la feuille de marque. Importe-la avec le résumé (fichier « feuillematch_… .pdf ») pour remplir cette page.</p>`;
   }
+  // La frise ne dépend que de la saisie : elle passe en tête de la page, feuille de marque ou non
+  if (TL) {
+    P.quarts = card('Le match, moment par moment', `Actions de ${esc(U)} à leur heure de saisie, arrêts de jeu compris. Chaque quart-temps a sa propre échelle, du premier au dernier geste saisi.`,
+      timelineHtml(TL) + `<h4 class="rp-h4">Moments à retenir</h4>` + momentsList(TL)) + P.quarts;
+  }
 
   // 4. Joueurs : qui a fait quoi, sur tout le match (au tir, puis avec le ballon)
   // Tableaux triés par numéro de maillot (le graphique des points reste trié par points)
@@ -553,8 +650,8 @@ function pages(D) {
   // 6. Méthode
   P.methode = `<div class="rp-notes">`
     + card('Sources', '', `<ul><li>Résumé e-Marque (officiel) : points, paniers et lancers réussis, fautes, temps de jeu${quarters.length ? ' ; feuille de marque : score par quart-temps' : ''}.</li><li>Saisie Pick&amp;Stats (non officielle) : tirs ratés, interceptions, fautes provoquées, balles perdues, marchers, rebonds par équipe, ballons gagnés.</li></ul>`)
-    + card('Méthode', '', `<ul><li>Tirs tentés = tirs réussis (e-Marque) + tirs ratés (saisie), joueur par joueur${quarters.length ? ' et quart-temps par quart-temps' : ''}.</li>${quarters.length ? '<li>Paniers et lancers réussis par quart-temps : lus sur la marque courante (numéro du joueur à chaque panier, en rouge aux 1er et 3e quarts-temps, en noir aux 2e et 4e).</li>' : ''}<li>Part des rebonds offensifs pris = rebonds offensifs ÷ (rebonds offensifs + rebonds défensifs adverses).</li><li>Par rapport à la saison : moyenne des autres matchs archivés de la même équipe, d’août à juillet. Une ligne n’apparaît que si au moins 2 de ces matchs ont la donnée (feuille e-Marque pour les points et l’adresse).</li></ul>`)
-    + card('Limites', '', `<ul><li>Non relevé : rebonds et passes décisives par joueur, tirs ratés de l’adversaire.</li><li>Les pourcentages dépendent de la saisie des tirs ratés : un raté oublié rend le pourcentage flatteur.</li>${b.fd && th.total.f ? `<li>Fautes provoquées saisies : ${b.fd} ; fautes commises par ${esc(T)} (e-Marque) : ${th.total.f}.</li>` : ''}</ul>`)
+    + card('Méthode', '', `<ul><li>Tirs tentés = tirs réussis (e-Marque) + tirs ratés (saisie), joueur par joueur${quarters.length ? ' et quart-temps par quart-temps' : ''}.</li>${quarters.length ? '<li>Paniers et lancers réussis par quart-temps : lus sur la marque courante (numéro du joueur à chaque panier, en rouge aux 1er et 3e quarts-temps, en noir aux 2e et 4e).</li>' : ''}<li>Part des rebonds offensifs pris = rebonds offensifs ÷ (rebonds offensifs + rebonds défensifs adverses).</li>${TL ? `<li>Frise du match : chaque action à son heure de saisie. Séries repérées : au moins ${LOSS_N} balles perdues ou marchers en ${WIN_MS / 60000} minutes ; au moins ${MISS_N} tirs ratés en ${WIN_MS / 60000} minutes (les paniers réussis n’étant pas saisis, on ne peut pas parler de ratés « d’affilée ») ; au moins ${POS_N} actions positives (interceptions, fautes provoquées, ballons gagnés) sur ${POS_W} d’affilée.</li>` : ''}<li>Par rapport à la saison : moyenne des autres matchs archivés de la même équipe, d’août à juillet. Une ligne n’apparaît que si au moins 2 de ces matchs ont la donnée (feuille e-Marque pour les points et l’adresse).</li></ul>`)
+    + card('Limites', '', `<ul><li>Non relevé : rebonds et passes décisives par joueur, tirs ratés de l’adversaire.</li><li>Les pourcentages dépendent de la saisie des tirs ratés : un raté oublié rend le pourcentage flatteur.</li>${TL ? '<li>Les heures de la frise sont celles de la saisie, pas le chronomètre du match : arrêts de jeu, temps morts et retards de saisie compris.</li>' : ''}${b.fd && th.total.f ? `<li>Fautes provoquées saisies : ${b.fd} ; fautes commises par ${esc(T)} (e-Marque) : ${th.total.f}.</li>` : ''}</ul>`)
     + `</div>`;
   return P;
 }
@@ -741,6 +838,22 @@ html[data-theme="dark"] .rp{--rp-good:#5cc28f;--rp-low:#f08a7e}
 .rp-t tbody tr.grp:first-child td{padding-top:6px}
 .rp-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--mut)}
 .rp-legend span{display:inline-flex;align-items:center;gap:6px}.rp-legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.rp-tl{margin:4px 0 10px}
+.rp-tlrow{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:8px;margin-bottom:4px}
+.rp-tlq{line-height:1.15;font-size:13px}.rp-tlq b{display:block}.rp-tlq span{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums}
+.rp-track{position:relative;height:34px;margin:0 10px}
+.rp-track::before{content:"";position:absolute;left:-6px;right:-6px;top:50%;border-top:1px solid color-mix(in srgb,var(--rp-axis) 50%,transparent)}
+.rp-run{position:absolute;top:2px;bottom:2px;border-radius:9px}
+.rp-run.down{background:color-mix(in srgb,var(--rp-low) 14%,transparent);border:1px solid color-mix(in srgb,var(--rp-low) 55%,transparent)}
+.rp-run.up{background:color-mix(in srgb,var(--rp-good) 14%,transparent);border:1px solid color-mix(in srgb,var(--rp-good) 55%,transparent)}
+.rp-mk{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border:2px solid var(--card);box-sizing:border-box}
+.rp-mk.miss{border-radius:50%;background:var(--rp-low)}
+.rp-mk.loss{border-radius:3px;background:#d9a441}
+.rp-mk.pos{width:12px;height:12px;margin:-6px 0 0 -6px;background:var(--rp-good);transform:rotate(45deg)}
+.rp-mk.key{position:static;margin:0;flex:none}
+.rp-legend i.rp-runkey{width:16px;border-radius:3px;background:color-mix(in srgb,var(--rp-low) 14%,transparent);border:1px solid color-mix(in srgb,var(--rp-low) 55%,transparent)}
+.rp-h4{margin:14px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.rp-moments .rp-muted{font-size:13px}
 .rp svg{display:block;overflow:visible}
 .rp svg .lbl{fill:var(--ink);font-size:12px;font-variant-numeric:tabular-nums}
 .rp svg .ax{fill:var(--mut);font-size:12px;font-variant-numeric:tabular-nums}
