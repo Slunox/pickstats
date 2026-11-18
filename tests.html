@@ -34,10 +34,10 @@
 
   <div class="card">
     <h2>Vérifier une vraie feuille</h2>
-    <p class="mut">Choisis le résumé e-Marque (« resume_… .pdf »), et si tu veux la feuille de marque (« feuillematch_… .pdf »).
+    <p class="mut">Choisis le .zip de l’e-Marque, ou le résumé (« resume_… .pdf ») et si tu veux la feuille de marque (« feuillematch_… .pdf »).
       On ne connaît pas le bon résultat d’avance : la page vérifie que tout ce qui est lu est cohérent (points = paniers,
       somme des joueurs = total de l’équipe, mi-temps et quarts-temps = score final). Rien n’est enregistré ni envoyé.</p>
-    <input type="file" id="pdf" accept=".pdf,application/pdf" multiple>
+    <input type="file" id="pdf" accept=".pdf,application/pdf,.zip,application/zip" multiple>
     <div id="real"></div>
   </div>
 </main>
@@ -45,6 +45,7 @@
 <script type="module">
 import * as E from './js/emarque.js';
 import { timeline } from './js/views/report.js';
+import * as Z from './js/zip.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -149,6 +150,25 @@ T('Série : 6 tirs ratés en 3 minutes', () => runsOf([0, 0.5, 1, 1.5, 2, 2.5].m
 T('Séries qui se chevauchent : une seule', () => runsOf([0, 1, 2, 3, 4].map(x => at('to', 3, x)).concat([at('m2', 3, 10)])), [['loss', 3, 5]]);
 T('Bonne série : 6 actions positives sur 8', () => runsOf(['stl', 'fd', 'm2', 'stl', 'w5', 'm3', 'wr', 'fd'].map((a, i) => at(a, 4, i))), [['pos', 4, 6]]);
 T('Séries par quart-temps, pas à cheval', () => runsOf([at('to', 1, 0), at('to', 1, 1), at('to', 2, 1.5), at('m2', 2, 5), at('m2', 2, 6), at('m2', 2, 7)]), []);
+
+// --- .zip de l'e-Marque (testdata/emarque-test.zip : de faux PDF dans un dossier, plus un .txt) ---
+async function zipTests() {
+  const name = 'Zip : lecture du fichier de test';
+  try {
+    const blob = await (await fetch('testdata/emarque-test.zip', { cache: 'no-store' })).blob();
+    const zf = new File([blob], 'emarque-test.zip', { type: 'application/zip' });
+    const all = await Z.unzip(zf);
+    check(A, 'Zip : fichiers trouvés, sans leur dossier', all.map(f => f.name).sort(),
+      ['feuillematch_0001.pdf', 'lisez-moi.txt', 'resume_0001_DM2_B_1234_EQUIPE_A-1_EQUIPE_B-3.pdf']);
+    const res = all.find(f => /^resume/.test(f.name));
+    check(A, 'Zip : contenu décompressé intact', (await res.text()).trim(), Array(400).fill('resume').join(' '));
+    check(A, 'Zip : seuls les PDF sont gardés pour l’import', (await Z.expandZips([zf])).map(f => f.name).sort(),
+      ['feuillematch_0001.pdf', 'resume_0001_DM2_B_1234_EQUIPE_A-1_EQUIPE_B-3.pdf']);
+    const pdf = new File(['x'], 'resume_x.pdf');
+    check(A, 'Zip : un PDF choisi directement passe tel quel', (await Z.expandZips([pdf]))[0] === pdf, true);
+  } catch (e) { crash(A, name, e); }
+}
+await zipTests();
 
 const done = () => {
   const s = $('sum');

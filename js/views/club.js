@@ -27,8 +27,8 @@ export function club() {
     ${teams}
     ${canEdit() ? `<button class="btn" data-x="addteam" style="margin-top:12px">+ Ajouter une équipe</button>
       <button class="btn alt" data-x="tempick" style="margin-top:8px"${ui.teBusy ? ' disabled' : ''}>${ui.teBusy ? 'Lecture du PDF…' : 'Créer depuis une feuille e-Marque'}</button>
-      <input type="file" id="tefile" accept=".pdf,application/pdf" hidden>
-      <p class="help">Choisis le <b>résumé</b> d’un match (« resume_… .pdf ») : l’équipe est créée avec ses joueurs, leurs numéros et sa catégorie.</p>` :'<p class="help" style="margin-top:10px">En tant que bénévole, tu ne peux pas modifier les équipes : demande à un coach ou au responsable.</p>'}
+      <input type="file" id="tefile" accept=".pdf,application/pdf,.zip,application/zip" hidden>
+      <p class="help">Choisis le <b>.zip</b> de l’e-Marque d’un match, ou son <b>résumé</b> (« resume_… .pdf ») : l’équipe est créée avec ses joueurs, leurs numéros et sa catégorie.</p>` :'<p class="help" style="margin-top:10px">En tant que bénévole, tu ne peux pas modifier les équipes : demande à un coach ou au responsable.</p>'}
   </div>
   <div class="card">
     <h2>Matchs archivés</h2>

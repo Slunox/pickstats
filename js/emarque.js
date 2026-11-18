@@ -7,6 +7,7 @@
 // associés par numéro de maillot.
 
 import { GLYPHS } from './emarque-glyphs.js';
+import { expandZips } from './zip.js';
 
 let pdfReady = null;
 
@@ -309,7 +310,8 @@ const NOT_RESUME = 'Il manque le résumé de l’e-Marque (fichier « resume_…
 // pour le score par quart-temps). Renvoie { num, a, b, teams, quarters, ratios, warn }.
 export async function readEmarque(files) {
   const pdfjs = await loadPdfJs();
-  const list = Array.from(files || []);
+  // Le .zip exporté par l'e-Marque est accepté tel quel : on en sort les PDF
+  const list = await expandZips(Array.from(files || []));
   const kind = f => (/^resume/i.test(f.name) ? 'r' : /^feuille/i.test(f.name) ? 'f' : /^position/i.test(f.name) ? 'p' : '?');
   let res = null, feuille = null, resFile = null;
   for (const f of list) {

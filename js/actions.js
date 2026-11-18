@@ -40,7 +40,7 @@ function emRead(m, reading) {
     ui.em = { gid: m.id, data: d, side: guessSide(d, { ours, opp: m.opp, nums: (m.roster || []).map(p => p.n) }) };
     ui.view = 'emcheck';
   }).catch(e => {
-    note(e && e.message && /e-Marque|PDF/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
+    note(e && e.message && /e-Marque|PDF|zip/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
   }).finally(() => { ui.emBusy = false; render(); });
 }
 
@@ -808,7 +808,7 @@ document.addEventListener('change', e => {
       .catch(e => {
         ui.teBusy = false;
         render();
-        note(e && e.message && /e-Marque|PDF/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
+        note(e && e.message && /e-Marque|PDF|zip/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
       });
     return;
   }

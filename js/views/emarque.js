@@ -10,7 +10,7 @@ import { back } from './common.js';
 // Colonnes vérifiées : [clé, en-tête]
 const COLS = [['min', 'Temps'], ['pts', 'Pts'], ['p3', '3 pts'], ['p2i', '2 pts int.'], ['p2e', '2 pts ext.'], ['lf', 'LF'], ['f', 'Fautes']];
 
-const EM_INPUT = '<input type="file" id="emfile" accept=".pdf,application/pdf" multiple hidden>';
+const EM_INPUT = '<input type="file" id="emfile" accept=".pdf,application/pdf,.zip,application/zip" multiple hidden>';
 
 // Carte « Feuille e-Marque » dans la fiche d'un match archivé : seulement tant qu'aucune feuille
 // n'est importée (ensuite, Remplacer / Retirer sont dans « Gérer le match »).
@@ -18,7 +18,7 @@ export function emCard(m) {
   if (m.em || !canEditMatch(m)) return '';
   if (ui.emBusy) return '<div class="card"><h3>Feuille e-Marque</h3><p class="help">Lecture du PDF…</p></div>';
   return `<div class="card"><h3>Feuille e-Marque</h3>
-    <p class="help" style="margin-bottom:14px">Choisis le <b>résumé</b> (« resume_… .pdf ») et, si tu l’as, la <b>feuille de marque</b> (« feuillematch_… .pdf ») : tu peux sélectionner les deux fichiers en même temps. Tu obtiens les points, les fautes, le temps de jeu, les % de réussite et un rapport complet du match, quart-temps par quart-temps.</p>
+    <p class="help" style="margin-bottom:14px">Choisis le <b>.zip</b> exporté par l’e-Marque, tel quel. Ou bien le <b>résumé</b> (« resume_… .pdf ») et, si tu l’as, la <b>feuille de marque</b> (« feuillematch_… .pdf ») : tu peux sélectionner les deux fichiers en même temps. Tu obtiens les points, les fautes, le temps de jeu, les % de réussite et un rapport complet du match, quart-temps par quart-temps.</p>
     <button class="btn" data-x="empick">Importer la feuille e-Marque</button>${EM_INPUT}
   </div>`;
 }
