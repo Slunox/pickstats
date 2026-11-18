@@ -110,7 +110,7 @@ function startMatch() {
 }
 
 function addEvent(ev) {
-  S.ev.push(ev);
+  S.ev.push({ ...ev, t: Date.now() }); // t : heure de saisie (ms), pour l’historique et les analyses à venir
   ui.rebBar = false; // tout événement referme la demande de rebond
   toast(evText(ev) + ' ✓');
   save();
@@ -131,7 +131,7 @@ function dropLock() {
 // un même g, et « Annuler la dernière » les retire ensemble.
 function addGroup(evs, msg) {
   const g = Date.now();
-  evs.forEach(e => S.ev.push({ ...e, g }));
+  evs.forEach(e => S.ev.push({ ...e, g, t: g }));
   toast(msg + ' ✓');
   save();
 }

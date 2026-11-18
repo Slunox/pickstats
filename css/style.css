@@ -24,6 +24,7 @@ nav button.on{background:var(--dk);color:#fff}
 .undo[disabled]{opacity:.45;cursor:default}
 .hrow{display:grid;grid-template-columns:70px 1fr auto 56px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .hrow .hq{font-weight:800;background:var(--bg);border-radius:8px;padding:8px 0;text-align:center}
+.hrow .hq small{display:block;font-size:.72rem;font-weight:600;color:var(--mut);margin-top:1px;font-variant-numeric:tabular-nums}
 .hrow .hd b{display:block}.hrow .hd span{color:var(--mut)}
 .hrow .del{width:56px}
 .cerr{color:#B91C1C;font-weight:700;margin:10px 0 0}
@@ -542,3 +543,29 @@ html[data-theme="dark"] .gtoval{background:#4A3A14;color:#FFE1A3}
 .dyntag{font-style:normal;display:inline-block;background:#C4473A;color:#fff;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:999px;margin-right:4px;vertical-align:2px}
 .dynn{font-style:normal;display:inline-block;background:#F5C6C0;color:#5A140C;font-size:.75rem;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:2px;vertical-align:1px;white-space:nowrap}
 .actbar>.in>small.dynhelp{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:26px}.actbar .dynhelp b{color:var(--ink)}
+/* Téléphone : les joueurs sur deux colonnes, plus compacts, pour en voir 8 à 10 sans défiler
+   (une seule colonne pleine largeur obligeait à faire défiler la liste à chaque action). */
+@media(max-width:560px){
+  .grid,.grid.stk{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .pl{min-height:60px;padding:8px 10px;column-gap:4px;grid-template-columns:minmax(2.4rem,auto) minmax(0,1fr)}
+  .pl b{font-size:2.1rem}
+  .pl.st{padding:8px 6px}.pl.st b{font-size:2.6rem}
+}
+/* Libellés courts des boutons d'équipe, pour les blocs côte à côte sur téléphone. */
+.tb .sh{display:none}
+/* Téléphone, écran à l'essai : les deux équipes côte à côte (empilées, elles prenaient environ
+   280 px avant le premier joueur). Le nom suffit en en-tête, les boutons passent en court. */
+@media(max-width:560px){
+  .top.slim{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+  .top.slim .me,.top.slim .opp{padding:6px 6px 8px}
+  .top.slim .tbh{display:block;margin-bottom:4px}.top.slim .tbh>small{display:none}
+  .top.slim .nm{font-size:.95rem}
+  .top.slim .tbs{gap:5px}
+  .top.slim .tb{min-height:50px;padding:4px 1px}
+  .top.slim .tb small{font-size:.78rem}.top.slim .tb b{font-size:1.3rem}
+  .top.slim .tb .lg{display:none}.top.slim .tb .sh{display:inline}
+  /* La bulle des ballons gagnés s'accroche au bloc (pas au bouton, trop à droite pour elle) */
+  .top.slim .wonw{position:static}
+  .top.slim .wonpop{left:0;right:auto;width:calc(100vw - 24px)}
+  .top.slim .wonw.open::after{left:calc(100% - 6px - (100% - 22px) / 6)}
+}

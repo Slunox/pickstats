@@ -92,13 +92,13 @@ function wonButton() {
       <div class="wpb">${WON.map(w => `<button role="menuitem" data-x="tact" data-a="${w[0]}">${w[1]}<b>${cnt(w[0], S.q)}</b></button>`).join('')}</div>
     </div>` : '';
   return `<div class="wonw${ui.won ? ' open' : ''}"><button class="tb won" data-x="wonopen" aria-expanded="${!!ui.won}" aria-label="Ballon gagné : choisir le type">`
-    + `<small>Ballon gagné</small><b>${total}</b></button>${pop}</div>`;
+    + `<small><span class="lg">Ballon gagné</span><span class="sh">Gagné</span></small><b>${total}</b></button>${pop}</div>`;
 }
 
 // Bloc d'équipe compact : « Rebonds » à gauche et le nom centré sur la même ligne, puis les boutons.
 const teamBlock = (cls, name, color, list, label, extra = '') => `<div class="${cls}${isLight(color) ? ' lt' : ''}" style="${colorVars(color)}">
     <div class="tbg"><div class="tbh"><small>Rebonds</small><div class="nm">${esc(name)}</div></div><div class="tbs">`
-  + list.map(w => `<button class="tb" data-x="tact" data-a="${w[0]}" aria-label="Ajouter : ${label} ${w[1]}"><small><span class="tbp">+</span> ${w[1]}</small><b>${cnt(w[0], S.q)}</b></button>`).join('')
+  + list.map(w => `<button class="tb" data-x="tact" data-a="${w[0]}" aria-label="Ajouter : ${label} ${w[1]}"><small><span class="tbp">+</span> <span class="lg">${w[1]}</span><span class="sh">${w[1].slice(0, 3)}.</span></small><b>${cnt(w[0], S.q)}</b></button>`).join('')
   + extra + '</div></div></div>';
 
 function playerButton(p, r, stk, mode, nm) {

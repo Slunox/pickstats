@@ -6,11 +6,14 @@ import { esc, qLabel } from '../util.js';
 import { who } from '../model.js';
 import { back, periodChips } from './common.js';
 
+// Heure de saisie, « 14h32 » ; les actions d'avant cet enregistrement n'en ont pas.
+const hhmm = t => { const d = new Date(t); return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0'); };
+
 export function hist() {
   const list = S.ev.map((e, i) => ({ e, i })).filter(o => ui.hq === 'all' || o.e.q === +ui.hq).reverse();
   const rows = list.length
     ? list.map(o => `<div class="hrow">
-        <span class="hq">${qLabel(o.e.q)}</span>
+        <span class="hq">${qLabel(o.e.q)}${o.e.t ? `<small>${hhmm(o.e.t)}</small>` : ''}</span>
         <div class="hd"><b>${esc(who(o.e))}</b><span class="tag ${TAGC[o.e.a] || ''}">${LBL[o.e.a]}</span></div>
         ${SWAP[o.e.a]
           ? `<button class="swp" data-x="swapev" data-i="${o.i}" aria-label="Changer en ${LBL[SWAP[o.e.a][0]]}">⇄ ${SWAP[o.e.a][1]}</button>`

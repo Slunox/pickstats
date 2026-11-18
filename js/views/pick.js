@@ -18,11 +18,14 @@ export function pick() {
   if (!P.teamId) return chooseTeam();
 
   const t = S.teams.find(z => z.id === P.teamId);
+  // Les doublons sont en rouge dès l'ouverture (deux joueurs avec le même numéro habituel),
+  // pas seulement après une saisie : markDup ne tourne qu'à la frappe.
+  const c = dupCount(P.rows);
   const rows = P.rows.length
     ? P.rows.map((r, i) => `<div class="prow3">
         <input type="checkbox" data-pc="${i}"${r.in ? ' checked' : ''} aria-label="Présent">
         <span class="pname">${esc(r.name) || 'Sans nom'}</span>
-        <input data-pnum="${i}" value="${esc(r.num)}" inputmode="numeric" maxlength="3" placeholder="N°" aria-label="Numéro du match">
+        <input data-pnum="${i}"${isDup(r, c) ? ' class="dup"' : ''} value="${esc(r.num)}" inputmode="numeric" maxlength="3" placeholder="N°" aria-label="Numéro du match">
       </div>`).join('')
     : '<p class="help">Cette équipe n’a aucun joueur. Ajoute-en depuis « Effectifs et matchs ».</p>';
 
@@ -44,16 +47,22 @@ export function pick() {
   </div>`;
 }
 
-// Signale en rouge les numéros en double parmi les joueurs cochés.
-export function markDup() {
+// Combien de joueurs cochés portent chaque numéro.
+function dupCount(rows) {
   const c = {};
-  ui.P.rows.forEach(r => {
+  rows.forEach(r => {
     if (!r.in) return;
     const n = String(r.num).trim();
     if (n) c[n] = (c[n] || 0) + 1;
   });
+  return c;
+}
+const isDup = (r, c) => r.in && c[String(r.num).trim()] > 1;
+
+// Signale en rouge les numéros en double parmi les joueurs cochés (pendant la frappe).
+export function markDup() {
+  const c = dupCount(ui.P.rows);
   document.querySelectorAll('[data-pnum]').forEach(i => {
-    const r = ui.P.rows[+i.dataset.pnum];
-    i.classList.toggle('dup', r.in && c[String(r.num).trim()] > 1);
+    i.classList.toggle('dup', isDup(ui.P.rows[+i.dataset.pnum], c));
   });
 }
