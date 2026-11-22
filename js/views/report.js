@@ -5,8 +5,8 @@
 
 import { S, ui } from '../state.js';
 import { esc, fdate } from '../util.js';
-import { roster1, myInk, oppInk, seasonGames } from '../model.js';
-import { playerName, matchInfo } from '../emarque.js';
+import { roster1, myInk, oppInk, seasonGames, firstName, withFirst } from '../model.js';
+import { playerName, playerFirst, matchInfo } from '../emarque.js';
 import { WON, LBL } from '../constants.js';
 
 // --- Mise en forme ---
@@ -71,7 +71,7 @@ function build() {
     });
     return {
       // Nom de l'effectif ; sinon celui de la feuille, remis à l'endroit (« EGERSZEGI, Rémy » → « Rémy Egerszegi »)
-      n, ...e, name: roster1(n).name || playerName(e.name), p2, a2, a3, fg: p2 + e.p3, afg, a1: e.lf + m1,
+      n, ...e, ...(roster1(n).name ? { name: roster1(n).name, ...withFirst(roster1(n)) } : { name: playerName(e.name), ...withFirst({ first: playerFirst(e.name) }) }), p2, a2, a3, fg: p2 + e.p3, afg, a1: e.lf + m1,
       ppt: afg ? (2 * p2 + 3 * e.p3) / afg : null, stl, fd, to, trav, bal: stl + fd - to - trav, byQ,
     };
   }).sort((a, b) => (b.pts - a.pts) || (+a.n - +b.n));
@@ -134,11 +134,11 @@ const legend = items => `<div class="rp-legend">${items.map(([c, l]) => `<span><
 const T_MISS = ['m1', 'm2', 'm3'], T_LOSS = ['to', 'trav'], T_POS = ['stl', 'fd', ...WON.map(w => w[0])];
 const kindOf = a => (T_MISS.includes(a) ? 'miss' : T_LOSS.includes(a) ? 'loss' : T_POS.includes(a) ? 'pos' : null);
 const hhmm = t => { const d = new Date(t); return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0'); };
-const evWho = e => (!e.p || e.p === '__team' ? 'Équipe' : `#${e.p} ${first(roster1(e.p).name)}`.trim());
+const evWho = e => (!e.p || e.p === '__team' ? 'Équipe' : `#${e.p} ${firstName(roster1(e.p))}`.trim());
 // Joueurs d'une série, les plus présents d'abord : « Lucas 2, Louis, Hugo »
 const whoList = list => {
   const n = {};
-  list.forEach(e => { const k = !e.p || e.p === '__team' ? 'l’équipe' : first(roster1(e.p).name) || '#' + e.p; n[k] = (n[k] || 0) + 1; });
+  list.forEach(e => { const k = !e.p || e.p === '__team' ? 'l’équipe' : firstName(roster1(e.p)) || '#' + e.p; n[k] = (n[k] || 0) + 1; });
   return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([k, c]) => k + (c > 1 ? ' ' + c : '')).join(', ');
 };
 
@@ -416,18 +416,18 @@ function findings(D, names) {
   // Joueurs : meilleur marqueur adroit, points partagés, le plus efficace ; les 5 fautes en note
   const five = players.filter(p => p.f >= 5), top = players[0];
   const topGood = top && top.pts >= 15 && top.afg && top.fg / top.afg >= 0.5;
-  if (topGood) add('top', 5, 1, 'Le meilleur marqueur.', `#${esc(top.n)} ${esc(first(top.name))} : <b>${top.pts}</b> points à <b>${ma(top.fg, top.afg)}</b> au tir.`);
+  if (topGood) add('top', 5, 1, 'Le meilleur marqueur.', `#${esc(top.n)} ${esc(firstName(top))} : <b>${top.pts}</b> points à <b>${ma(top.fg, top.afg)}</b> au tir.`);
   const ten = players.filter(p => p.pts >= 10);
-  if (ten.length >= 3) add('share', 3 + ten.length, 1, 'Des points partagés.', `<b>${ten.length}</b> joueurs à 10 points ou plus : ${ten.map(p => `${esc(first(p.name))} (${p.pts})`).join(', ')}.`);
+  if (ten.length >= 3) add('share', 3 + ten.length, 1, 'Des points partagés.', `<b>${ten.length}</b> joueurs à 10 points ou plus : ${ten.map(p => `${esc(firstName(p))} (${p.pts})`).join(', ')}.`);
   const eff = players.filter(p => p !== (topGood ? top : null) && p.afg >= 6 && p.ppt >= 1.2).sort((a, b) => b.ppt - a.ppt)[0];
-  if (eff) add('eff', 4, 1, 'Le plus efficace.', `#${esc(eff.n)} ${esc(first(eff.name))} : <b>${eff.pts}</b> points à <b>${ma(eff.fg, eff.afg)}</b> au tir.`);
+  if (eff) add('eff', 4, 1, 'Le plus efficace.', `#${esc(eff.n)} ${esc(firstName(eff))} : <b>${eff.pts}</b> points à <b>${ma(eff.fg, eff.afg)}</b> au tir.`);
   // 5 fautes : à travailler quand ce sont des marqueurs (10 points ou plus), sinon simple note
-  const who = p => `#${esc(p.n)} ${esc(first(p.name))} (<b>${p.pts}</b> pts${mins(p.min) ? ` en ${mins(p.min)} min` : ''})`;
+  const who = p => `#${esc(p.n)} ${esc(firstName(p))} (<b>${p.pts}</b> pts${mins(p.min) ? ` en ${mins(p.min)} min` : ''})`;
   const fiveScorers = five.filter(p => p.pts >= 10), fiveOthers = five.filter(p => p.pts < 10);
   if (fiveScorers.length) add('five', 8 + fiveScorers.reduce((a, p) => a + p.pts, 0) / 4, -1, 'Les 5 fautes.',
     `${andList(fiveScorers.map(who))} ${fiveScorers.length > 1 ? 'sont sortis' : 'est sorti'} pour 5 fautes${d < 0 ? ' : autant de points en moins sur la fin' : ''}.`);
   if (fiveOthers.length) add('fiveN', 5, 0, '', `${andList(fiveOthers.map(who))} ${fiveOthers.length > 1 ? 'sont sortis' : 'est sorti'} pour 5 fautes.`);
-  if (top && top.pts >= 10 && !topGood && !five.includes(top)) add('topn', 6, 0, '', `#${esc(top.n)} ${esc(first(top.name))}, meilleur marqueur avec <b>${top.pts}</b> points.`);
+  if (top && top.pts >= 10 && !topGood && !five.includes(top)) add('topn', 6, 0, '', `#${esc(top.n)} ${esc(firstName(top))}, meilleur marqueur avec <b>${top.pts}</b> points.`);
 
   const by = list => list.sort((a, b) => b.p - a.p);
   return { good: by(C.filter(c => c.tone > 0)).slice(0, 5), bad: by(C.filter(c => c.tone < 0)).slice(0, 5), notes: by(C.filter(c => !c.tone)).slice(0, 2) };
@@ -634,8 +634,8 @@ function pages(D) {
   P.joueurs = card('Au tir', 'Tentés = réussis (e-Marque) + ratés (saisie). Pts/tir : points marqués à 2 pts / 3 pts ÷ tirs tentés (hors lancers). En vert : 50 % et plus ; en rouge : moins de 35 %.',
     table('<th>N°</th><th>Joueur</th><th class="n">Temps</th><th class="n">Pts</th><th class="n">Tirs</th><th class="n">2 pts</th><th class="n">3 pts</th><th class="n">LF</th><th class="n">Pts/tir</th><th class="n">Fautes</th>',
       pnum.map(prow).join(''), pfoot))
-    + card('Points par joueur', 'Par type de panier. En bout de barre : points et adresse à 2 pts / 3 pts.', legend([[cLF, 'Lancers francs'], [c2, 'Paniers à 2 pts'], [c3, 'Paniers à 3 pts']])
-      + stacked(players.map(p => ({ label: `#${p.n} ${first(p.name)}`.trim(), parts: [{ v: p.lf, color: cLF, name: 'Lancers francs' }, { v: 2 * p.p2, color: c2, name: 'Paniers à 2 pts' }, { v: 3 * p.p3, color: c3, name: 'Paniers à 3 pts' }], tail: `${p.pts} pts${p.afg ? ' · ' + Math.round(100 * p.fg / p.afg) + ' %' : ''}` }))))
+    + card('Points par joueur', 'Par type de panier. En bout de barre : points et adresse à 2 pts / 3 pts.', legend([[c2, 'Paniers à 2 pts'], [c3, 'Paniers à 3 pts'], [cLF, 'Lancers francs']])
+      + stacked(players.map(p => ({ label: `#${p.n} ${firstName(p)}`.trim(), parts: [{ v: 2 * p.p2, color: c2, name: 'Paniers à 2 pts' }, { v: 3 * p.p3, color: c3, name: 'Paniers à 3 pts' }, { v: p.lf, color: cLF, name: 'Lancers francs' }], tail: `${p.pts} pts${p.afg ? ' · ' + Math.round(100 * p.fg / p.afg) + ' %' : ''}` }))))
     + card('Avec le ballon', 'Bilan = interceptions + fautes provoquées − balles perdues − marchers. Indicateur interne, pas une évaluation officielle.',
       table('<th>N°</th><th>Joueur</th><th class="n">Interc.</th><th class="n">Fautes prov.</th><th class="n">Pertes</th><th class="n">Marchers</th><th class="n">Bilan</th>', brows,
         `<tr><td></td><td>Équipe</td><td class="n">${b.stl}</td><td class="n">${b.fd}</td><td class="n">${b.to}</td><td class="n">${b.trav}</td><td class="n">${sgn(bal)}</td></tr>`));

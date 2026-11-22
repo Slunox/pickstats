@@ -119,7 +119,17 @@ export function classify(s, glyphs = GLYPHS) {
 
 // « I » majuscule et « l » minuscule ont la même forme : dans un mot qui contient des minuscules,
 // ce n'est un « I » qu'en première lettre (« FIorent » → « Florent », mais « Ilan »).
-const fixL = s => s.split(' ').map(w => (/[a-zà-ÿ]/.test(w) ? w[0] + w.slice(1).replace(/I/g, 'l') : w)).join(' ');
+// (Un « I » après un tiret ou une apostrophe est aussi une initiale : « Jean-Inès ».)
+const notInitial = /(?<![-'’])I/g;
+const fixL = s => s.split(' ').map(w => (/[a-zà-ÿ]/.test(w) ? w[0] + w.slice(1).replace(notInitial, 'l') : w)).join(' ');
+
+// Prénom du joueur (après la virgule, « NOM, Prénom ») : il n'est jamais tout en majuscules, donc un
+// « I » qui n'est pas une initiale y est un « l », même dans un mot court sans autre minuscule
+// (« LAIOUEJ, EI Mehdi » → « LAIOUEJ, El Mehdi »), que fixL ne peut pas trancher seul.
+export const fixFirstName = s => {
+  const k = String(s).indexOf(',');
+  return k < 0 ? s : s.slice(0, k + 1) + s.slice(k + 1).split(' ').map(w => (w ? w[0] + w.slice(1).replace(notInitial, 'l') : w)).join(' ');
+};
 
 // Texte d'un tracé, avec les espaces (écart entre deux caractères supérieur au tiers de la hauteur).
 function runText(r, cls) {
@@ -168,7 +178,7 @@ export function parseResume(allLines) {
     // Joueur : commence par un numéro suivi d'un nom (lettres)
     if (ti > 1 && isNum(first.s) && t.slice(1, ti).some(k => /\D/.test(k.s))) {
       if (!cur || cur.done) { cur = { players: [], totals: [] }; teams.push(cur); }
-      cur.players.push({ n: String(+first.s), name: t.slice(1, ti).map(k => k.w).join(' '), ...row });
+      cur.players.push({ n: String(+first.s), name: fixFirstName(t.slice(1, ti).map(k => k.w).join(' ')), ...row });
       return;
     }
     if (!cur) return;
@@ -278,6 +288,9 @@ export function playerName(s) {
   const p = pre.join(',').trim();
   return [p, tidyName(nom.trim())].filter(Boolean).join(' ');
 }
+// Prénom seul, d'après la virgule de la feuille (« MARTIN, Jean Pierre » → « Jean Pierre ») : gardé
+// avec le joueur pour ne pas avoir à le deviner dans « Jean Pierre Martin ».
+export const playerFirst = s => { const k = String(s || '').indexOf(','); return k < 0 ? '' : String(s).slice(k + 1).trim(); };
 
 // Même nom, à l'ordre des mots, aux majuscules, aux accents et aux tirets près
 // (« DUPONT Antoine » = « Antoine Dupont »).
@@ -292,11 +305,12 @@ export const sameName = (a, b) => nameKey(a) === nameKey(b);
 //     (« Leo » → « Léo Martin ») : son nom devient celui de la feuille ;
 //  3. sinon, il est ajouté.
 // Personne n'est retiré : un joueur absent de la feuille était peut-être juste absent ce jour-là.
-// Renvoie { add: [{ name, num }], ren: [{ i, from, to }], num: [{ i, name, from, to }] } (i : rang dans players).
+// Renvoie { add: [{ name, num, first }], ren: [{ i, from, to, first }], num: [{ i, name, from, to }],
+// first: [{ i, first }] } (i : rang dans players ; first : prénom d'après la virgule de la feuille).
 export function rosterUpdate(sheet, players) {
   const words = s => new Set(nameKey(s).split(' ').filter(Boolean));
-  const used = new Set(), out = { add: [], ren: [], num: [] };
-  const list = sheet.map(p => ({ n: p.n, name: playerName(p.name) })).filter(p => p.name);
+  const used = new Set(), out = { add: [], ren: [], num: [], first: [] };
+  const list = sheet.map(p => ({ n: p.n, name: playerName(p.name), first: playerFirst(p.name) })).filter(p => p.name);
   // Les correspondances par nom d'abord, pour qu'un numéro repris par un autre ne les vole pas
   const byName = list.map(p => {
     const i = players.findIndex((q, j) => !used.has(j) && sameName(q.name, p.name));
@@ -309,9 +323,11 @@ export function rosterUpdate(sheet, players) {
       const w = words(p.name);
       i = players.findIndex((q, j) => !used.has(j) && String(q.num || '').trim() === p.n
         && (!String(q.name || '').trim() || [...words(q.name)].some(x => w.has(x))));
-      if (i >= 0) { used.add(i); if (!p.name.includes('?')) out.ren.push({ i, from: players[i].name || '', to: p.name }); }
+      if (i >= 0) { used.add(i); if (!p.name.includes('?')) out.ren.push({ i, from: players[i].name || '', to: p.name, first: p.first }); }
     }
-    if (i < 0) { out.add.push({ name: p.name, num: p.n }); return; }
+    if (i < 0) { out.add.push({ name: p.name, num: p.n, first: p.first }); return; }
+    // Prénom de la feuille gardé avec le joueur (sans rien afficher dans le récapitulatif)
+    if (p.first && !p.first.includes('?') && players[i].first !== p.first && !out.ren.some(r => r.i === i)) out.first.push({ i, first: p.first });
     const was = String(players[i].num || '').trim();
     if (was !== p.n) out.num.push({ i, name: p.name, from: was, to: p.n });
   });
@@ -324,7 +340,7 @@ export function rosterUpdate(sheet, players) {
 export function nameFixes(players, roster) {
   return players.flatMap(p => {
     const r = (roster || []).find(z => String(z.n) === p.n), to = playerName(p.name);
-    return r && to && !to.includes('?') && !sameName(to, r.name) ? [{ n: p.n, from: r.name || '', to }] : [];
+    return r && to && !to.includes('?') && !sameName(to, r.name) ? [{ n: p.n, from: r.name || '', to, first: playerFirst(p.name) }] : [];
   });
 }
 

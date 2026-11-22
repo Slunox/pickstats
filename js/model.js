@@ -15,7 +15,7 @@ export const periods = () => {
 export function allP() {
   return S.roster
     .filter(p => String(p.n).trim())
-    .map(p => ({ n: String(p.n).trim(), name: String(p.name || '').trim(), in: p.in !== false }))
+    .map(p => ({ n: String(p.n).trim(), name: String(p.name || '').trim(), ...withFirst(p), in: p.in !== false }))
     .filter((p, i, a) => a.findIndex(q => q.n === p.n) === i)
     .sort(cmpN);
 }
@@ -67,6 +67,8 @@ export const evText = e => isOpp(e) ? LBL[e.a] : (e.p === '__team' ? 'Équipe' :
 // Prénom seul pour l'écran de saisie : « Antoine Sarrabayrouse » ou « SARRABAYROUSE Antoine » → « Antoine ».
 // Si deux joueurs ont le même prénom, on ajoute l'initiale du nom (« Julian B. »).
 const isCaps = w => /\p{L}/u.test(w) && w === w.toUpperCase();
+// Premier mot qui ne fait pas un prénom à lui seul (« El Mehdi », « Abd El Kader »)
+const JOINED = /^(el|al|abd)$/i;
 function splitName(s) {
   const w = String(s || '').replace(/,/g, ' ').trim().split(/\s+/).filter(Boolean);
   if (w.length < 2) return { first: w[0] || '', last: '' };
@@ -74,10 +76,25 @@ function splitName(s) {
   let k = 0;
   while (k < w.length - 1 && isCaps(w[k])) k++;
   if (k > 0 && !isCaps(w[k])) return { first: w.slice(k).join(' '), last: w.slice(0, k).join(' ') };
+  // Prénoms composés en deux mots : « El Mehdi Laiouej » → « El Mehdi »
+  if (w.length > 2 && JOINED.test(w[0])) return { first: w.slice(0, 2).join(' '), last: w.slice(2).join(' ') };
   return { first: w[0], last: w.slice(1).join(' ') };
 }
+// Prénom et nom d'un joueur { name, first? }. first : prénom repris d'une feuille e-Marque (d'après sa
+// virgule), utilisé tant que le nom commence par lui ; sinon (nom tapé ou modifié à la main), on devine.
+export function nameParts(p) {
+  const name = String(p.name || '').trim(), f = String(p.first || '').trim();
+  if (f && name.toLowerCase().startsWith(f.toLowerCase() + ' ')) return { first: name.slice(0, f.length), last: name.slice(f.length).trim() };
+  return splitName(name);
+}
+export const firstName = p => nameParts(p).first;
+// Change le nom d'un joueur, avec son prénom s'il est connu (sinon on l'oublie : il ne correspond plus).
+export function rename(p, name, first) { p.name = name; if (first) p.first = first; else delete p.first; }
+// Champ « first » à recopier, seulement s'il existe (Firestore refuse les valeurs undefined).
+export const withFirst = p => (p && p.first ? { first: p.first } : {});
+
 export function shortNames(list) {
-  const N = list.map(p => splitName(p.name));
+  const N = list.map(nameParts);
   const count = {};
   N.forEach(n => { const f = n.first.toLowerCase(); count[f] = (count[f] || 0) + 1; });
   return Object.fromEntries(list.map((p, i) => {
@@ -129,7 +146,7 @@ export function selTeam(id) {
   const t = S.teams.find(z => z.id === id);
   if (!t) return;
   ui.P.teamId = id;
-  ui.P.rows = t.players.map(p => ({ id: p.id, name: p.name, num: String(p.num || ''), in: true })).sort(byNumThenName);
+  ui.P.rows = t.players.map(p => ({ id: p.id, name: p.name, ...withFirst(p), num: String(p.num || ''), in: true })).sort(byNumThenName);
 }
 
 // --- Matchs archivés ---

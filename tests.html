@@ -45,6 +45,7 @@
 <script type="module">
 import * as E from './js/emarque.js';
 import { timeline } from './js/views/report.js';
+import { shortNames } from './js/model.js';
 import * as Z from './js/zip.js';
 
 const $ = id => document.getElementById(id);
@@ -125,15 +126,21 @@ T('Quarts-temps : prolongation séparée', () => E.periods([...ev, { s: 15, n: '
 
 // --- Noms et dates ---
 T('Nom de joueur remis à l’endroit', () => E.playerName('SARRABAYROUSE, Antoine'), 'Antoine Sarrabayrouse');
+T('Prénom : un « I » qui n’est pas une initiale est un « l »', () => [E.fixFirstName('LAIOUEJ, EI Mehdi'), E.fixFirstName('DUPONT, Jean-Inès'), E.fixFirstName('Ilunga Biou, Maxime'), E.fixFirstName('SANS VIRGULE')], ['LAIOUEJ, El Mehdi', 'DUPONT, Jean-Inès', 'Ilunga Biou, Maxime', 'SANS VIRGULE']);
 T('Même nom à l’ordre, aux majuscules et aux accents près', () => [E.sameName('DUPONT Antoine', 'antoine dupont'), E.sameName('Jérôme Le-Gall', 'LE GALL Jerome'), E.sameName('Antoine', 'Antoine Dupont')], [true, true, false]);
 T('Noms repris de la feuille (l’e-Marque fait foi)', () => E.nameFixes(
   [{ n: '5', name: 'DUPONT, Antoine' }, { n: '7', name: 'MARTIN, Léo' }, { n: '9', name: 'B?RNARD, Paul' }, { n: '12', name: 'HORS, Compo' }, { n: '14', name: 'PETIT, Max' }],
   [{ n: '5', name: 'Antoine Dupont' }, { n: '7', name: 'Leo' }, { n: '9', name: 'Paul' }, { n: '14', name: '' }]),
-  [{ n: '7', from: 'Leo', to: 'Léo Martin' }, { n: '14', from: '', to: 'Max Petit' }]);
+  [{ n: '7', from: 'Leo', to: 'Léo Martin', first: 'Léo' }, { n: '14', from: '', to: 'Max Petit', first: 'Max' }]);
 T('Effectif mis à jour d’après la feuille (ajouts, noms, numéros, personne de retiré)', () => E.rosterUpdate(
   [{ n: '5', name: 'DUPONT, Antoine' }, { n: '8', name: 'MARTIN, Léo' }, { n: '10', name: 'PETIT, Max' }, { n: '11', name: 'NOUVEAU, Sam' }, { n: '4', name: 'ROUX, Tom' }],
   [{ name: 'Antoine Dupont', num: '5' }, { name: 'Leo', num: '8' }, { name: 'Léo Martin', num: '' }, { name: '', num: '10' }, { name: 'Ancien Joueur', num: '11' }, { name: 'Tom Roux', num: '6' }]),
-  { add: [{ name: 'Sam Nouveau', num: '11' }], ren: [{ i: 3, from: '', to: 'Max Petit' }], num: [{ i: 2, name: 'Léo Martin', from: '', to: '8' }, { i: 5, name: 'Tom Roux', from: '6', to: '4' }] });
+  { add: [{ name: 'Sam Nouveau', num: '11', first: 'Sam' }], ren: [{ i: 3, from: '', to: 'Max Petit', first: 'Max' }], num: [{ i: 2, name: 'Léo Martin', from: '', to: '8' }, { i: 5, name: 'Tom Roux', from: '6', to: '4' }],
+    first: [{ i: 0, first: 'Antoine' }, { i: 2, first: 'Léo' }, { i: 5, first: 'Tom' }] });
+T('Prénom retenu d’après la virgule de la feuille', () => [E.playerFirst('MARTIN, Jean Pierre'), E.playerFirst('Sans virgule')], ['Jean Pierre', '']);
+T('Prénom affiché : celui de la feuille s’il est connu, sinon deviné', () => shortNames([
+  { n: '1', name: 'Jean Pierre Martin', first: 'Jean Pierre' }, { n: '2', name: 'Marie Anne Durand' }, { n: '3', name: 'Paul Dupont', first: 'Jean' }, { n: '4', name: 'DUPONT Antoine' }]),
+  { 1: 'Jean Pierre', 2: 'Marie', 3: 'Paul', 4: 'Antoine' });
 T('Nom d’équipe adverse lisible', () => E.oppName('BC DES PINS-3'), 'BC des Pins-3');
 T('Numéro d’équipe', () => E.teamSuffix('ENTENTE PESSAC BASKET CLUB-3'), '3');
 T('Date courte : juin et juillet distincts', () => [E.shortDate(new Date(2026, 5, 15)).split(' ')[2], E.shortDate(new Date(2026, 6, 15)).split(' ')[2]], ['juin', 'juil']);

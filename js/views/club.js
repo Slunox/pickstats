@@ -84,19 +84,19 @@ export function tupd() {
   const nameAt = i => esc(t.players[i].name) || 'sans nom';
   const block = (title, items) => items.length ? `<h3 class="tuh">${title}</h3><ul class="emren">${items.join('')}</ul>` : '';
   const pl = (n, one, many) => n + ' ' + (n > 1 ? many : one);
-  const none = !C.add.length && !C.ren.length && !C.num.length;
+  const none = !C.add.length && !C.ren.length && !C.num.length, firsts = none && C.first.length;
   const unread = C.add.some(p => p.name.includes('?'));
 
   return back('Annuler', 'tupx', null, 'Mise à jour') + `<div class="card">
     <h2>${esc(t.name)} : mise à jour</h2>
     <label>L’équipe sur la feuille</label>
     <div class="chips">${[0, 1].map(s => `<button class="chip${side === s ? ' on' : ''}" data-x="tupside" data-v="${s}">${s ? 'Visiteurs' : 'Locaux'} : ${esc(tidyName(s ? d.b : d.a) || '?')}</button>`).join('')}</div>
-    ${none ? '<p class="help">L’effectif est déjà à jour avec cette feuille : rien à changer.</p>' : `
+    ${none ? `<p class="help">L’effectif est déjà à jour avec cette feuille${firsts ? '. Les prénoms de la feuille seront retenus pour l’affichage (« El Mehdi » plutôt que « El »).' : ' : rien à changer.'}</p>` : `
     ${block(`${pl(C.add.length, 'joueur ajouté', 'joueurs ajoutés')}`, C.add.map(p => `<li><b>#${esc(p.num)}</b> ${esc(p.name)}</li>`))}
     ${block(`${pl(C.ren.length, 'nom corrigé', 'noms corrigés')}`, C.ren.map(r => `<li><s>${nameAt(r.i)}</s> → <b>${esc(r.to)}</b></li>`))}
     ${block(`${pl(C.num.length, 'numéro changé', 'numéros changés')}`, C.num.map(r => `<li>${esc(r.name)} : <s>${r.from ? '#' + esc(r.from) : 'sans numéro'}</s> → <b>#${esc(r.to)}</b></li>`))}
     ${unread ? '<p class="emwarn">Certaines lettres n’ont pas été reconnues (« ? ») : corrige ces noms dans l’effectif après l’enregistrement.</p>' : ''}`}
     <p class="help">L’e-Marque fait foi. Les joueurs absents de la feuille restent dans l’effectif.</p>
-    ${none ? '' : '<button class="btn go2" data-x="tupsave">Enregistrer dans l’effectif</button>'}
+    ${none && !firsts ? '' : '<button class="btn go2" data-x="tupsave">Enregistrer dans l’effectif</button>'}
   </div>`;
 }

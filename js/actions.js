@@ -4,7 +4,7 @@
 
 import { S, ui, save, withMatch } from './state.js';
 import { $, uid, cmpN } from './util.js';
-import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, myColor, oppColor, isLight, colorVars } from './model.js';
+import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, myColor, oppColor, isLight, colorVars, rename, withFirst } from './model.js';
 import { toast, tick, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP, DEMO } from './constants.js';
 import { backup, restoreFile, download, shareFile } from './export.js';
@@ -21,7 +21,7 @@ import { shareImage } from './statimage.js';
 import { markDup } from './views/pick.js';
 import { logoFromFile } from './logo.js';
 import { render } from './render.js';
-import { readEmarque, fromEm, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix, nameFixes, sameName, rosterUpdate } from './emarque.js';
+import { readEmarque, fromEm, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix, nameFixes, sameName, rosterUpdate, playerFirst } from './emarque.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
 import { inClub, canDelMatch, canEditMatch } from './cloud.js';
@@ -56,7 +56,7 @@ function archiveMatch() {
     st: 'local',
     id: S.matchId || Date.now(), date: new Date().toISOString(), me: S.me, opp: S.opp,
     myColor: S.myColor || null, oppColor: S.oppColor || null, teamId: S.teamId, q: S.q,
-    ev: S.ev.slice(), roster: roster().map(p => ({ n: p.n, name: p.name, in: true })),
+    ev: S.ev.slice(), roster: roster().map(p => ({ n: p.n, name: p.name, ...withFirst(p), in: true })),
     ...(cloud.name ? { by: cloud.name } : {}), // pseudo de celui qui a fait les stats
   };
   S.arch.push(m);
@@ -96,7 +96,7 @@ function startMatch() {
     S.myColor = P.myColor || null;
     S.oppColor = P.oppColor || null;
     S.teamId = t.id;
-    S.roster = ch.map(r => ({ n: String(r.num).trim(), name: r.name, in: true, pid: r.id })).sort(cmpN);
+    S.roster = ch.map(r => ({ n: String(r.num).trim(), name: r.name, ...withFirst(r), in: true, pid: r.id })).sort(cmpN);
     S.ev = []; S.q = 1; S.active = true; S.court = []; // court : joueurs sur le terrain
     S.matchId = Date.now() * 1000 + Math.floor(Math.random() * 1000); // identifiant partagé avec les autres appareils
     ui.sel = null; ui.sq = 'all'; ui.P = null; ui.view = 'play';
@@ -167,7 +167,7 @@ function teamFromSheet(d, side) {
   const name = (side ? d.b : d.a) || '', lv = d.level || {};
   const t = {
     id: uid(), cat: lv.cat || 'Sénior', sex: lv.sex || '', suf: teamSuffix(name),
-    players: d.teams[side].players.map(p => ({ id: uid(), name: playerName(p.name), num: p.n })),
+    players: d.teams[side].players.map(p => ({ id: uid(), name: playerName(p.name), ...withFirst({ first: playerFirst(p.name) }), num: p.n })),
   };
   t.name = teamLabel(t);
   S.teams.push(t);
@@ -395,9 +395,14 @@ const ACTIONS = {
     // retrouvé par son ancien nom, ou par son numéro s'il n'en avait pas, et seulement s'il est unique)
     const fixes = nameFixes(E.data.teams[E.side].players, m.roster), team = S.teams.find(t => t.id === m.teamId);
     fixes.forEach(f => {
-      m.roster.forEach(r => { if (String(r.n) === f.n) r.name = f.to; });
+      m.roster.forEach(r => { if (String(r.n) === f.n) rename(r, f.to, f.first); });
       const hit = team ? team.players.filter(p => f.from ? sameName(p.name, f.from) : !String(p.name || '').trim() && String(p.num).trim() === f.n) : [];
-      if (hit.length === 1) hit[0].name = f.to;
+      if (hit.length === 1) rename(hit[0], f.to, f.first);
+    });
+    // Prénom de la feuille (d'après sa virgule) gardé avec les joueurs du match déjà au bon nom
+    E.data.teams[E.side].players.forEach(p => {
+      const first = playerFirst(p.name), r = m.roster.find(z => String(z.n) === p.n);
+      if (r && first && !first.includes('?') && sameName(r.name, playerName(p.name))) r.first = first;
     });
     // Nom de l'adversaire : celui de la feuille (ou corrigé dans l'écran de vérification), s'il diffère
     const n = oppOf(E).trim(), renamed = !!n && n !== m.opp;
@@ -497,7 +502,7 @@ const ACTIONS = {
     const t = matchTeam(), p = t && t.players.find(z => z.id === el.dataset.id);
     if (!p) return false;
     const n = String(p.num || '').trim(), ok = n && !dupN(n, -1) && !S.ev.some(z => z.p === n);
-    S.roster.push({ n: ok ? n : '', name: p.name, in: true, pid: p.id });
+    S.roster.push({ n: ok ? n : '', name: p.name, ...withFirst(p), in: true, pid: p.id });
     save();
     if (!ok) toast('Donne-lui un numéro pour ce match');
   },
@@ -523,7 +528,7 @@ const ACTIONS = {
     let n = 0;
     m.roster.forEach(p => {
       const tp = t.players.find(z => String(z.num || '').trim() === String(p.n) && String(z.name).trim());
-      if (tp && tp.name !== p.name) { p.name = tp.name; n++; }
+      if (tp && tp.name !== p.name) { rename(p, tp.name, tp.first); n++; }
     });
     ui.gnOpen = true;
     save();
@@ -539,14 +544,15 @@ const ACTIONS = {
     const U = ui.tup, t = U && S.teams.find(z => z.id === U.tid);
     if (!t) return false;
     const C = rosterUpdate(U.data.teams[U.side].players, t.players);
-    C.ren.forEach(r => { t.players[r.i].name = r.to; });
+    C.ren.forEach(r => rename(t.players[r.i], r.to, r.first));
+    C.first.forEach(r => { t.players[r.i].first = r.first; });
     C.num.forEach(r => { t.players[r.i].num = r.to; });
-    C.add.forEach(p => t.players.push({ id: uid(), name: p.name, num: p.num }));
+    C.add.forEach(p => t.players.push({ id: uid(), name: p.name, ...withFirst(p), num: p.num }));
     ui.tup = null; ui.tid = t.id; ui.view = 'tedit';
     sortPlayers();
     save();
     const n = C.add.length + C.ren.length + C.num.length;
-    toast(`Effectif mis à jour : ${n} changement${n > 1 ? 's' : ''}`);
+    toast(n ? `Effectif mis à jour : ${n} changement${n > 1 ? 's' : ''}` : 'Prénoms de la feuille retenus');
   },
   tback: () => {
     sortPlayers();
