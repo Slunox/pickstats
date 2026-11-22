@@ -565,9 +565,9 @@ function pages(D) {
       + grp('Fautes')
       + row3('Fautes commises', us.total.f, th.total.f)))
     + `<div class="rp-col">`
-    + card('Origine des points', 'Points marqués par type de panier (e-Marque).', legend([[cLF, 'Lancers francs'], [c2, 'Paniers à 2 pts'], [c3, 'Paniers à 3 pts']])
-      + stacked([{ label: first(U), parts: [{ v: uL, color: cLF, name: 'Lancers francs' }, { v: u2, color: c2, name: 'Paniers à 2 pts' }, { v: u3, color: c3, name: 'Paniers à 3 pts' }], tail: us.total.pts + ' pts' },
-        { label: first(T), parts: [{ v: tL, color: cLF, name: 'Lancers francs' }, { v: t2, color: c2, name: 'Paniers à 2 pts' }, { v: t3, color: c3, name: 'Paniers à 3 pts' }], tail: th.total.pts + ' pts' }], null, 400))
+    + card('Origine des points', 'Points marqués par type de panier (e-Marque).', legend([[c2, 'Paniers à 2 pts'], [c3, 'Paniers à 3 pts'], [cLF, 'Lancers francs']])
+      + stacked([{ label: first(U), parts: [{ v: u2, color: c2, name: 'Paniers à 2 pts' }, { v: u3, color: c3, name: 'Paniers à 3 pts' }, { v: uL, color: cLF, name: 'Lancers francs' }], tail: us.total.pts + ' pts' },
+        { label: first(T), parts: [{ v: t2, color: c2, name: 'Paniers à 2 pts' }, { v: t3, color: c3, name: 'Paniers à 3 pts' }, { v: tL, color: cLF, name: 'Lancers francs' }], tail: th.total.pts + ' pts' }], null, 400))
     + ratio
     + `</div></div>`
     // Ballons : relevés pour nous seulement (saisie), donc en tuiles sous le face-à-face, en pleine largeur

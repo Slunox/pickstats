@@ -7,7 +7,7 @@
 // sauf pour ajouter un nouveau fichier à FILES (indispensable pour le mode hors ligne).
 // À changer quand la démo dépend d'une modification de l'appli : elle lit l'appli depuis le cache,
 // un fichier d'avant la modification lui ferait chercher un bouton qui n'existe pas encore.
-const CACHE = 'pickstats-16';
+const CACHE = 'pickstats-17';
 const FILES = [
   './', 'index.html', 'demo.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'css/style.css',
