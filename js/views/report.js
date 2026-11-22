@@ -716,7 +716,7 @@ export function reportFile(m) {
     // Onglets collés en haut, une page à la fois. Ils marchent sans JavaScript : chaque onglet est l'étiquette
     // d'un bouton radio caché, et le CSS affiche la page dont le bouton est coché. À l'impression, toutes les pages à la suite.
     + `.rp-r{position:absolute;top:0;left:0;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}.rp .rp-page{display:none}`
-    + PAGES.map(([id]) => `#p-${id}:checked~#${id}{display:flex}#p-${id}:checked~nav label[for="p-${id}"]{color:var(--ink);font-weight:600;border-bottom-color:var(--rp-accent)}`
+    + PAGES.map(([id]) => `#p-${id}:checked~[data-page="${id}"]{display:flex}#p-${id}:checked~nav label[for="p-${id}"]{color:var(--ink);font-weight:600;border-bottom-color:var(--rp-accent)}`
       + `#p-${id}:focus-visible~nav label[for="p-${id}"]{outline:2px solid var(--rp-accent);outline-offset:-2px}`).join('')
     + `nav.rp-nav{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);padding-top:6px;scrollbar-width:thin}`
     + `nav.rp-nav label{flex:none;font-size:14px;border-bottom:3px solid transparent;color:var(--mut);padding:10px 14px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}`
@@ -728,7 +728,7 @@ export function reportFile(m) {
     + `<div class="rp" style="--rp-accent:${myInk()}">${head(m).replace('</header>', THEME_BTN + '</header>')}`
     + PAGES.map(([id, l], i) => `<input type="radio" class="rp-r" name="rp-page" id="p-${id}" aria-label="${l}"${i ? '' : ' checked'}>`).join('')
     + `<nav class="rp-nav" aria-label="Pages du dossier">${PAGES.map(([id, l]) => `<label for="p-${id}">${l}</label>`).join('')}</nav>`
-    + PAGES.map(([id, l], i) => `<section class="rp-page" id="${id}"><div class="rp-ptitle"><span>Page ${i + 1} sur ${PAGES.length}</span><h2>${l}</h2></div>${P[id]}`
+    + PAGES.map(([id, l], i) => `<section class="rp-page" data-page="${id}"><div class="rp-ptitle"><span>Page ${i + 1} sur ${PAGES.length}</span><h2>${l}</h2></div>${P[id]}`
       + `<div class="rp-pg">${i ? `<label for="p-${PAGES[i - 1][0]}" data-go="-1">← ${PAGES[i - 1][1]}</label>` : '<span></span>'}${i < PAGES.length - 1 ? `<label for="p-${PAGES[i + 1][0]}" data-go="1">${PAGES[i + 1][1]} →</label>` : '<span></span>'}</div></section>`).join('')
     + `<footer class="rp-foot">Document interne${S.clubName ? ' ' + esc(S.clubName) : ''} – ${esc(S.me)}. Statistiques individuelles à usage du staff et de l’équipe, à ne pas diffuser publiquement. Généré par Pick&amp;Stats.</footer></div>`
     + `<script>${TABS_JS}${THEME_JS}(${swipeNav})(document);</script></body></html>`;
@@ -794,6 +794,9 @@ const TABS_JS = `(function(){
   radios.forEach(function(r){r.addEventListener('change',function(){sync();window.scrollTo(0,0);});});
   var k=ids.indexOf(location.hash.slice(1)); if(k>=0) radios[k].checked=true;
   sync();
+  // Toujours en haut de page à l'ouverture et au rechargement. (Les pages n'ont pas d'id : avec un
+  // id égal au #page de l'adresse, le navigateur sautait jusqu'à elle, sous l'en-tête du rapport.)
+  try{history.scrollRestoration='manual';}catch(e){}
 })();`;
 
 // Styles du rapport (préfixe rp-), communs à l'appli et au fichier exporté.
