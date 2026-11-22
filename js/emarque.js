@@ -279,6 +279,55 @@ export function playerName(s) {
   return [p, tidyName(nom.trim())].filter(Boolean).join(' ');
 }
 
+// Même nom, à l'ordre des mots, aux majuscules, aux accents et aux tirets près
+// (« DUPONT Antoine » = « Antoine Dupont »).
+const nameKey = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .split(/[\s,'’-]+/).filter(Boolean).sort().join(' ');
+export const sameName = (a, b) => nameKey(a) === nameKey(b);
+
+// Mise à jour de l'effectif d'une équipe d'après une feuille (sheet : joueurs de la feuille,
+// players : effectif { name, num }). Un joueur de la feuille est retrouvé dans l'effectif :
+//  1. par son nom (son numéro habituel devient celui de la feuille s'il a changé) ;
+//  2. sinon par son numéro, si le joueur de l'effectif n'a pas de nom ou partage un mot du nom
+//     (« Leo » → « Léo Martin ») : son nom devient celui de la feuille ;
+//  3. sinon, il est ajouté.
+// Personne n'est retiré : un joueur absent de la feuille était peut-être juste absent ce jour-là.
+// Renvoie { add: [{ name, num }], ren: [{ i, from, to }], num: [{ i, name, from, to }] } (i : rang dans players).
+export function rosterUpdate(sheet, players) {
+  const words = s => new Set(nameKey(s).split(' ').filter(Boolean));
+  const used = new Set(), out = { add: [], ren: [], num: [] };
+  const list = sheet.map(p => ({ n: p.n, name: playerName(p.name) })).filter(p => p.name);
+  // Les correspondances par nom d'abord, pour qu'un numéro repris par un autre ne les vole pas
+  const byName = list.map(p => {
+    const i = players.findIndex((q, j) => !used.has(j) && sameName(q.name, p.name));
+    if (i >= 0) used.add(i);
+    return i;
+  });
+  list.forEach((p, k) => {
+    let i = byName[k];
+    if (i < 0) {
+      const w = words(p.name);
+      i = players.findIndex((q, j) => !used.has(j) && String(q.num || '').trim() === p.n
+        && (!String(q.name || '').trim() || [...words(q.name)].some(x => w.has(x))));
+      if (i >= 0) { used.add(i); if (!p.name.includes('?')) out.ren.push({ i, from: players[i].name || '', to: p.name }); }
+    }
+    if (i < 0) { out.add.push({ name: p.name, num: p.n }); return; }
+    const was = String(players[i].num || '').trim();
+    if (was !== p.n) out.num.push({ i, name: p.name, from: was, to: p.n });
+  });
+  return out;
+}
+
+// Noms de la composition à remplacer par ceux de la feuille (l'e-Marque fait foi) : joueurs reliés par
+// leur numéro, dont le nom diffère. Les noms encore illisibles (« ? ») attendent d'être corrigés.
+// roster : [{ n, name }]. Renvoie [{ n, from, to }].
+export function nameFixes(players, roster) {
+  return players.flatMap(p => {
+    const r = (roster || []).find(z => String(z.n) === p.n), to = playerName(p.name);
+    return r && to && !to.includes('?') && !sameName(to, r.name) ? [{ n: p.n, from: r.name || '', to }] : [];
+  });
+}
+
 // Date courte : « dim 15 nov 2026 ». Abréviations écrites à la main pour ne pas confondre juin et juillet.
 const DAYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
 const MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];

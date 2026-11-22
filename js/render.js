@@ -3,7 +3,7 @@
 import { S, ui } from './state.js';
 import { $ } from './util.js';
 import { home } from './views/home.js';
-import { club, tedit } from './views/club.js';
+import { club, tedit, tupd } from './views/club.js';
 import { pick } from './views/pick.js';
 import { games, game, report } from './views/archives.js';
 import { play } from './views/play.js';
@@ -20,7 +20,7 @@ import { emSheet } from './views/emsheet.js';
 // Écran de saisie : le classique est celui de la démo, l'autre est à l'essai (Réglages).
 const playView = () => (S.entry === 'lock' ? playLock() : play());
 
-const VIEWS = { home, club, tedit, pick, games, game, play: playView, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, emsheet: emSheet, report };
+const VIEWS = { home, club, tedit, tupd, pick, games, game, play: playView, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, emsheet: emSheet, report };
 
 // Écrans qui affichent la barre d'onglets du match en cours
 const MATCH_VIEWS = ['play', 'hist', 'stats', 'comp', 'set'];

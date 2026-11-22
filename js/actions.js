@@ -21,7 +21,7 @@ import { shareImage } from './statimage.js';
 import { markDup } from './views/pick.js';
 import { logoFromFile } from './logo.js';
 import { render } from './render.js';
-import { readEmarque, fromEm, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix } from './emarque.js';
+import { readEmarque, fromEm, guessSide, toEm, tidyName, checkRow, playerName, teamSuffix, nameFixes, sameName, rosterUpdate } from './emarque.js';
 import { keepAwake, releaseAwake } from './awake.js';
 import { sendLink, decodeMatch, extractCode, readMatchFile, addImported } from './share.js';
 import { inClub, canDelMatch, canEditMatch } from './cloud.js';
@@ -391,12 +391,20 @@ const ACTIONS = {
     const E = ui.em, m = E && S.arch.find(z => String(z.id) === String(E.gid));
     if (!m) return false;
     m.em = toEm(E.data, E.side);
+    // Noms des joueurs : la feuille fait foi, dans le match et dans l'effectif de l'équipe (joueur
+    // retrouvé par son ancien nom, ou par son numéro s'il n'en avait pas, et seulement s'il est unique)
+    const fixes = nameFixes(E.data.teams[E.side].players, m.roster), team = S.teams.find(t => t.id === m.teamId);
+    fixes.forEach(f => {
+      m.roster.forEach(r => { if (String(r.n) === f.n) r.name = f.to; });
+      const hit = team ? team.players.filter(p => f.from ? sameName(p.name, f.from) : !String(p.name || '').trim() && String(p.num).trim() === f.n) : [];
+      if (hit.length === 1) hit[0].name = f.to;
+    });
     // Nom de l'adversaire : celui de la feuille (ou corrigé dans l'écran de vérification), s'il diffère
     const n = oppOf(E).trim(), renamed = !!n && n !== m.opp;
     if (renamed) m.opp = n;
     ui.em = null; ui.view = 'game'; ui.sq = 'all';
     save();
-    toast(renamed ? 'Feuille enregistrée · adversaire renommé « ' + n + ' »' : 'Feuille e-Marque enregistrée');
+    toast(renamed ? 'Feuille enregistrée · adversaire renommé « ' + n + ' »' : fixes.length ? 'Feuille enregistrée · ' + fixes.length + ' nom' + (fixes.length > 1 ? 's' : '') + ' repris' : 'Feuille e-Marque enregistrée');
   },
   gdel: el => {
     const id = el.dataset.id, m = S.arch.find(z => String(z.id) === id);
@@ -523,6 +531,23 @@ const ACTIONS = {
     else note('Aucun nom à changer. Les noms sont repris d’après le numéro habituel de chaque joueur dans l’équipe : vérifie ces numéros dans « Effectifs et matchs », ou corrige les noms à la main ci-dessous.');
   },
   tempick: () => { const f = $('#tefile'); if (f) f.click(); return false; },
+  // Mise à jour de l'effectif d'après une feuille e-Marque
+  tupick: () => { const f = $('#tufile'); if (f) f.click(); return false; },
+  tupside: el => { ui.tup.side = +el.dataset.v; },
+  tupx: () => { ui.tup = null; ui.view = 'tedit'; },
+  tupsave: () => {
+    const U = ui.tup, t = U && S.teams.find(z => z.id === U.tid);
+    if (!t) return false;
+    const C = rosterUpdate(U.data.teams[U.side].players, t.players);
+    C.ren.forEach(r => { t.players[r.i].name = r.to; });
+    C.num.forEach(r => { t.players[r.i].num = r.to; });
+    C.add.forEach(p => t.players.push({ id: uid(), name: p.name, num: p.num }));
+    ui.tup = null; ui.tid = t.id; ui.view = 'tedit';
+    sortPlayers();
+    save();
+    const n = C.add.length + C.ren.length + C.num.length;
+    toast(`Effectif mis à jour : ${n} changement${n > 1 ? 's' : ''}`);
+  },
   tback: () => {
     sortPlayers();
     const t = tm() && ui.tnew === ui.tid ? tm() : null;
@@ -668,7 +693,7 @@ document.addEventListener('keydown', e => {
 // Actions interdites aux bénévoles.
 // Actions sur un match, permises aussi à un bénévole sur son match pas encore validé (voir canEditMatch)
 const MATCH_EDIT = ['gnames', 'empick', 'emdel', 'emsave'];
-const EDIT_ONLY = ['tedit', 'addteam', 'tempick', 'gnames', 'delteam', 'addpl', 'delpl', 'gval', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'ccol', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
+const EDIT_ONLY = ['tedit', 'addteam', 'tempick', 'tupick', 'tupsave', 'gnames', 'delteam', 'addpl', 'delpl', 'gval', 'empick', 'emdel', 'emsave', 'logopick', 'logodel', 'ccol', 'crenew', 'cshare', 'ccopy', 'crole', 'ckick'];
 
 document.addEventListener('click', e => {
   // Toucher le fond sombre ferme la fenêtre comme « Annuler ».
@@ -810,6 +835,24 @@ document.addEventListener('change', e => {
         render();
         note(e && e.message && /e-Marque|PDF|zip/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
       });
+    return;
+  }
+  if (t.id === 'tufile') {
+    const files = Array.from(t.files || []), tid = ui.tid;
+    t.value = '';
+    if (!files.length) return;
+    ui.teBusy = true;
+    render();
+    readEmarque(files).then(d => {
+      const team = S.teams.find(z => z.id === tid);
+      if (!team) return;
+      // Notre équipe sur la feuille : d'après les noms (équipe, club) puis les numéros de l'effectif
+      const side = guessSide(d, { ours: [team.name, cloud.club && cloud.club.name, S.clubName].filter(Boolean), nums: team.players.map(p => String(p.num || '').trim()).filter(Boolean) });
+      ui.tup = { tid, data: d, side };
+      ui.view = 'tupd';
+    }).catch(e => {
+      note(e && e.message && /e-Marque|PDF|zip/.test(e.message) ? e.message : 'Ce PDF ne peut pas être lu. Choisis le résumé de l’e-Marque (fichier « resume_… .pdf »).');
+    }).finally(() => { ui.teBusy = false; render(); });
     return;
   }
   if (t.id === 'impfile') {

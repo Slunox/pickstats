@@ -3,7 +3,7 @@
 import { S, ui, withMatch } from '../state.js';
 import { esc } from '../util.js';
 import { roster1 } from '../model.js';
-import { checkRow, oppName } from '../emarque.js';
+import { checkRow, oppName, nameFixes } from '../emarque.js';
 import { canEditMatch } from '../cloud.js';
 import { back } from './common.js';
 
@@ -59,6 +59,12 @@ export function emCheck() {
     ${unread.map(({ p, ti, i }) => `<label class="emfn"><span>${ti === side ? 'Mon équipe' : esc(oppOf(E) || m.opp)} · n° ${esc(p.n)}</span>
       <input data-emn="${ti}|${i}" value="${esc(p.name)}" maxlength="40" autocomplete="off"></label>`).join('')}</div>` : '';
 
+  // Noms repris de la feuille : elle fait foi sur ceux saisis dans l'appli.
+  const fixes = nameFixes(us.players, m.roster);
+  const renames = fixes.length ? `<div class="emfix"><h3>Noms repris de la feuille</h3>
+    <p class="help" style="margin-top:0">L’e-Marque fait foi : ${fixes.length > 1 ? 'ces noms remplaceront' : 'ce nom remplacera'} celui saisi, dans ce match et dans l’effectif de l’équipe.</p>
+    <ul class="emren">${fixes.map(f => `<li><b>#${esc(f.n)}</b> <s>${esc(f.from) || 'sans nom'}</s> → <b>${esc(f.to)}</b></li>`).join('')}</ul></div>` : '';
+
   const bad = us.players.filter(p => !checkRow(p)).length;
   const sum = us.players.reduce((a, p) => a + (+p.pts || 0), 0);
   const missing = [...nums].filter(n => !us.players.some(p => p.n === n));
@@ -86,6 +92,7 @@ export function emCheck() {
       <tbody>${rows}</tbody>
     </table></div>
     <p class="help">Les joueurs sont reliés par leur numéro de maillot. Corrige une valeur si elle ne correspond pas à la feuille.</p>
+    ${renames}
     ${fixNames}
     <button class="btn go2" data-x="emsave">Enregistrer dans le match</button>
   </div>`;

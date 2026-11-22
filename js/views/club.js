@@ -5,6 +5,7 @@ import { CATS, SEXES } from '../constants.js';
 import { esc, plural } from '../util.js';
 import { sortedTeams, tm, teamColor } from '../model.js';
 import { back } from './common.js';
+import { rosterUpdate, tidyName } from '../emarque.js';
 import { cloud, canEdit } from '../cloud.js';
 import { clubHead } from './account.js';
 
@@ -68,6 +69,34 @@ export function tedit() {
     <div class="prow2 head"><span>Nom</span><span>N° habituel</span><span></span></div>
     ${players}
     <button class="btn" data-x="addpl">Ajouter un joueur</button>
+    <button class="btn alt" data-x="tupick" style="margin-top:8px"${ui.teBusy ? ' disabled' : ''}>${ui.teBusy ? 'Lecture du PDF…' : 'Mettre à jour depuis une feuille e-Marque'}</button>
+    <input type="file" id="tufile" accept=".pdf,application/pdf,.zip,application/zip" multiple hidden>
+    <p class="help">Choisis le <b>.zip</b> ou le <b>résumé</b> d’un match récent : les nouveaux joueurs sont ajoutés, les noms et numéros corrigés d’après la feuille. Personne n’est retiré.</p>
   </div>
   <button class="btn bad" data-x="delteam">Supprimer cette équipe</button>`;
+}
+
+// Mise à jour de l'effectif d'après une feuille e-Marque : récapitulatif avant d'enregistrer.
+export function tupd() {
+  const U = ui.tup, t = U && S.teams.find(z => z.id === U.tid);
+  if (!t) return back('Effectifs et matchs', 'view', 'club', 'Mise à jour');
+  const d = U.data, side = U.side, C = rosterUpdate(d.teams[side].players, t.players);
+  const nameAt = i => esc(t.players[i].name) || 'sans nom';
+  const block = (title, items) => items.length ? `<h3 class="tuh">${title}</h3><ul class="emren">${items.join('')}</ul>` : '';
+  const pl = (n, one, many) => n + ' ' + (n > 1 ? many : one);
+  const none = !C.add.length && !C.ren.length && !C.num.length;
+  const unread = C.add.some(p => p.name.includes('?'));
+
+  return back('Annuler', 'tupx', null, 'Mise à jour') + `<div class="card">
+    <h2>${esc(t.name)} : mise à jour</h2>
+    <label>L’équipe sur la feuille</label>
+    <div class="chips">${[0, 1].map(s => `<button class="chip${side === s ? ' on' : ''}" data-x="tupside" data-v="${s}">${s ? 'Visiteurs' : 'Locaux'} : ${esc(tidyName(s ? d.b : d.a) || '?')}</button>`).join('')}</div>
+    ${none ? '<p class="help">L’effectif est déjà à jour avec cette feuille : rien à changer.</p>' : `
+    ${block(`${pl(C.add.length, 'joueur ajouté', 'joueurs ajoutés')}`, C.add.map(p => `<li><b>#${esc(p.num)}</b> ${esc(p.name)}</li>`))}
+    ${block(`${pl(C.ren.length, 'nom corrigé', 'noms corrigés')}`, C.ren.map(r => `<li><s>${nameAt(r.i)}</s> → <b>${esc(r.to)}</b></li>`))}
+    ${block(`${pl(C.num.length, 'numéro changé', 'numéros changés')}`, C.num.map(r => `<li>${esc(r.name)} : <s>${r.from ? '#' + esc(r.from) : 'sans numéro'}</s> → <b>#${esc(r.to)}</b></li>`))}
+    ${unread ? '<p class="emwarn">Certaines lettres n’ont pas été reconnues (« ? ») : corrige ces noms dans l’effectif après l’enregistrement.</p>' : ''}`}
+    <p class="help">L’e-Marque fait foi. Les joueurs absents de la feuille restent dans l’effectif.</p>
+    ${none ? '' : '<button class="btn go2" data-x="tupsave">Enregistrer dans l’effectif</button>'}
+  </div>`;
 }
