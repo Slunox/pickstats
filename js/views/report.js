@@ -134,13 +134,8 @@ const legend = items => `<div class="rp-legend">${items.map(([c, l]) => `<span><
 const T_MISS = ['m1', 'm2', 'm3'], T_LOSS = ['to', 'trav'], T_POS = ['stl', 'fd', ...WON.map(w => w[0])];
 const kindOf = a => (T_MISS.includes(a) ? 'miss' : T_LOSS.includes(a) ? 'loss' : T_POS.includes(a) ? 'pos' : null);
 const hhmm = t => { const d = new Date(t); return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0'); };
-const evWho = e => (!e.p || e.p === '__team' ? 'Équipe' : `#${e.p} ${firstName(roster1(e.p))}`.trim());
-// Joueurs d'une série, les plus présents d'abord : « Lucas 2, Louis, Hugo »
-const whoList = list => {
-  const n = {};
-  list.forEach(e => { const k = !e.p || e.p === '__team' ? 'l’équipe' : firstName(roster1(e.p)) || '#' + e.p; n[k] = (n[k] || 0) + 1; });
-  return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([k, c]) => k + (c > 1 ? ' ' + c : '')).join(', ');
-};
+// Le moment par moment ne nomme personne : il montre les temps faibles et forts de l'équipe,
+// pas qui a perdu le ballon ou raté le tir.
 
 // Séries d'un quart (E : actions classées, triées par heure).
 //  – pertes : au moins 3 balles perdues ou marchers en 3 minutes ;
@@ -197,7 +192,7 @@ function timelineHtml(TL) {
   return `<div class="rp-tl">${TL.Q.map(x => {
     const span = Math.max(x.t1 - x.t0, 60000), px = t => (100 * (t - x.t0) / span).toFixed(2);
     const bands = x.runs.map(r => `<span class="rp-run ${r.tone > 0 ? 'up' : 'down'}" style="left:calc(${px(r.t0)}% - 10px);width:calc(${(px(r.t1) - px(r.t0)).toFixed(2)}% + 20px)" title="${esc(qName(x.q - 1) + ' : ' + runText(r))}"></span>`).join('');
-    const marks = x.list.map(e => `<i class="rp-mk ${e.k}" style="left:${px(e.t)}%" title="${esc(`${qName(e.q - 1)} · ${hhmm(e.t)} · ${evWho(e)} · ${LBL[e.a] || e.a}`)}"></i>`).join('');
+    const marks = x.list.map(e => `<i class="rp-mk ${e.k}" style="left:${px(e.t)}%" title="${esc(`${qName(e.q - 1)} · ${hhmm(e.t)} · ${LBL[e.a] || e.a}`)}"></i>`).join('');
     return `<div class="rp-tlrow"><div class="rp-tlq"><b>${qName(x.q - 1)}</b><span>${hhmm(x.t0)}</span></div>`
       + `<div class="rp-track" role="img" aria-label="Actions du ${qName(x.q - 1)}">${bands}${marks}</div></div>`;
   }).join('')}</div>`
@@ -207,7 +202,7 @@ function timelineHtml(TL) {
 // « Moments à retenir » : une ligne par série, dans l'ordre du match.
 const momentsList = TL => (TL.runs.length
   ? `<ul class="rp-finds rp-moments">${TL.runs.map(r => `<li class="${r.tone > 0 ? 'up' : 'down'}"><strong>${qName(r.q - 1)} : ${runText(r)}.</strong> `
-    + `<span class="rp-muted">${hhmm(r.t0)}${hhmm(r.t1) !== hhmm(r.t0) ? ' – ' + hhmm(r.t1) : ''} · ${esc(whoList(r.list))}</span></li>`).join('')}</ul>`
+    + `<span class="rp-muted">${hhmm(r.t0)}${hhmm(r.t1) !== hhmm(r.t0) ? ' – ' + hhmm(r.t1) : ''}</span></li>`).join('')}</ul>`
   : '<p class="rp-muted" style="margin:0">Pas de série marquante : ni trou d’air, ni temps fort net.</p>');
 
 // --- Analyse : facteurs du match ---
@@ -284,7 +279,6 @@ function headline(D, names) {
 // Phrases courtes, chiffres arrondis, et la moyenne de la saison quand l'écart compte.
 
 const pct0 = (m, a) => (a ? Math.round(100 * m / a) + ' %' : '–');
-const mins = s => (/^(\d+):/.exec(String(s || '')) || [])[1];
 
 // Moyennes de la saison (voir seasonGames) pour les chiffres de SEASON_ROWS, null si pas assez de matchs.
 function seasonAvgs() {
@@ -421,12 +415,13 @@ function findings(D, names) {
   if (ten.length >= 3) add('share', 3 + ten.length, 1, 'Des points partagés.', `<b>${ten.length}</b> joueurs à 10 points ou plus : ${ten.map(p => `${esc(firstName(p))} (${p.pts})`).join(', ')}.`);
   const eff = players.filter(p => p !== (topGood ? top : null) && p.afg >= 6 && p.ppt >= 1.2).sort((a, b) => b.ppt - a.ppt)[0];
   if (eff) add('eff', 4, 1, 'Le plus efficace.', `#${esc(eff.n)} ${esc(firstName(eff))} : <b>${eff.pts}</b> points à <b>${ma(eff.fg, eff.afg)}</b> au tir.`);
-  // 5 fautes : à travailler quand ce sont des marqueurs (10 points ou plus), sinon simple note
-  const who = p => `#${esc(p.n)} ${esc(firstName(p))} (<b>${p.pts}</b> pts${mins(p.min) ? ` en ${mins(p.min)} min` : ''})`;
+  // 5 fautes : à travailler quand ce sont des marqueurs (10 points ou plus), sinon simple note.
+  // Sans nom : c'est une faiblesse d'équipe (discipline défensive), pas un joueur à pointer du doigt.
   const fiveScorers = five.filter(p => p.pts >= 10), fiveOthers = five.filter(p => p.pts < 10);
+  const out = k => `${k > 1 ? 'sont sortis' : 'est sorti'} pour 5 fautes`;
   if (fiveScorers.length) add('five', 8 + fiveScorers.reduce((a, p) => a + p.pts, 0) / 4, -1, 'Les 5 fautes.',
-    `${andList(fiveScorers.map(who))} ${fiveScorers.length > 1 ? 'sont sortis' : 'est sorti'} pour 5 fautes${d < 0 ? ' : autant de points en moins sur la fin' : ''}.`);
-  if (fiveOthers.length) add('fiveN', 5, 0, '', `${andList(fiveOthers.map(who))} ${fiveOthers.length > 1 ? 'sont sortis' : 'est sorti'} pour 5 fautes.`);
+    `<b>${fiveScorers.length}</b> ${fiveScorers.length > 1 ? 'marqueurs' : 'marqueur'} à 10 points ou plus ${out(fiveScorers.length)}${d < 0 ? ' : autant de points en moins sur la fin' : ''}.`);
+  if (fiveOthers.length) add('fiveN', 5, 0, '', `<b>${fiveOthers.length}</b> joueur${fiveOthers.length > 1 ? 's' : ''} ${out(fiveOthers.length)}.`);
   if (top && top.pts >= 10 && !topGood && !five.includes(top)) add('topn', 6, 0, '', `#${esc(top.n)} ${esc(firstName(top))}, meilleur marqueur avec <b>${top.pts}</b> points.`);
 
   const by = list => list.sort((a, b) => b.p - a.p);
