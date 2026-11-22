@@ -18,7 +18,7 @@ export function pick() {
   if (!P.teamId) return chooseTeam();
 
   const t = S.teams.find(z => z.id === P.teamId);
-  // Les doublons sont en rouge dès l'ouverture (deux joueurs avec le même numéro habituel),
+  // Les doublons et numéros manquants sont en rouge dès l'ouverture,
   // pas seulement après une saisie : markDup ne tourne qu'à la frappe.
   const c = dupCount(P.rows);
   const rows = P.rows.length
@@ -57,9 +57,10 @@ function dupCount(rows) {
   });
   return c;
 }
-const isDup = (r, c) => r.in && c[String(r.num).trim()] > 1;
+// En rouge : un joueur coché sans numéro, ou dont le numéro est porté par un autre joueur coché.
+const isDup = (r, c) => { const n = String(r.num ?? '').trim(); return r.in && (!n || c[n] > 1); };
 
-// Signale en rouge les numéros en double parmi les joueurs cochés (pendant la frappe).
+// Signale en rouge les numéros manquants ou en double parmi les joueurs cochés (frappe, coche).
 export function markDup() {
   const c = dupCount(ui.P.rows);
   document.querySelectorAll('[data-pnum]').forEach(i => {
