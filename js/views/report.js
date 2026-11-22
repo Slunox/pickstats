@@ -230,11 +230,15 @@ const FACT = {
   bench: ['le banc', 'le banc', 'un banc productif', 'un banc moins productif'],
 };
 const andList = l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' et ' + l[l.length - 1] : l[0] || '');
+// Séries d'un même genre : « une série de 6 pertes de balle », « deux séries de pertes de balle (5 et 6) »
+const NUMW = ['', 'une', 'deux', 'trois', 'quatre', 'cinq'];
+const series = (ns, what) => (!ns.length ? '' : ns.length === 1 ? `une série de ${ns[0]} ${what}`
+  : `${NUMW[ns.length] || ns.length} séries de ${what} (${andList(ns.map(String))})`);
 
 // Bloc sous le score : un titre (résultat et scénario), puis quelques lignes étiquetées
 // (le tournant, ce qui a fait la différence ou coûté le match, le ou les points positifs). Les chiffres détaillés sont dans les tuiles.
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-function headline(D, names) {
+function headline(D, names, TL) {
   const { em, us, th, quarters } = D, [, T] = names, d = us.total.pts - th.total.pts, ad = Math.abs(d);
   let t = d > 0 ? (ad >= 20 ? 'Large victoire' : ad <= 3 ? 'Victoire arrachée' : 'Victoire')
     : d < 0 ? (ad >= 20 ? 'Lourde défaite' : ad <= 3 ? 'Défaite d’un souffle' : 'Défaite')
@@ -253,8 +257,28 @@ function headline(D, names) {
     const dir = Math.sign(d);
     // Le quart-temps qui a le plus pesé dans le sens du résultat
     const q = quarters.length ? quarters.reduce((a, x) => ((x.us - x.th) * dir > (a.us - a.th) * dir ? x : a)) : null;
-    if (q && (q.us - q.th) * dir >= 6) rows.push(['', 'Le tournant', `${qName(q.i)} ${d > 0 ? 'gagné' : 'perdu'} ${q.us}-${q.th}`]);
-    const top = F.filter(f => f.v * dir >= 4).sort((a, b) => b.v * dir - a.v * dir).slice(0, 2).map(f => FACT[f.k][d > 0 ? 0 : 1]);
+    const turn = q && (q.us - q.th) * dir >= 6 ? q : null;
+    // Séries du moment par moment dans ce quart, dans le sens du résultat (trous d'air si perdu, temps
+    // forts si gagné) : elles disent comment l'écart s'est fait.
+    const R = turn && TL ? TL.runs.filter(r => r.q === turn.i + 1 && r.tone === dir) : [];
+    const runsOf = k => R.filter(r => r.k === k).map(r => r.n);
+    if (turn) {
+      const how = d < 0
+        ? [series(runsOf('loss'), 'pertes de balle'), series(runsOf('miss'), 'tirs ratés')]
+        : [series(runsOf('pos'), `actions positives sur ${POS_W}`)];
+      const txt = andList(how.filter(Boolean));
+      rows.push(['', 'Le tournant', `${qName(turn.i)} ${d > 0 ? 'gagné' : 'perdu'} ${turn.us}-${turn.th}${txt ? ', avec ' + txt : ''}`]);
+    }
+    // Facteurs cités : les deux plus lourds, plus un 3e s'il pèse presque autant que le 2e (2 points ou
+    // moins d'écart). Les pertes de balle sont citées d'office si elles ont fait des séries dans le
+    // quart décisif d'une défaite : c'est là qu'elles ont coûté le plus, même si le bilan du match les
+    // compense en partie (interceptions, ballons gagnés).
+    const ranked = F.filter(f => f.v * dir >= 4).sort((a, b) => b.v * dir - a.v * dir);
+    const cited = ranked.slice(0, 2);
+    if (ranked[2] && Math.abs(ranked[1].v - ranked[2].v) <= 2) cited.push(ranked[2]);
+    const ball = F.find(f => f.k === 'ball');
+    if (d < 0 && runsOf('loss').length && ball && ball.v < 0 && !cited.includes(ball)) cited.splice(Math.min(cited.length, 2), 1, ball);
+    const top = cited.map(f => FACT[f.k][d > 0 ? 0 : 1]);
     const against = F.filter(f => f.v * dir <= -6).sort((a, b) => a.v * dir - b.v * dir).slice(0, 2).map(f => FACT[f.k][d > 0 ? 1 : 0]);
     if (d > 0) {
       if (top.length) rows.push(['up', 'La différence', cap(andList(top))]);
@@ -523,7 +547,7 @@ function pages(D) {
   P.resume = `<div class="rp-score"><div class="rp-team"><span>${esc(U)}</span><span class="big">${us.total.pts}</span></div><span class="sep">–</span>`
     + `<div class="rp-team"><span>${esc(T)}</span><span class="big">${th.total.pts}</span></div><span class="rp-pill ${d > 0 ? 'good' : d < 0 ? 'low' : ''}">${d > 0 ? 'Victoire' : d < 0 ? 'Défaite' : 'Nul'}</span></div>`
     + qline
-    + headline(D, names)
+    + headline(D, names, TL)
     + keyTiles(D, names)
     + (F.good.length || F.bad.length || F.notes.length
       ? `<h3 class="rp-h3">Ce qu’il faut retenir</h3><div class="rp-take2">${col('up', 'Points forts', F.good)}${col('down', 'À travailler', F.bad)}</div>`
