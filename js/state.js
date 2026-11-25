@@ -79,7 +79,7 @@ export function withMatch(m, f) {
 export const ui = {
   view: 'home',   // écran affiché
   sel: null,      // numéro du joueur sélectionné sur la saisie
-  dyn: null,      // mode dynamique (essai) : 'm2' ou 'm3', chaque joueur touché retente ce tir après un rebond offensif
+  dyn: null,      // mode dynamique : 'm2' ou 'm3', chaque joueur touché retente ce tir après un rebond offensif
   dynP: null,     // mode dynamique : dernier tireur (numéro)
   dynN: 0,        // mode dynamique : nombre de tirs ratés enchaînés
   ft: null,       // lancers francs en cours de saisie (essai) : { n: joueur, k: nombre, r: [marqué ?] }

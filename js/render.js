@@ -7,7 +7,6 @@ import { club, tedit, tupd } from './views/club.js';
 import { pick } from './views/pick.js';
 import { games, game, report } from './views/archives.js';
 import { play } from './views/play.js';
-import { playLock } from './views/playlock.js';
 import { hist } from './views/history.js';
 import { stats } from './views/stats.js';
 import { comp } from './views/composition.js';
@@ -17,10 +16,7 @@ import { members } from './views/account.js';
 import { emCheck } from './views/emarque.js';
 import { emSheet } from './views/emsheet.js';
 
-// Écran de saisie : le classique est celui de la démo, l'autre est à l'essai (Réglages).
-const playView = () => (S.entry === 'lock' ? playLock() : play());
-
-const VIEWS = { home, club, tedit, tupd, pick, games, game, play: playView, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, emsheet: emSheet, report };
+const VIEWS = { home, club, tedit, tupd, pick, games, game, play, hist, stats, comp, set: settings, import: importView, members, emcheck: emCheck, emsheet: emSheet, report };
 
 // Écrans qui affichent la barre d'onglets du match en cours
 const MATCH_VIEWS = ['play', 'hist', 'stats', 'comp', 'set'];
@@ -53,7 +49,7 @@ export function render() {
   const inMatch = S.active && MATCH_VIEWS.includes(ui.view);
   const moved = ui.view !== shown;
   shown = ui.view;
-  // Marge du bas : la barre d'actions de la saisie (classique ou essai) est une carte collante
+  // Marge du bas : la barre d'actions de la saisie est une carte collante
   // mais dans le flux, qui prend sa place elle-même ; ailleurs, pas de barre du tout.
   document.documentElement.dataset.bar = ui.view === 'play' ? 'flow' : '';
   // La fenêtre du compte est recréée elle aussi : on garde l'endroit où elle était défilée.

@@ -4,7 +4,7 @@
 
 import { S, ui, save, withMatch } from './state.js';
 import { $, uid, cmpN } from './util.js';
-import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, myColor, oppColor, isLight, colorVars, rename, withFirst } from './model.js';
+import { roster, dupN, evText, teamLabel, tm, matchTeam, sortPlayers, selTeam, curG, rename, withFirst } from './model.js';
 import { toast, tick, ask, note, answer, choose, chosen } from './dom.js';
 import { MISS, SWAP, DEMO } from './constants.js';
 import { backup, restoreFile, download, shareFile } from './export.js';
@@ -116,9 +116,8 @@ function addEvent(ev) {
   save();
 }
 
-// Écran de saisie choisi dans les Réglages : 'lock' (essai), sinon le classique de la démo.
-const entry = () => (S.entry === 'lock' ? 'lock' : '1');
-
+// Referme tout ce que la saisie avait en cours : mode dynamique, lancers francs, ballons gagnés,
+// demande de rebond, joueur sélectionné.
 function dropLock() {
   ui.dyn = null;
   ui.ft = null;
@@ -151,15 +150,6 @@ function setJersey(which, v) {
   }
   const val = v === String(S.clubColor || '').toUpperCase() ? null : v;
   if (draft) ui.P.myColor = val; else { S.myColor = val; save(); }
-}
-
-// Après un tir raté : qui a pris le rebond ?
-function askRebound() {
-  choose('Qui a pris le rebond ?', [
-    { label: (cloud.club && cloud.club.name) || S.clubName || S.me, sub: 'Rebond offensif', cls: 'tc' + (isLight(myColor()) ? ' lt' : ''), style: colorVars(myColor()), fn: () => addEvent({ a: 'ro', q: S.q, p: '__team' }) },
-    { label: S.opp, sub: 'Rebond défensif', cls: 'tc' + (isLight(oppColor()) ? ' lt' : ''), style: colorVars(oppColor()), fn: () => addEvent({ a: 'odr', q: S.q }) },
-    { label: 'Personne', sub: 'Ballon dehors, faute…' },
-  ]);
 }
 
 // Nouvelle équipe d'après le résumé e-Marque (side : 0 = locaux, 1 = visiteurs).
@@ -222,18 +212,14 @@ const ACTIONS = {
   desel: () => { ui.sel = null; },
   act: el => {
     const a = el.dataset.a;
-    if (!ui.sel) {
-      if (entry() === 'lock') toast('Touche d’abord le joueur');
-      return false;
-    }
-    // Essai : les lancers francs se disent un par un
+    if (!ui.sel) { toast('Touche d’abord le joueur'); return false; }
+    // Les lancers francs se disent un par un
     if (a === 'lf') { ui.ft = { n: ui.sel, k: 0, r: [] }; return; }
     const p = ui.sel;
     addEvent({ a, q: S.q, p });
     ui.sel = null;
     if (!MISS.includes(a)) return;
-    if (entry() !== 'lock') { askRebound(); return; }
-    // Essai : mode dynamique, le rebond se demande dans la barre du bas
+    // Tir raté : mode dynamique, le rebond se demande dans la barre du bas
     ui.dyn = a;
     ui.dynP = p; // dernier tireur et nombre de tirs enchaînés, affichés dans la barre
     ui.dynN = 1;
@@ -592,7 +578,6 @@ const ACTIONS = {
   theme: el => { S.theme = el.dataset.t; save(); },
   lay: el => { S.layout = el.dataset.l; save(); },
   pst: el => { S.pstats = el.dataset.v; save(); },
-  entry: el => { S.entry = el.dataset.v; dropLock(); save(); },
   awake: el => {
     S.awake = el.dataset.v === '1';
     save();

@@ -7,14 +7,14 @@
 // sauf pour ajouter un nouveau fichier à FILES (indispensable pour le mode hors ligne).
 // À changer quand la démo dépend d'une modification de l'appli : elle lit l'appli depuis le cache,
 // un fichier d'avant la modification lui ferait chercher un bouton qui n'existe pas encore.
-const CACHE = 'pickstats-20';
+const CACHE = 'pickstats-21';
 const FILES = [
   './', 'index.html', 'demo.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'css/style.css',
   'js/main.js', 'js/constants.js', 'js/util.js', 'js/state.js', 'js/model.js', 'js/dom.js',
   'js/awake.js', 'js/export.js', 'js/render.js', 'js/actions.js', 'js/share.js', 'js/cloud.js', 'js/cloud-config.js', 'js/logo.js', 'js/statimage.js',
   'js/views/common.js', 'js/views/home.js', 'js/views/club.js', 'js/views/pick.js',
-  'js/views/play.js', 'js/views/playlock.js', 'js/views/court.js', 'js/views/history.js', 'js/views/stats.js', 'js/views/archives.js',
+  'js/views/play.js', 'js/views/court.js', 'js/views/history.js', 'js/views/stats.js', 'js/views/archives.js',
   'js/emarque.js', 'js/emarque-glyphs.js', 'js/zip.js', 'js/views/emarque.js', 'js/views/emstats.js', 'js/views/report.js', 'js/views/emsheet.js',
   'js/views/composition.js', 'js/views/settings.js', 'js/views/import.js', 'js/views/account.js', 'js/views/icons.js',
   // Lecture des PDF de l'e-Marque : pour pouvoir importer une feuille même sans réseau

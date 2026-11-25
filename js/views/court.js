@@ -1,4 +1,4 @@
-// Joueurs sur le terrain, commun aux deux écrans de saisie (classique et dynamique).
+// Joueurs sur le terrain, sur l'écran de saisie.
 // Sans terrain choisi : une seule grille, comme avant. Avec : les joueurs sur le terrain en grand,
 // le banc en petit dessous (toujours touchable : un changement oublié ne doit pas bloquer la
 // saisie). En mode changements : tous les joueurs, chaque appui entre ou sort.
@@ -11,7 +11,7 @@ import { allP } from '../model.js';
 // Joueurs sur le terrain : ceux de S.court encore présents au match.
 export const onCourt = present => (S.court || []).filter(n => present.some(p => p.n === n));
 
-// button(p, r, stk, mode, nm) : le bouton joueur de l'écran (chacun a le sien).
+// button(p, r, stk, mode, nm) : le bouton joueur, fourni par play.js.
 // lock : classe ajoutée aux grilles (contour du mode dynamique).
 export function playersBlock({ T, stk, mode, shw, names, button, lock = '' }) {
   const present = allP().filter(p => p.in), court = onCourt(present);
